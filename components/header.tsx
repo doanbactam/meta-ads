@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select';
 import { useEffect, useState } from 'react';
 import { getAdAccounts, type AdAccount } from '@/lib/api/ad-accounts';
+import { UserButton, useUser } from '@clerk/nextjs';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -21,6 +22,7 @@ interface HeaderProps {
 }
 
 export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }: HeaderProps) {
+  const { user } = useUser();
   const [adAccounts, setAdAccounts] = useState<AdAccount[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -97,13 +99,13 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
           <Bell className="h-3.5 w-3.5" />
         </Button>
         <Separator orientation="vertical" className="h-4" />
-        <Button variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-xs font-normal">
-          <Badge variant="outline" className="h-5 w-5 rounded-sm p-0 text-[10px] font-normal">
-            A
-          </Badge>
-          <span>admin</span>
-          <ChevronDown className="h-3 w-3" />
-        </Button>
+        <UserButton
+          appearance={{
+            elements: {
+              avatarBox: "h-8 w-8"
+            }
+          }}
+        />
       </div>
     </header>
   );

@@ -7,7 +7,7 @@ export async function getCampaigns(adAccountId?: string): Promise<Campaign[]> {
     orderBy: { createdAt: 'desc' },
   });
 
-  return campaigns.map(c => ({
+  return campaigns.map((c) => ({
     id: c.id,
     name: c.name,
     status: c.status as Campaign['status'],

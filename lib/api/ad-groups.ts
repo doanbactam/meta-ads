@@ -7,7 +7,7 @@ export async function getAdGroups(campaignId?: string): Promise<AdGroup[]> {
     orderBy: { createdAt: 'desc' },
   });
 
-  return adGroups.map(ag => ({
+  return adGroups.map((ag) => ({
     id: ag.id,
     campaign_id: ag.campaignId,
     name: ag.name,

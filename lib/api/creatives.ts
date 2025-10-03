@@ -7,7 +7,7 @@ export async function getCreatives(adGroupId?: string): Promise<Creative[]> {
     orderBy: { createdAt: 'desc' },
   });
 
-  return creatives.map(c => ({
+  return creatives.map((c) => ({
     id: c.id,
     ad_group_id: c.adGroupId,
     name: c.name,
