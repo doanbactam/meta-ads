@@ -1,62 +1,181 @@
-import { supabase } from '@/lib/supabase';
+import { prisma } from '@/lib/prisma';
 import { Campaign } from '@/types';
 
-export async function getCampaigns(): Promise<Campaign[]> {
-  const { data, error } = await supabase
-    .from('campaigns')
-    .select('*')
-    .order('created_at', { ascending: false });
+export async function getCampaigns(adAccountId?: string): Promise<Campaign[]> {
+  const campaigns = await prisma.campaign.findMany({
+    where: adAccountId ? { adAccountId } : undefined,
+    orderBy: { createdAt: 'desc' },
+  });
 
-  if (error) throw error;
-  return data || [];
+  return campaigns.map(c => ({
+    id: c.id,
+    name: c.name,
+    status: c.status as Campaign['status'],
+    budget: c.budget,
+    spent: c.spent,
+    impressions: c.impressions,
+    clicks: c.clicks,
+    ctr: c.ctr,
+    conversions: c.conversions,
+    cost_per_conversion: c.costPerConversion,
+    date_start: c.dateStart,
+    date_end: c.dateEnd,
+    schedule: c.schedule,
+    created_at: c.createdAt.toISOString(),
+    updated_at: c.updatedAt.toISOString(),
+  }));
 }
 
-export async function createCampaign(campaign: Omit<Campaign, 'id' | 'created_at' | 'updated_at'>): Promise<Campaign> {
-  const { data, error } = await supabase
-    .from('campaigns')
-    .insert([campaign])
-    .select()
-    .single();
+export async function getCampaignById(id: string): Promise<Campaign | null> {
+  const campaign = await prisma.campaign.findUnique({
+    where: { id },
+  });
 
-  if (error) throw error;
-  return data;
+  if (!campaign) return null;
+
+  return {
+    id: campaign.id,
+    name: campaign.name,
+    status: campaign.status as Campaign['status'],
+    budget: campaign.budget,
+    spent: campaign.spent,
+    impressions: campaign.impressions,
+    clicks: campaign.clicks,
+    ctr: campaign.ctr,
+    conversions: campaign.conversions,
+    cost_per_conversion: campaign.costPerConversion,
+    date_start: campaign.dateStart,
+    date_end: campaign.dateEnd,
+    schedule: campaign.schedule,
+    created_at: campaign.createdAt.toISOString(),
+    updated_at: campaign.updatedAt.toISOString(),
+  };
+}
+
+export async function createCampaign(
+  data: Omit<Campaign, 'id' | 'created_at' | 'updated_at'> & { adAccountId: string }
+): Promise<Campaign> {
+  const campaign = await prisma.campaign.create({
+    data: {
+      adAccountId: data.adAccountId,
+      name: data.name,
+      status: data.status,
+      budget: data.budget,
+      spent: data.spent || 0,
+      impressions: data.impressions || 0,
+      clicks: data.clicks || 0,
+      ctr: data.ctr || 0,
+      conversions: data.conversions || 0,
+      costPerConversion: data.cost_per_conversion || 0,
+      dateStart: data.date_start,
+      dateEnd: data.date_end,
+      schedule: data.schedule,
+    },
+  });
+
+  return {
+    id: campaign.id,
+    name: campaign.name,
+    status: campaign.status as Campaign['status'],
+    budget: campaign.budget,
+    spent: campaign.spent,
+    impressions: campaign.impressions,
+    clicks: campaign.clicks,
+    ctr: campaign.ctr,
+    conversions: campaign.conversions,
+    cost_per_conversion: campaign.costPerConversion,
+    date_start: campaign.dateStart,
+    date_end: campaign.dateEnd,
+    schedule: campaign.schedule,
+    created_at: campaign.createdAt.toISOString(),
+    updated_at: campaign.updatedAt.toISOString(),
+  };
 }
 
 export async function updateCampaign(id: string, updates: Partial<Campaign>): Promise<Campaign> {
-  const { data, error } = await supabase
-    .from('campaigns')
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .select()
-    .single();
+  const campaign = await prisma.campaign.update({
+    where: { id },
+    data: {
+      ...(updates.name && { name: updates.name }),
+      ...(updates.status && { status: updates.status }),
+      ...(updates.budget !== undefined && { budget: updates.budget }),
+      ...(updates.spent !== undefined && { spent: updates.spent }),
+      ...(updates.impressions !== undefined && { impressions: updates.impressions }),
+      ...(updates.clicks !== undefined && { clicks: updates.clicks }),
+      ...(updates.ctr !== undefined && { ctr: updates.ctr }),
+      ...(updates.conversions !== undefined && { conversions: updates.conversions }),
+      ...(updates.cost_per_conversion !== undefined && { costPerConversion: updates.cost_per_conversion }),
+      ...(updates.date_start && { dateStart: updates.date_start }),
+      ...(updates.date_end && { dateEnd: updates.date_end }),
+      ...(updates.schedule && { schedule: updates.schedule }),
+    },
+  });
 
-  if (error) throw error;
-  return data;
+  return {
+    id: campaign.id,
+    name: campaign.name,
+    status: campaign.status as Campaign['status'],
+    budget: campaign.budget,
+    spent: campaign.spent,
+    impressions: campaign.impressions,
+    clicks: campaign.clicks,
+    ctr: campaign.ctr,
+    conversions: campaign.conversions,
+    cost_per_conversion: campaign.costPerConversion,
+    date_start: campaign.dateStart,
+    date_end: campaign.dateEnd,
+    schedule: campaign.schedule,
+    created_at: campaign.createdAt.toISOString(),
+    updated_at: campaign.updatedAt.toISOString(),
+  };
 }
 
 export async function deleteCampaign(id: string): Promise<void> {
-  const { error } = await supabase
-    .from('campaigns')
-    .delete()
-    .eq('id', id);
-
-  if (error) throw error;
+  await prisma.campaign.delete({
+    where: { id },
+  });
 }
 
 export async function duplicateCampaign(id: string): Promise<Campaign> {
-  const { data: original, error: fetchError } = await supabase
-    .from('campaigns')
-    .select('*')
-    .eq('id', id)
-    .single();
+  const original = await prisma.campaign.findUnique({
+    where: { id },
+  });
 
-  if (fetchError) throw fetchError;
+  if (!original) throw new Error('Campaign not found');
 
-  const { id: _, created_at, updated_at, ...campaignData } = original;
-  const duplicate = {
-    ...campaignData,
-    name: `${original.name} (Copy)`,
+  const duplicate = await prisma.campaign.create({
+    data: {
+      adAccountId: original.adAccountId,
+      name: `${original.name} (Copy)`,
+      status: original.status,
+      budget: original.budget,
+      spent: 0,
+      impressions: 0,
+      clicks: 0,
+      ctr: 0,
+      conversions: 0,
+      costPerConversion: 0,
+      dateStart: original.dateStart,
+      dateEnd: original.dateEnd,
+      schedule: original.schedule,
+    },
+  });
+
+  return {
+    id: duplicate.id,
+    name: duplicate.name,
+    status: duplicate.status as Campaign['status'],
+    budget: duplicate.budget,
+    spent: duplicate.spent,
+    impressions: duplicate.impressions,
+    clicks: duplicate.clicks,
+    ctr: duplicate.ctr,
+    conversions: duplicate.conversions,
+    cost_per_conversion: duplicate.costPerConversion,
+    date_start: duplicate.dateStart,
+    date_end: duplicate.dateEnd,
+    schedule: duplicate.schedule,
+    created_at: duplicate.createdAt.toISOString(),
+    updated_at: duplicate.updatedAt.toISOString(),
   };
-
-  return createCampaign(duplicate);
 }

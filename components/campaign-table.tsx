@@ -20,7 +20,11 @@ import {
 
 const defaultColumns = ['name', 'status', 'budget', 'spent', 'impressions', 'clicks', 'ctr', 'conversions', 'cost', 'dateRange', 'schedule'];
 
-export function CampaignTable() {
+interface CampaignTableProps {
+  adAccountId?: string;
+}
+
+export function CampaignTable({ adAccountId }: CampaignTableProps) {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
@@ -31,13 +35,15 @@ export function CampaignTable() {
   });
 
   useEffect(() => {
-    loadCampaigns();
-  }, []);
+    if (adAccountId) {
+      loadCampaigns();
+    }
+  }, [adAccountId]);
 
   async function loadCampaigns() {
     try {
       setLoading(true);
-      const data = await getCampaigns();
+      const data = await getCampaigns(adAccountId);
       setCampaigns(data);
     } catch (error) {
       console.error('Error loading campaigns:', error);
