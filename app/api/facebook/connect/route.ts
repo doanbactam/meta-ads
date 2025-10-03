@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { FacebookMarketingAPI } from '@/lib/facebook-api';
 import { checkRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/rate-limiter';
+import { getOrCreateUserFromClerk } from '@/lib/api/users';
 
 export async function POST(req: NextRequest) {
   try {
@@ -51,16 +52,7 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { clerkId: userId },
-    });
-
-    if (!user) {
-      return NextResponse.json({
-        error: 'User not found',
-        message: 'User account not found in database',
-      }, { status: 404 });
-    }
+    const user = await getOrCreateUserFromClerk(userId);
 
     const expiryDate = validation.expiresAt
       ? new Date(validation.expiresAt * 1000)
@@ -113,6 +105,7 @@ export async function POST(req: NextRequest) {
           facebookAccessToken: accessToken,
           facebookTokenExpiry: expiryDate,
           facebookAdAccountId: adAccountId,
+          facebookUserId: validation.userId,
         },
       });
 
@@ -171,6 +164,7 @@ export async function POST(req: NextRequest) {
         facebookAccessToken: accessToken,
         facebookTokenExpiry: expiryDate,
         facebookAdAccountId: cleanAccountId,
+        facebookUserId: validation.userId,
       },
     });
 
