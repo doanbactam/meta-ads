@@ -51,18 +51,40 @@ export class FacebookMarketingAPI {
   async validateToken(): Promise<FacebookTokenValidation> {
     try {
       const response = await fetch(
-        `https://graph.facebook.com/v23.0/debug_token?input_token=${this.accessToken}&access_token=${this.accessToken}`
+        `https://graph.facebook.com/v23.0/debug_token?input_token=${this.accessToken}&access_token=${this.accessToken}`,
+        {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          },
+        }
       );
 
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
         return {
           isValid: false,
-          error: 'Failed to validate token',
+          error: errorData.error?.message || `HTTP ${response.status}: Failed to validate token`,
         };
       }
 
       const data = await response.json();
+
+      if (data.error) {
+        return {
+          isValid: false,
+          error: data.error.message || 'Token validation failed',
+        };
+      }
+
       const tokenData = data.data;
+
+      if (!tokenData) {
+        return {
+          isValid: false,
+          error: 'Invalid response from Facebook API',
+        };
+      }
 
       return {
         isValid: tokenData.is_valid || false,
@@ -70,11 +92,13 @@ export class FacebookMarketingAPI {
         userId: tokenData.user_id,
         expiresAt: tokenData.expires_at,
         scopes: tokenData.scopes || [],
+        error: !tokenData.is_valid ? 'Token is not valid' : undefined,
       };
     } catch (error) {
+      console.error('Token validation error:', error);
       return {
         isValid: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : 'Unknown error occurred during validation',
       };
     }
   }
@@ -82,25 +106,41 @@ export class FacebookMarketingAPI {
   async getUserAdAccounts(): Promise<FacebookAdAccountData[]> {
     try {
       const response = await fetch(
-        `https://graph.facebook.com/v23.0/me/adaccounts?fields=id,name,account_status,currency,timezone_name&access_token=${this.accessToken}`
+        `https://graph.facebook.com/v23.0/me/adaccounts?fields=id,name,account_status,currency,timezone_name&access_token=${this.accessToken}`,
+        {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          },
+        }
       );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch ad accounts');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error?.message || `HTTP ${response.status}: Failed to fetch ad accounts`;
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
 
-      return (data.data || []).map((account: any) => ({
+      if (data.error) {
+        throw new Error(data.error.message || 'Failed to fetch ad accounts');
+      }
+
+      if (!data.data || !Array.isArray(data.data)) {
+        return [];
+      }
+
+      return data.data.map((account: any) => ({
         id: account.id,
-        name: account.name,
-        accountStatus: account.account_status,
-        currency: account.currency,
+        name: account.name || 'Unnamed Account',
+        accountStatus: account.account_status || 1,
+        currency: account.currency || 'USD',
         timezone: account.timezone_name || 'UTC',
       }));
     } catch (error) {
       console.error('Error fetching ad accounts:', error);
-      throw error;
+      throw error instanceof Error ? error : new Error('Unknown error fetching ad accounts');
     }
   }
 
@@ -111,19 +151,35 @@ export class FacebookMarketingAPI {
         : `act_${adAccountId}`;
 
       const response = await fetch(
-        `https://graph.facebook.com/v23.0/${formattedAccountId}/campaigns?fields=id,name,status,objective,spend_cap,daily_budget,lifetime_budget&access_token=${this.accessToken}`
+        `https://graph.facebook.com/v23.0/${formattedAccountId}/campaigns?fields=id,name,status,objective,spend_cap,daily_budget,lifetime_budget&access_token=${this.accessToken}`,
+        {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          },
+        }
       );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch campaigns');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error?.message || `HTTP ${response.status}: Failed to fetch campaigns`;
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
 
-      return (data.data || []).map((campaign: any) => ({
+      if (data.error) {
+        throw new Error(data.error.message || 'Failed to fetch campaigns');
+      }
+
+      if (!data.data || !Array.isArray(data.data)) {
+        return [];
+      }
+
+      return data.data.map((campaign: any) => ({
         id: campaign.id,
-        name: campaign.name,
-        status: campaign.status,
+        name: campaign.name || 'Unnamed Campaign',
+        status: campaign.status || 'UNKNOWN',
         objective: campaign.objective,
         spendCap: campaign.spend_cap,
         dailyBudget: campaign.daily_budget,
@@ -131,7 +187,7 @@ export class FacebookMarketingAPI {
       }));
     } catch (error) {
       console.error('Error fetching campaigns:', error);
-      throw error;
+      throw error instanceof Error ? error : new Error('Unknown error fetching campaigns');
     }
   }
 
