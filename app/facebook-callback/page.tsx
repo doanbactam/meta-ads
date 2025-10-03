@@ -12,23 +12,34 @@ export default function FacebookCallbackPage() {
   useEffect(() => {
     const handleCallback = () => {
       try {
+        // Check if window.opener exists
+        if (!window.opener) {
+          setStatus('error');
+          setMessage('This page should be opened from the main application.');
+          return;
+        }
+
         // Extract the access token from the URL hash fragment
         const hash = window.location.hash.substring(1);
         const params = new URLSearchParams(hash);
         const accessToken = params.get('access_token');
         const error = params.get('error');
         const errorDescription = params.get('error_description');
+        const errorReason = params.get('error_reason');
 
         if (error) {
           setStatus('error');
-          setMessage(errorDescription || 'Authentication failed. Please try again.');
+          const errorMsg = errorDescription || errorReason || error || 'Authentication failed';
+          setMessage(errorMsg);
 
           // Send error message to parent window
-          if (window.opener) {
+          try {
             window.opener.postMessage({
               type: 'facebook-auth-error',
-              error: errorDescription || error,
+              error: errorMsg,
             }, window.location.origin);
+          } catch (e) {
+            console.error('Failed to send error message to parent:', e);
           }
 
           setTimeout(() => {
@@ -41,11 +52,33 @@ export default function FacebookCallbackPage() {
           setStatus('error');
           setMessage('No access token received. Please try again.');
 
-          if (window.opener) {
+          try {
             window.opener.postMessage({
               type: 'facebook-auth-error',
               error: 'No access token received',
             }, window.location.origin);
+          } catch (e) {
+            console.error('Failed to send error message to parent:', e);
+          }
+
+          setTimeout(() => {
+            window.close();
+          }, 3000);
+          return;
+        }
+
+        // Validate access token format (basic check)
+        if (accessToken.length < 20) {
+          setStatus('error');
+          setMessage('Invalid access token format received.');
+
+          try {
+            window.opener.postMessage({
+              type: 'facebook-auth-error',
+              error: 'Invalid access token format',
+            }, window.location.origin);
+          } catch (e) {
+            console.error('Failed to send error message to parent:', e);
           }
 
           setTimeout(() => {
@@ -59,16 +92,25 @@ export default function FacebookCallbackPage() {
         setMessage('Authentication successful! Closing window...');
 
         // Send the access token to the parent window
-        if (window.opener) {
+        try {
           window.opener.postMessage({
             type: 'facebook-auth-success',
             accessToken,
           }, window.location.origin);
+        } catch (e) {
+          console.error('Failed to send token to parent:', e);
+          setStatus('error');
+          setMessage('Failed to communicate with parent window.');
+          return;
         }
 
         // Close the popup after a short delay
         setTimeout(() => {
-          window.close();
+          try {
+            window.close();
+          } catch (e) {
+            console.error('Failed to close window:', e);
+          }
         }, 1500);
 
       } catch (err) {
@@ -77,20 +119,33 @@ export default function FacebookCallbackPage() {
         setMessage('An error occurred while processing authentication.');
 
         if (window.opener) {
-          window.opener.postMessage({
-            type: 'facebook-auth-error',
-            error: 'Processing error',
-          }, window.location.origin);
+          try {
+            window.opener.postMessage({
+              type: 'facebook-auth-error',
+              error: err instanceof Error ? err.message : 'Processing error',
+            }, window.location.origin);
+          } catch (e) {
+            console.error('Failed to send error message to parent:', e);
+          }
         }
 
         setTimeout(() => {
-          window.close();
+          try {
+            window.close();
+          } catch (e) {
+            console.error('Failed to close window:', e);
+          }
         }, 3000);
       }
     };
 
-    handleCallback();
-  }, [router]);
+    // Add a small delay to ensure DOM is ready
+    const timeoutId = setTimeout(handleCallback, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, []);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">

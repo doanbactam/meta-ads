@@ -42,7 +42,8 @@ function getRateLimitKey(identifier: string, endpoint: string): string {
  */
 function cleanupExpiredEntries(): void {
   const now = Date.now();
-  for (const [key, entry] of rateLimitStore.entries()) {
+  const entries = Array.from(rateLimitStore.entries());
+  for (const [key, entry] of entries) {
     if (entry.resetTime < now) {
       rateLimitStore.delete(key);
     }
