@@ -5,12 +5,26 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting seed...');
 
+  // Create demo user
+  const demoUser = await prisma.user.upsert({
+    where: { clerkId: 'demo-user-clerk-id' },
+    update: {},
+    create: {
+      clerkId: 'demo-user-clerk-id',
+      email: 'demo@example.com',
+      name: 'Demo User',
+    },
+  });
+
+  console.log('✅ Demo user created');
+
   // Create ad accounts
   const facebookAccount = await prisma.adAccount.upsert({
     where: { id: 'facebook-acc-1' },
     update: {},
     create: {
       id: 'facebook-acc-1',
+      userId: demoUser.id,
       name: 'Facebook Ads Account',
       platform: 'facebook',
       status: 'active',
@@ -24,8 +38,23 @@ async function main() {
     update: {},
     create: {
       id: 'instagram-acc-1',
+      userId: demoUser.id,
       name: 'Instagram Ads Account',
       platform: 'instagram',
+      status: 'active',
+      currency: 'USD',
+      timeZone: 'UTC',
+    },
+  });
+
+  const linkedinAccount = await prisma.adAccount.upsert({
+    where: { id: 'linkedin-acc-1' },
+    update: {},
+    create: {
+      id: 'linkedin-acc-1',
+      userId: demoUser.id,
+      name: 'LinkedIn Ads Account',
+      platform: 'linkedin',
       status: 'active',
       currency: 'USD',
       timeZone: 'UTC',
@@ -89,6 +118,24 @@ async function main() {
     },
   });
 
+  const campaign4 = await prisma.campaign.create({
+    data: {
+      adAccountId: linkedinAccount.id,
+      name: 'B2B Lead Generation',
+      status: 'Eligible',
+      budget: 6000,
+      spent: 4500.75,
+      impressions: 95000,
+      clicks: 2850,
+      ctr: 3.0,
+      conversions: 380,
+      costPerConversion: 11.84,
+      dateStart: '2025-06-15',
+      dateEnd: '2025-09-15',
+      schedule: 'Weekdays 8am-6pm',
+    },
+  });
+
   console.log('✅ Campaigns created');
 
   // Create ad groups for campaign1
@@ -140,6 +187,23 @@ async function main() {
       conversions: 140,
       dateStart: '2025-05-15',
       dateEnd: '2025-07-15',
+    },
+  });
+
+  const adGroup4 = await prisma.adGroup.create({
+    data: {
+      campaignId: campaign4.id,
+      name: 'Ad Group - Decision Makers',
+      status: 'Active',
+      budget: 3000,
+      spent: 2250.50,
+      impressions: 47500,
+      clicks: 1425,
+      ctr: 3.0,
+      cpc: 1.58,
+      conversions: 190,
+      dateStart: '2025-06-15',
+      dateEnd: '2025-09-15',
     },
   });
 
@@ -217,6 +281,20 @@ async function main() {
         roas: 3.5,
         dateStart: '2025-05-15',
         dateEnd: '2025-07-15',
+      },
+      {
+        adGroupId: adGroup4.id,
+        name: 'LinkedIn Sponsored Content',
+        format: 'Image',
+        status: 'Active',
+        impressions: 47500,
+        clicks: 1425,
+        ctr: 3.0,
+        engagement: 2100,
+        spend: 2250.50,
+        roas: 5.2,
+        dateStart: '2025-06-15',
+        dateEnd: '2025-09-15',
       },
     ],
   });

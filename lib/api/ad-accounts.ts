@@ -11,12 +11,13 @@ export interface AdAccount {
   updated_at: string;
 }
 
-export async function getAdAccounts(): Promise<AdAccount[]> {
+export async function getAdAccounts(userId?: string): Promise<AdAccount[]> {
   const accounts = await prisma.adAccount.findMany({
+    where: userId ? { userId } : undefined,
     orderBy: { createdAt: 'desc' },
   });
 
-  return accounts.map(a => ({
+  return accounts.map((a) => ({
     id: a.id,
     name: a.name,
     platform: a.platform,
@@ -48,10 +49,11 @@ export async function getAdAccountById(id: string): Promise<AdAccount | null> {
 }
 
 export async function createAdAccount(
-  data: Omit<AdAccount, 'id' | 'created_at' | 'updated_at'>
+  data: Omit<AdAccount, 'id' | 'created_at' | 'updated_at'> & { userId: string }
 ): Promise<AdAccount> {
   const account = await prisma.adAccount.create({
     data: {
+      userId: data.userId,
       name: data.name,
       platform: data.platform,
       status: data.status,
