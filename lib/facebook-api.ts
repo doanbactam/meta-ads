@@ -1,9 +1,4 @@
-import { bizSdk } from 'facebook-nodejs-business-sdk';
-
-const AdAccount = bizSdk.AdAccount;
-const Campaign = bizSdk.Campaign;
-const AdSet = bizSdk.AdSet;
-const Ad = bizSdk.Ad;
+import { FacebookAdsApi, AdAccount, Campaign, AdSet, Ad } from 'facebook-nodejs-business-sdk';
 
 export interface FacebookTokenValidation {
   isValid: boolean;
@@ -50,7 +45,7 @@ export class FacebookMarketingAPI {
 
   constructor(accessToken: string) {
     this.accessToken = accessToken;
-    bizSdk.FacebookAdsApi.init(accessToken);
+    FacebookAdsApi.init(accessToken);
   }
 
   async validateToken(): Promise<FacebookTokenValidation> {
