@@ -10,6 +10,8 @@ import { DateRangePicker } from '@/components/date-range-picker';
 import { Campaign } from '@/types';
 import { getCampaigns, deleteCampaign, duplicateCampaign } from '@/lib/api/campaigns';
 import { formatCurrency, formatNumber, formatPercentage, formatDateRange } from '@/lib/formatters';
+import { useFacebookConnection } from '@/hooks/use-facebook-connection';
+import { FacebookConnectDialog } from '@/components/facebook-connect-dialog';
 import {
   Select,
   SelectContent,
@@ -33,12 +35,19 @@ export function CampaignTable({ adAccountId }: CampaignTableProps) {
     from: undefined,
     to: undefined,
   });
+  const [showConnectDialog, setShowConnectDialog] = useState(false);
+
+  const { connected, loading: connectionLoading, connectFacebook } = useFacebookConnection(adAccountId);
 
   useEffect(() => {
     if (adAccountId) {
-      loadCampaigns();
+      if (connected) {
+        loadFacebookCampaigns();
+      } else if (!connectionLoading) {
+        loadCampaigns();
+      }
     }
-  }, [adAccountId]);
+  }, [adAccountId, connected, connectionLoading]);
 
   async function loadCampaigns() {
     try {
@@ -50,6 +59,52 @@ export function CampaignTable({ adAccountId }: CampaignTableProps) {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function loadFacebookCampaigns() {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/facebook/campaigns?adAccountId=${adAccountId}`);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch Facebook campaigns');
+      }
+
+      const data = await response.json();
+
+      const formattedCampaigns: Campaign[] = data.campaigns.map((campaign: any) => ({
+        id: campaign.id,
+        name: campaign.name,
+        status: mapFacebookStatus(campaign.status),
+        budget: parseFloat(campaign.dailyBudget || campaign.lifetimeBudget || '0') / 100,
+        spent: parseFloat(campaign.insights?.spend || '0'),
+        impressions: parseInt(campaign.insights?.impressions || '0'),
+        clicks: parseInt(campaign.insights?.clicks || '0'),
+        ctr: parseFloat(campaign.insights?.ctr || '0'),
+        conversions: 0,
+        cost_per_conversion: 0,
+        date_start: new Date().toISOString().split('T')[0],
+        date_end: new Date().toISOString().split('T')[0],
+        schedule: 'All day',
+      }));
+
+      setCampaigns(formattedCampaigns);
+    } catch (error) {
+      console.error('Error loading Facebook campaigns:', error);
+      setShowConnectDialog(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function mapFacebookStatus(status: string): Campaign['status'] {
+    const statusMap: { [key: string]: Campaign['status'] } = {
+      'ACTIVE': 'Eligible',
+      'PAUSED': 'Paused',
+      'DELETED': 'Removed',
+      'ARCHIVED': 'Ended',
+    };
+    return statusMap[status] || 'Pending';
   }
 
   async function handleDelete() {
@@ -123,6 +178,12 @@ export function CampaignTable({ adAccountId }: CampaignTableProps) {
 
   return (
     <div className="space-y-3">
+      <FacebookConnectDialog
+        open={showConnectDialog}
+        onOpenChange={setShowConnectDialog}
+        onConnect={connectFacebook}
+      />
+
       <div className="flex items-center justify-between">
         <div className="relative w-64">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
