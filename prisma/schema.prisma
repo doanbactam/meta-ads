@@ -10,13 +10,30 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum SubscriptionPackage {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
 model User {
-  id        String   @id @default(cuid())
-  clerkId   String   @unique @map("clerk_id")
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id                  String               @id @default(cuid())
+  clerkId             String               @unique @map("clerk_id")
+  email               String               @unique
+  name                String?
+  imageUrl            String?              @map("image_url")
+  role                UserRole             @default(USER)
+  subscriptionPackage SubscriptionPackage  @default(FREE) @map("subscription_package")
+  subscriptionExpiry  DateTime?            @map("subscription_expiry")
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
 
   adAccounts AdAccount[]
 
@@ -24,21 +41,23 @@ model User {
 }
 
 model AdAccount {
-  id                    String   @id @default(cuid())
-  userId                String   @map("user_id")
+  id                    String    @id @default(cuid())
+  userId                String    @map("user_id")
   name                  String
-  platform              String   // facebook, instagram, linkedin, messenger
-  status                String   // active, paused, disabled
-  currency              String   @default("USD")
-  timeZone              String   @default("UTC")
-  facebookAccessToken   String?  @map("facebook_access_token")
+  platform              String    // facebook, instagram, linkedin, messenger
+  status                String    // active, paused, disabled
+  currency              String    @default("USD")
+  timeZone              String    @default("UTC") @map("time_zone")
+  facebookAccessToken   String?   @map("facebook_access_token") @db.Text
   facebookTokenExpiry   DateTime? @map("facebook_token_expiry")
-  facebookAdAccountId   String?  @map("facebook_ad_account_id")
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @updatedAt @map("updated_at")
+  facebookAdAccountId   String?   @map("facebook_ad_account_id")
+  facebookUserId        String?   @map("facebook_user_id")
+  facebookPageId        String?   @map("facebook_page_id")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
 
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  campaigns   Campaign[]
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaigns Campaign[]
 
   @@index([userId])
   @@map("ad_accounts")

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { FacebookMarketingAPI } from '@/lib/facebook-api';
+import { getOrCreateUserFromClerk } from '@/lib/api/users';
 
 export async function GET(req: NextRequest) {
   try {
@@ -17,13 +18,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Ad account ID is required' }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { clerkId: userId },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+    const user = await getOrCreateUserFromClerk(userId);
 
     const adAccount = await prisma.adAccount.findFirst({
       where: {
