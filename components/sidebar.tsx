@@ -1,7 +1,8 @@
 'use client';
 
-import { LayoutDashboard, Megaphone, ChartBar as BarChart3, CircleHelp as HelpCircle, Sun, Moon, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Megaphone, BarChart3, HelpCircle, Sun, Moon, Terminal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 
@@ -14,61 +15,56 @@ export function Sidebar() {
   }, []);
 
   const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', active: false },
-    { icon: Megaphone, label: 'Campaign', active: true },
-    { icon: BarChart3, label: 'Analytics', active: false },
-    { icon: HelpCircle, label: 'Support', active: false },
+    { icon: LayoutDashboard, label: 'dashboard', active: false },
+    { icon: Megaphone, label: 'campaigns', active: true },
+    { icon: BarChart3, label: 'analytics', active: false },
+    { icon: HelpCircle, label: 'support', active: false },
   ];
 
   return (
-    <div className="w-64 bg-card border-r border-border flex flex-col">
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-            <span className="text-sm font-semibold">◐</span>
-          </div>
-          <span className="font-semibold">Ad Manager</span>
-        </div>
+    <div className="w-52 bg-card border-r border-border flex flex-col">
+      <div className="h-12 px-4 border-b border-border flex items-center gap-2">
+        <Terminal className="h-4 w-4" />
+        <span className="text-sm font-medium">ad_manager</span>
       </div>
 
-      <nav className="flex-1 p-4">
-        <ul className="space-y-1">
+      <nav className="flex-1 p-2">
+        <ul className="space-y-0.5">
           {menuItems.map((item) => (
             <li key={item.label}>
               <Button
-                variant={item.active ? 'secondary' : 'ghost'}
-                className={`w-full justify-between ${
-                  item.active ? 'bg-secondary' : ''
+                variant="ghost"
+                className={`w-full justify-start h-8 px-3 text-xs font-normal ${
+                  item.active ? 'bg-muted' : 'hover:bg-muted/50'
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <item.icon className="w-4 h-4" />
-                  <span>{item.label}</span>
-                </div>
-                {item.active && <ChevronRight className="w-4 h-4" />}
+                <item.icon className="mr-2 h-3.5 w-3.5" />
+                <span>{item.label}</span>
               </Button>
             </li>
           ))}
         </ul>
       </nav>
 
-      <div className="p-4 border-t border-border">
-        <div className="flex items-center gap-2">
+      <div className="p-2 border-t border-border">
+        <div className="flex items-center gap-1">
           <Button
             variant="ghost"
-            size="icon"
+            size="sm"
+            className={`h-8 flex-1 text-xs font-normal ${theme === 'light' ? 'bg-muted' : 'hover:bg-muted/50'}`}
             onClick={() => setTheme('light')}
-            className={theme === 'light' ? 'bg-secondary' : ''}
           >
-            <Sun className="w-4 h-4" />
+            <Sun className="mr-1.5 h-3.5 w-3.5" />
+            light
           </Button>
           <Button
             variant="ghost"
-            size="icon"
+            size="sm"
+            className={`h-8 flex-1 text-xs font-normal ${theme === 'dark' ? 'bg-muted' : 'hover:bg-muted/50'}`}
             onClick={() => setTheme('dark')}
-            className={theme === 'dark' ? 'bg-secondary' : ''}
           >
-            <Moon className="w-4 h-4" />
+            <Moon className="mr-1.5 h-3.5 w-3.5" />
+            dark
           </Button>
         </div>
       </div>

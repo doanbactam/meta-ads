@@ -6,46 +6,40 @@ import { Header } from '@/components/header';
 import { CampaignTable } from '@/components/campaign-table';
 import { AdGroupsTable } from '@/components/ad-groups-table';
 import { CreativesTable } from '@/components/creatives-table';
-import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 export function AdManagerDashboard() {
-  const [activeTab, setActiveTab] = useState<'campaigns' | 'adGroups' | 'creatives'>('campaigns');
-
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <Button
-                variant={activeTab === 'campaigns' ? 'secondary' : 'ghost'}
-                className={activeTab === 'campaigns' ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}
-                onClick={() => setActiveTab('campaigns')}
-              >
-                Campaigns
-              </Button>
-              <Button
-                variant={activeTab === 'adGroups' ? 'secondary' : 'ghost'}
-                className={activeTab === 'adGroups' ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}
-                onClick={() => setActiveTab('adGroups')}
-              >
-                Ad groups
-              </Button>
-              <Button
-                variant={activeTab === 'creatives' ? 'secondary' : 'ghost'}
-                className={activeTab === 'creatives' ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}
-                onClick={() => setActiveTab('creatives')}
-              >
-                Creatives
-              </Button>
-            </div>
+        <main className="flex-1 overflow-y-auto p-4">
+          <Tabs defaultValue="campaigns" className="space-y-4">
+            <TabsList className="inline-flex h-9 items-center justify-center rounded-sm bg-muted p-1 text-muted-foreground">
+              <TabsTrigger value="campaigns" className="rounded-sm px-3 text-xs font-medium">
+                campaigns
+              </TabsTrigger>
+              <TabsTrigger value="adGroups" className="rounded-sm px-3 text-xs font-medium">
+                ad_groups
+              </TabsTrigger>
+              <TabsTrigger value="creatives" className="rounded-sm px-3 text-xs font-medium">
+                creatives
+              </TabsTrigger>
+            </TabsList>
 
-            {activeTab === 'campaigns' && <CampaignTable />}
-            {activeTab === 'adGroups' && <AdGroupsTable />}
-            {activeTab === 'creatives' && <CreativesTable />}
-          </div>
+            <TabsContent value="campaigns" className="space-y-4">
+              <CampaignTable />
+            </TabsContent>
+
+            <TabsContent value="adGroups" className="space-y-4">
+              <AdGroupsTable />
+            </TabsContent>
+
+            <TabsContent value="creatives" className="space-y-4">
+              <CreativesTable />
+            </TabsContent>
+          </Tabs>
         </main>
       </div>
     </div>
