@@ -1,43 +1,45 @@
 'use client';
 
-import { Bell, ChevronDown, Facebook, Instagram } from 'lucide-react';
+import { Bell, ChevronDown, Facebook, MessageCircle, Linkedin, Instagram } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 
 export function Header() {
   const platforms = [
-    { name: 'Facebook', icon: Facebook, active: true },
-    { name: 'Messenger', icon: Facebook, active: true },
-    { name: 'LinkedIn', icon: Facebook, active: true },
-    { name: 'Instagram', icon: Instagram, active: true },
+    { name: 'facebook', icon: Facebook },
+    { name: 'messenger', icon: MessageCircle },
+    { name: 'linkedin', icon: Linkedin },
+    { name: 'instagram', icon: Instagram },
   ];
 
   return (
-    <header className="h-16 border-b border-border bg-card px-6 flex items-center justify-between">
-      <div className="flex items-center gap-4">
+    <header className="h-12 border-b border-border bg-card px-4 flex items-center justify-between">
+      <div className="flex items-center gap-1">
         {platforms.map((platform, index) => (
           <Button
             key={index}
             variant="ghost"
             size="sm"
-            className="gap-2 text-sm"
+            className="h-8 gap-1.5 px-2 text-xs font-normal hover:bg-muted"
           >
-            <platform.icon className="w-4 h-4" />
-            {platform.name}
+            <platform.icon className="h-3 w-3" />
+            <span className="lowercase">{platform.name}</span>
           </Button>
         ))}
       </div>
 
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="w-5 h-5" />
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <Bell className="h-3.5 w-3.5" />
         </Button>
-        <Button variant="ghost" className="gap-2">
-          <Avatar className="w-8 h-8">
-            <AvatarFallback className="bg-muted text-sm">A</AvatarFallback>
-          </Avatar>
-          <span className="text-sm">Armand</span>
-          <ChevronDown className="w-4 h-4" />
+        <Separator orientation="vertical" className="h-4" />
+        <Button variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-xs font-normal">
+          <Badge variant="outline" className="h-5 w-5 rounded-sm p-0 text-[10px] font-normal">
+            A
+          </Badge>
+          <span>admin</span>
+          <ChevronDown className="h-3 w-3" />
         </Button>
       </div>
     </header>
