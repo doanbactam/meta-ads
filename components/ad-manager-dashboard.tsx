@@ -9,11 +9,18 @@ import { CreativesTable } from '@/components/creatives-table';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 export function AdManagerDashboard() {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [selectedAdAccount, setSelectedAdAccount] = useState<string>('');
+
   return (
     <div className="flex h-screen bg-background">
-      <Sidebar />
+      <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header />
+        <Header
+          onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+          selectedAdAccount={selectedAdAccount}
+          onAdAccountChange={setSelectedAdAccount}
+        />
         <main className="flex-1 overflow-y-auto p-4">
           <Tabs defaultValue="campaigns" className="space-y-4">
             <TabsList className="inline-flex h-9 items-center justify-center rounded-sm bg-muted p-1 text-muted-foreground">
@@ -29,7 +36,7 @@ export function AdManagerDashboard() {
             </TabsList>
 
             <TabsContent value="campaigns" className="space-y-4">
-              <CampaignTable />
+              <CampaignTable adAccountId={selectedAdAccount} />
             </TabsContent>
 
             <TabsContent value="adGroups" className="space-y-4">

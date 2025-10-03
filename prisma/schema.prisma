@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AdAccount {
+  id          String   @id @default(cuid())
+  name        String
+  platform    String   // facebook, instagram, linkedin, messenger
+  status      String   // active, paused, disabled
+  currency    String   @default("USD")
+  timeZone    String   @default("UTC")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  campaigns   Campaign[]
+
+  @@map("ad_accounts")
+}
+
+model Campaign {
+  id                   String   @id @default(cuid())
+  adAccountId          String   @map("ad_account_id")
+  name                 String
+  status               String   // Eligible, Paused, Disapproved, Pending, Ended, Removed
+  budget               Float
+  spent                Float    @default(0)
+  impressions          Int      @default(0)
+  clicks               Int      @default(0)
+  ctr                  Float    @default(0)
+  conversions          Int      @default(0)
+  costPerConversion    Float    @default(0) @map("cost_per_conversion")
+  dateStart            String   @map("date_start")
+  dateEnd              String   @map("date_end")
+  schedule             String
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  adAccount            AdAccount  @relation(fields: [adAccountId], references: [id], onDelete: Cascade)
+  adGroups             AdGroup[]
+
+  @@index([adAccountId])
+  @@map("campaigns")
+}
+
+model AdGroup {
+  id          String   @id @default(cuid())
+  campaignId  String   @map("campaign_id")
+  name        String
+  status      String   // Active, Paused, Pending, Ended
+  budget      Float
+  spent       Float    @default(0)
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  ctr         Float    @default(0)
+  cpc         Float    @default(0)
+  conversions Int      @default(0)
+  dateStart   String   @map("date_start")
+  dateEnd     String   @map("date_end")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  campaign    Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  creatives   Creative[]
+
+  @@index([campaignId])
+  @@map("ad_groups")
+}
+
+model Creative {
+  id          String   @id @default(cuid())
+  adGroupId   String   @map("ad_group_id")
+  name        String
+  format      String   // Image, Video, Carousel, Story
+  status      String   // Active, Paused, Review, Rejected
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  ctr         Float    @default(0)
+  engagement  Float    @default(0)
+  spend       Float    @default(0)
+  roas        Float    @default(0)
+  dateStart   String   @map("date_start")
+  dateEnd     String   @map("date_end")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  adGroup     AdGroup  @relation(fields: [adGroupId], references: [id], onDelete: Cascade)
+
+  @@index([adGroupId])
+  @@map("creatives")
+}
