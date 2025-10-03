@@ -1,98 +1,97 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useFacebookStore } from '@/lib/stores/facebook-store';
 
 interface FacebookConnectionStatus {
   connected: boolean;
-  loading: boolean;
-  error?: string;
   adAccountId?: string;
   facebookAdAccountId?: string;
   tokenExpiry?: Date;
 }
 
-export function useFacebookConnection(adAccountId?: string) {
-  const [status, setStatus] = useState<FacebookConnectionStatus>({
-    connected: false,
-    loading: true,
-  });
+async function checkFacebookConnection(adAccountId?: string): Promise<FacebookConnectionStatus> {
+  if (!adAccountId) {
+    return { connected: false };
+  }
 
-  const checkConnection = useCallback(async () => {
-    if (!adAccountId) {
-      setStatus({ connected: false, loading: false });
-      return;
-    }
-
-    try {
-      setStatus((prev) => ({ ...prev, loading: true }));
-
-      const response = await fetch(
-        `/api/facebook/check-connection?adAccountId=${adAccountId}`
-      );
-
-      const data = await response.json();
-
-      if (response.ok && data.connected) {
-        setStatus({
-          connected: true,
-          loading: false,
-          adAccountId: data.adAccountId,
-          facebookAdAccountId: data.facebookAdAccountId,
-          tokenExpiry: data.tokenExpiry ? new Date(data.tokenExpiry) : undefined,
-        });
-      } else {
-        setStatus({
-          connected: false,
-          loading: false,
-          error: data.message || data.error,
-        });
-      }
-    } catch (error) {
-      setStatus({
-        connected: false,
-        loading: false,
-        error: error instanceof Error ? error.message : 'Failed to check connection',
-      });
-    }
-  }, [adAccountId]);
-
-  useEffect(() => {
-    checkConnection();
-  }, [checkConnection]);
-
-  const connectFacebook = useCallback(
-    async (accessToken: string, fbAdAccountId?: string) => {
-      try {
-        const response = await fetch('/api/facebook/connect', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            accessToken,
-            adAccountId: fbAdAccountId,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-          await checkConnection();
-          return { success: true, data };
-        } else {
-          return { success: false, error: data.error || 'Failed to connect' };
-        }
-      } catch (error) {
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Failed to connect',
-        };
-      }
-    },
-    [checkConnection]
+  const response = await fetch(
+    `/api/facebook/check-connection?adAccountId=${adAccountId}`
   );
 
+  const data = await response.json();
+
+  if (response.ok && data.connected) {
+    return {
+      connected: true,
+      adAccountId: data.adAccountId,
+      facebookAdAccountId: data.facebookAdAccountId,
+      tokenExpiry: data.tokenExpiry ? new Date(data.tokenExpiry) : undefined,
+    };
+  }
+
+  return { connected: false };
+}
+
+async function connectFacebookAccount(accessToken: string, fbAdAccountId?: string) {
+  const response = await fetch('/api/facebook/connect', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      accessToken,
+      adAccountId: fbAdAccountId,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || !data.success) {
+    throw new Error(data.error || 'Failed to connect');
+  }
+
+  return data;
+}
+
+export function useFacebookConnection(adAccountId?: string) {
+  const queryClient = useQueryClient();
+  const { setConnected, setShowConnectionDialog } = useFacebookStore();
+
+  const { data: status, isLoading, error, refetch } = useQuery({
+    queryKey: ['facebook-connection', adAccountId],
+    queryFn: () => checkFacebookConnection(adAccountId),
+    enabled: !!adAccountId,
+    refetchOnMount: true,
+  });
+
+  const connectMutation = useMutation({
+    mutationFn: ({ accessToken, fbAdAccountId }: { accessToken: string; fbAdAccountId?: string }) =>
+      connectFacebookAccount(accessToken, fbAdAccountId),
+    onSuccess: (data) => {
+      setConnected(true, data.adAccountId, data.facebookAdAccountId, data.tokenExpiry);
+      queryClient.invalidateQueries({ queryKey: ['facebook-connection'] });
+    },
+  });
+
+  const connectFacebook = async (accessToken: string, fbAdAccountId?: string) => {
+    try {
+      await connectMutation.mutateAsync({ accessToken, fbAdAccountId });
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to connect',
+      };
+    }
+  };
+
   return {
-    ...status,
-    checkConnection,
+    connected: status?.connected || false,
+    loading: isLoading,
+    error: error instanceof Error ? error.message : undefined,
+    adAccountId: status?.adAccountId,
+    facebookAdAccountId: status?.facebookAdAccountId,
+    tokenExpiry: status?.tokenExpiry,
+    checkConnection: refetch,
     connectFacebook,
   };
 }

@@ -1,16 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useUser } from '@clerk/nextjs';
 import { Sidebar } from '@/components/sidebar';
 import { Header } from '@/components/header';
 import { CampaignTable } from '@/components/campaign-table';
 import { AdGroupsTable } from '@/components/ad-groups-table';
 import { CreativesTable } from '@/components/creatives-table';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { FacebookConnectDialog } from '@/components/facebook-connect-dialog';
+import { useFacebookConnection } from '@/hooks/use-facebook-connection';
+import { useFacebookStore } from '@/lib/stores/facebook-store';
 
 export function AdManagerDashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedAdAccount, setSelectedAdAccount] = useState<string>('');
+  const { isLoaded, isSignedIn } = useUser();
+  const { connected, loading, connectFacebook } = useFacebookConnection(selectedAdAccount);
+  const { showConnectionDialog, setShowConnectionDialog } = useFacebookStore();
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn && !loading) {
+      if (!connected) {
+        setShowConnectionDialog(true);
+      }
+    }
+  }, [isLoaded, isSignedIn, connected, loading, setShowConnectionDialog]);
 
   return (
     <div className="flex h-screen bg-background">
@@ -49,6 +64,17 @@ export function AdManagerDashboard() {
           </Tabs>
         </main>
       </div>
+
+      <FacebookConnectDialog
+        open={showConnectionDialog}
+        onOpenChange={(open) => {
+          if (!connected) {
+            return;
+          }
+          setShowConnectionDialog(open);
+        }}
+        onConnect={connectFacebook}
+      />
     </div>
   );
 }
