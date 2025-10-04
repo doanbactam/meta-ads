@@ -22,10 +22,10 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   }, []);
 
   const menuItems = [
-    { icon: LayoutDashboard, label: 'dashboard', href: '/dashboard' },
-    { icon: Megaphone, label: 'campaigns', href: '/campaigns' },
-    { icon: Target, label: 'ad sets', href: '/ad-sets' },
-    { icon: Image, label: 'ads', href: '/ads' },
+    { icon: LayoutDashboard, label: 'dashboard', href: '/dashboard', matchPath: '/dashboard' },
+    { icon: Megaphone, label: 'campaigns', href: '/campaigns?tab=campaigns', matchPath: '/campaigns' },
+    { icon: Target, label: 'ad sets', href: '/campaigns?tab=ad-sets', matchPath: '/campaigns' },
+    { icon: Image, label: 'ads', href: '/campaigns?tab=ads', matchPath: '/campaigns' },
   ];
 
   const handleNavigation = (href: string) => {
@@ -70,7 +70,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
       <nav className="flex-1 p-2">
         <ul className="space-y-0.5">
           {menuItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = pathname.startsWith(item.matchPath);
             return (
               <li key={item.label}>
                 <Button
