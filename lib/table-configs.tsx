@@ -1,6 +1,7 @@
 import { TableConfig } from '@/components/universal-data-table';
 import { Campaign, AdGroup, Ad } from '@/types';
-import { BarChart3, Eye } from 'lucide-react';
+import { Eye } from 'lucide-react';
+import { toast } from 'sonner';
 
 // Campaign Table Configuration
 export const campaignTableConfig: TableConfig<Campaign> = {
@@ -89,17 +90,24 @@ export const campaignTableConfig: TableConfig<Campaign> = {
       label: 'duplicate',
       onClick: async (ids) => {
         try {
-          await Promise.all(ids.map(async (id) => {
-            const response = await fetch(`/api/campaigns/${id}/duplicate`, {
-              method: 'POST',
-            });
-            if (!response.ok) throw new Error('Failed to duplicate campaign');
-          }));
-          // Refresh will be handled by React Query
-          window.location.reload(); // Temporary solution
+          toast.promise(
+            Promise.all(ids.map(async (id) => {
+              const response = await fetch(`/api/campaigns/${id}/duplicate`, {
+                method: 'POST',
+              });
+              if (!response.ok) throw new Error('Failed to duplicate campaign');
+            })),
+            {
+              loading: 'Duplicating campaigns...',
+              success: () => {
+                setTimeout(() => window.location.reload(), 1000);
+                return `${ids.length} campaign${ids.length > 1 ? 's' : ''} duplicated successfully`;
+              },
+              error: 'Failed to duplicate campaigns',
+            }
+          );
         } catch (error) {
           console.error('Error duplicating campaigns:', error);
-          alert('Failed to duplicate campaigns');
         }
       },
     },
@@ -107,33 +115,29 @@ export const campaignTableConfig: TableConfig<Campaign> = {
       label: 'remove',
       onClick: async (ids) => {
         if (!confirm(`Are you sure you want to delete ${ids.length} campaign(s)?`)) return;
-        
+
         try {
-          await Promise.all(ids.map(async (id) => {
-            const response = await fetch(`/api/campaigns/${id}`, {
-              method: 'DELETE',
-            });
-            if (!response.ok) throw new Error('Failed to delete campaign');
-          }));
-          // Refresh will be handled by React Query
-          window.location.reload(); // Temporary solution
+          toast.promise(
+            Promise.all(ids.map(async (id) => {
+              const response = await fetch(`/api/campaigns/${id}`, {
+                method: 'DELETE',
+              });
+              if (!response.ok) throw new Error('Failed to delete campaign');
+            })),
+            {
+              loading: 'Deleting campaigns...',
+              success: () => {
+                setTimeout(() => window.location.reload(), 1000);
+                return `${ids.length} campaign${ids.length > 1 ? 's' : ''} deleted successfully`;
+              },
+              error: 'Failed to delete campaigns',
+            }
+          );
         } catch (error) {
           console.error('Error deleting campaigns:', error);
-          alert('Failed to delete campaigns');
         }
       },
     },
-    custom: [
-      {
-        label: 'breakdown',
-        icon: BarChart3,
-        onClick: (ids) => {
-          // TODO: Implement breakdown view
-          console.log('Breakdown campaigns:', ids);
-        },
-        variant: 'outline' as const,
-      },
-    ],
   },
   
   emptyState: {
@@ -233,16 +237,24 @@ export const adGroupsTableConfig: TableConfig<AdGroup> = {
       label: 'duplicate',
       onClick: async (ids) => {
         try {
-          await Promise.all(ids.map(async (id) => {
-            const response = await fetch(`/api/ad-sets/${id}/duplicate`, {
-              method: 'POST',
-            });
-            if (!response.ok) throw new Error('Failed to duplicate ad set');
-          }));
-          window.location.reload(); // Temporary solution
+          toast.promise(
+            Promise.all(ids.map(async (id) => {
+              const response = await fetch(`/api/ad-sets/${id}/duplicate`, {
+                method: 'POST',
+              });
+              if (!response.ok) throw new Error('Failed to duplicate ad set');
+            })),
+            {
+              loading: 'Duplicating ad sets...',
+              success: () => {
+                setTimeout(() => window.location.reload(), 1000);
+                return `${ids.length} ad set${ids.length > 1 ? 's' : ''} duplicated successfully`;
+              },
+              error: 'Failed to duplicate ad sets',
+            }
+          );
         } catch (error) {
           console.error('Error duplicating ad sets:', error);
-          alert('Failed to duplicate ad sets');
         }
       },
     },
@@ -250,32 +262,29 @@ export const adGroupsTableConfig: TableConfig<AdGroup> = {
       label: 'remove',
       onClick: async (ids) => {
         if (!confirm(`Are you sure you want to delete ${ids.length} ad set(s)?`)) return;
-        
+
         try {
-          await Promise.all(ids.map(async (id) => {
-            const response = await fetch(`/api/ad-sets/${id}`, {
-              method: 'DELETE',
-            });
-            if (!response.ok) throw new Error('Failed to delete ad set');
-          }));
-          window.location.reload(); // Temporary solution
+          toast.promise(
+            Promise.all(ids.map(async (id) => {
+              const response = await fetch(`/api/ad-sets/${id}`, {
+                method: 'DELETE',
+              });
+              if (!response.ok) throw new Error('Failed to delete ad set');
+            })),
+            {
+              loading: 'Deleting ad sets...',
+              success: () => {
+                setTimeout(() => window.location.reload(), 1000);
+                return `${ids.length} ad set${ids.length > 1 ? 's' : ''} deleted successfully`;
+              },
+              error: 'Failed to delete ad sets',
+            }
+          );
         } catch (error) {
           console.error('Error deleting ad sets:', error);
-          alert('Failed to delete ad sets');
         }
       },
     },
-    custom: [
-      {
-        label: 'breakdown',
-        icon: BarChart3,
-        onClick: (ids) => {
-          // TODO: Implement breakdown view
-          console.log('Breakdown ad sets:', ids);
-        },
-        variant: 'outline' as const,
-      },
-    ],
   },
   
   emptyState: {
@@ -375,16 +384,24 @@ export const adsTableConfig: TableConfig<Ad> = {
       label: 'duplicate',
       onClick: async (ids) => {
         try {
-          await Promise.all(ids.map(async (id) => {
-            const response = await fetch(`/api/ads/${id}/duplicate`, {
-              method: 'POST',
-            });
-            if (!response.ok) throw new Error('Failed to duplicate ad');
-          }));
-          window.location.reload(); // Temporary solution
+          toast.promise(
+            Promise.all(ids.map(async (id) => {
+              const response = await fetch(`/api/ads/${id}/duplicate`, {
+                method: 'POST',
+              });
+              if (!response.ok) throw new Error('Failed to duplicate ad');
+            })),
+            {
+              loading: 'Duplicating ads...',
+              success: () => {
+                setTimeout(() => window.location.reload(), 1000);
+                return `${ids.length} ad${ids.length > 1 ? 's' : ''} duplicated successfully`;
+              },
+              error: 'Failed to duplicate ads',
+            }
+          );
         } catch (error) {
           console.error('Error duplicating ads:', error);
-          alert('Failed to duplicate ads');
         }
       },
     },
@@ -392,18 +409,26 @@ export const adsTableConfig: TableConfig<Ad> = {
       label: 'remove',
       onClick: async (ids) => {
         if (!confirm(`Are you sure you want to delete ${ids.length} ad(s)?`)) return;
-        
+
         try {
-          await Promise.all(ids.map(async (id) => {
-            const response = await fetch(`/api/ads/${id}`, {
-              method: 'DELETE',
-            });
-            if (!response.ok) throw new Error('Failed to delete ad');
-          }));
-          window.location.reload(); // Temporary solution
+          toast.promise(
+            Promise.all(ids.map(async (id) => {
+              const response = await fetch(`/api/ads/${id}`, {
+                method: 'DELETE',
+              });
+              if (!response.ok) throw new Error('Failed to delete ad');
+            })),
+            {
+              loading: 'Deleting ads...',
+              success: () => {
+                setTimeout(() => window.location.reload(), 1000);
+                return `${ids.length} ad${ids.length > 1 ? 's' : ''} deleted successfully`;
+              },
+              error: 'Failed to delete ads',
+            }
+          );
         } catch (error) {
           console.error('Error deleting ads:', error);
-          alert('Failed to delete ads');
         }
       },
     },

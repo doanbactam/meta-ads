@@ -2,6 +2,7 @@
 
 import { useState, ReactNode } from 'react';
 import { Sidebar } from '@/components/sidebar';
+import { MobileSidebar } from '@/components/mobile-sidebar';
 import { Header } from '@/components/header';
 import { FacebookConnectDialog } from '@/components/facebook-connect-dialog';
 import { useFacebookConnection } from '@/hooks/use-facebook-connection';
@@ -14,6 +15,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, showAdAccountSelector = true }: AppLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedAdAccount, setSelectedAdAccount] = useState<string>('');
   const { connected, loading, connectFacebook } = useFacebookConnection(selectedAdAccount);
   const { showConnectionDialog, setShowConnectionDialog } = useFacebookStore();
@@ -21,9 +23,10 @@ export function AppLayout({ children, showAdAccountSelector = true }: AppLayoutP
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
+      <MobileSidebar open={mobileMenuOpen} onOpenChange={setMobileMenuOpen} />
       <div className="flex flex-1 flex-col min-w-0">
         <Header
-          onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onToggleSidebar={() => setMobileMenuOpen(true)}
           selectedAdAccount={showAdAccountSelector ? selectedAdAccount : undefined}
           onAdAccountChange={showAdAccountSelector ? setSelectedAdAccount : undefined}
         />

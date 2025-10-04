@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useOverviewStats } from '@/hooks/use-shared-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import { DateRangePicker } from '@/components/date-range-picker';
+import { FacebookDateRangePicker } from '@/components/facebook-date-range-picker';
 
 import { formatCurrency } from '@/lib/formatters';
 import { TrendingUp, TrendingDown, DollarSign, Eye, MousePointer, Target, Percent, CreditCard, BarChart3 } from 'lucide-react';
@@ -111,7 +111,7 @@ export function DashboardOverview({ adAccountId }: DashboardOverviewProps) {
           <h1 className="text-2xl font-semibold text-foreground">dashboard</h1>
           <p className="text-sm text-muted-foreground">overview of your ad account performance</p>
         </div>
-        <DateRangePicker value={dateRange} onChange={setDateRange} />
+        <FacebookDateRangePicker value={dateRange} onChange={setDateRange} />
       </div>
 
 

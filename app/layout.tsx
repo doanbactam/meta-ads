@@ -5,7 +5,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { ClerkProvider } from '@clerk/nextjs';
 import { QueryProvider } from '@/lib/providers/query-provider';
 import { UserSettingsProvider } from '@/lib/contexts/user-settings-context';
-import { Toaster } from '@/components/ui/toaster';
+import { Toaster } from 'sonner';
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
