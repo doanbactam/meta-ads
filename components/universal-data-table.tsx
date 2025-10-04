@@ -124,16 +124,25 @@ export function UniversalDataTable<T extends { id: string }>({
       if (searchQuery) params.append('search', searchQuery);
       
       const response = await fetch(`${config.apiEndpoint}?${params}`);
-      
+
       if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error('Authentication required');
-        }
         const errorData = await response.json().catch(() => ({}));
+
+        // Check for token expiry
+        if (response.status === 401 || errorData.code === 'TOKEN_EXPIRED') {
+          throw new Error('FACEBOOK_TOKEN_EXPIRED');
+        }
+
         throw new Error(errorData.error || `Failed to fetch ${config.title}`);
       }
-      
+
       const data = await response.json();
+
+      // Check if the response contains a token expiry error even with 200 status
+      if (data.code === 'TOKEN_EXPIRED') {
+        throw new Error('FACEBOOK_TOKEN_EXPIRED');
+      }
+
       return Array.isArray(data) ? data : data[config.queryKey] || [];
     },
     enabled: !!adAccountId,

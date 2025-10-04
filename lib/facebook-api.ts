@@ -215,19 +215,41 @@ export class FacebookMarketingAPI {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         const errorMessage = errorData.error?.message || `HTTP ${response.status}: Failed to fetch campaigns`;
-        
+        const errorCode = errorData.error?.code;
+
         // Check if it's a token expiry error
-        if (errorMessage.includes('Session has expired') || errorMessage.includes('access token')) {
+        if (
+          errorMessage.includes('Session has expired') ||
+          errorMessage.includes('access token') ||
+          errorMessage.includes('token is invalid') ||
+          errorMessage.includes('Error validating access token') ||
+          errorCode === 190 || // Invalid OAuth 2.0 Access Token
+          response.status === 401
+        ) {
           throw new Error('FACEBOOK_TOKEN_EXPIRED');
         }
-        
+
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
 
       if (data.error) {
-        throw new Error(data.error.message || 'Failed to fetch campaigns');
+        const errorMessage = data.error.message || 'Failed to fetch campaigns';
+        const errorCode = data.error.code;
+
+        // Check if it's a token expiry error
+        if (
+          errorMessage.includes('Session has expired') ||
+          errorMessage.includes('access token') ||
+          errorMessage.includes('token is invalid') ||
+          errorMessage.includes('Error validating access token') ||
+          errorCode === 190
+        ) {
+          throw new Error('FACEBOOK_TOKEN_EXPIRED');
+        }
+
+        throw new Error(errorMessage);
       }
 
       if (!data.data || !Array.isArray(data.data)) {
