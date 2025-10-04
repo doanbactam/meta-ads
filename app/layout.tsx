@@ -21,7 +21,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      appearance={{
+        baseTheme: undefined,
+        variables: {
+          colorPrimary: 'hsl(var(--primary))',
+          colorBackground: 'hsl(var(--background))',
+          colorInputBackground: 'hsl(var(--background))',
+          colorInputText: 'hsl(var(--foreground))',
+          colorText: 'hsl(var(--foreground))',
+          colorTextSecondary: 'hsl(var(--muted-foreground))',
+          colorDanger: 'hsl(var(--destructive))',
+        },
+      }}
+    >
       <html lang="en" suppressHydrationWarning>
         <body className={jetbrainsMono.className}>
           <QueryProvider>

@@ -164,6 +164,40 @@ Open [http://localhost:3000](http://localhost:3000) to see the application.
 5. **Ad Account Selector**: Easy switching between ad accounts
 6. **Tailwind CSS 4**: Latest version with improved performance
 
+## Troubleshooting
+
+### Error: "The table `public.users` does not exist"
+
+This error occurs when the database hasn't been initialized. Follow these steps:
+
+1. Ensure your `.env` file exists and has a valid `DATABASE_URL`:
+```bash
+cp .env.example .env
+# Edit .env and set your DATABASE_URL
+```
+
+2. Generate Prisma Client:
+```bash
+npm run prisma:generate
+```
+
+3. Push the schema to your database:
+```bash
+npm run prisma:push
+```
+
+4. Verify the tables were created:
+```bash
+npm run prisma:studio
+```
+
+### Error: "Environment variable not found: DATABASE_URL"
+
+Make sure you've created a `.env` file from `.env.example` and configured all required environment variables including:
+- `DATABASE_URL` - PostgreSQL connection string
+- Clerk authentication keys
+- Facebook API credentials (if using Facebook integration)
+
 ## Contributing
 
 Feel free to submit issues and enhancement requests!

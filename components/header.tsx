@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/select';
 import { useEffect, useState } from 'react';
 import { getAdAccounts, type AdAccount } from '@/lib/api/ad-accounts';
-import { UserButton, useUser } from '@clerk/nextjs';
+import { UserButton, useUser, SignedIn, SignedOut } from '@clerk/nextjs';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -99,13 +99,23 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
           <Bell className="h-3.5 w-3.5" />
         </Button>
         <Separator orientation="vertical" className="h-4" />
-        <UserButton
-          appearance={{
-            elements: {
-              avatarBox: "h-8 w-8"
-            }
-          }}
-        />
+        <SignedIn>
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: "h-8 w-8",
+                userButtonPopoverCard: "shadow-lg border-border",
+                userButtonPopoverActionButton: "hover:bg-accent",
+                userButtonPopoverActionButtonText: "text-foreground",
+              }
+            }}
+          />
+        </SignedIn>
+        <SignedOut>
+          <Button variant="ghost" size="sm" className="h-8 px-3 text-xs">
+            Sign In
+          </Button>
+        </SignedOut>
       </div>
     </header>
   );
