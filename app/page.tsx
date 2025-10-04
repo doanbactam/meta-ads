@@ -1,7 +1,14 @@
 'use client';
 
-import { AdManagerDashboard } from '@/components/ad-manager-dashboard';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
-  return <AdManagerDashboard />;
+  const router = useRouter();
+
+  useEffect(() => {
+    router.push('/campaigns');
+  }, [router]);
+
+  return null;
 }

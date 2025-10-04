@@ -34,29 +34,29 @@ export async function GET(
       try {
         const { FacebookMarketingAPI } = await import('@/lib/facebook-api');
         const api = new FacebookMarketingAPI(adAccount.facebookAccessToken);
-        
+
         const facebookCampaigns = await api.getCampaigns(adAccount.facebookAdAccountId);
-        
+
         let totalSpent = 0;
         let totalImpressions = 0;
         let totalClicks = 0;
         let activeCampaigns = 0;
-        
+
         // Get insights for each campaign
         for (const campaign of facebookCampaigns) {
           const insights = await api.getCampaignInsights(campaign.id);
-          
+
           if (insights) {
             totalSpent += parseFloat(insights.spend || '0');
             totalImpressions += parseInt(insights.impressions || '0');
             totalClicks += parseInt(insights.clicks || '0');
           }
-          
+
           if (campaign.status === 'ACTIVE') {
             activeCampaigns++;
           }
         }
-        
+
         const stats = {
           totalSpent,
           totalImpressions,
@@ -68,6 +68,18 @@ export async function GET(
         return NextResponse.json(stats);
       } catch (facebookError) {
         console.error('Error fetching Facebook stats:', facebookError);
+
+        // Check if it's a token expiry error
+        if (facebookError instanceof Error && facebookError.message === 'FACEBOOK_TOKEN_EXPIRED') {
+          return NextResponse.json(
+            {
+              error: 'Facebook access token has expired. Please reconnect your Facebook account.',
+              code: 'TOKEN_EXPIRED'
+            },
+            { status: 401 }
+          );
+        }
+
         // Fall back to empty stats if Facebook API fails
       }
     }

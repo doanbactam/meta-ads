@@ -102,7 +102,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ads: allAds });
     } catch (facebookError) {
       console.error('Error fetching from Facebook API:', facebookError);
-      return NextResponse.json({ 
+
+      // Check if it's a token expiry error
+      if (facebookError instanceof Error && facebookError.message === 'FACEBOOK_TOKEN_EXPIRED') {
+        return NextResponse.json(
+          {
+            ads: [],
+            error: 'Facebook access token has expired. Please reconnect your Facebook account.',
+            code: 'TOKEN_EXPIRED'
+          },
+          { status: 401 }
+        );
+      }
+
+      return NextResponse.json({
         ads: [],
         error: 'Failed to fetch ads from Facebook. Please check your connection.'
       });

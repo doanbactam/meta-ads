@@ -1,6 +1,6 @@
 import { TableConfig } from '@/components/universal-data-table';
 import { Campaign, AdGroup, Ad } from '@/types';
-import { BarChart3 } from 'lucide-react';
+import { BarChart3, Eye } from 'lucide-react';
 
 // Campaign Table Configuration
 export const campaignTableConfig: TableConfig<Campaign> = {
@@ -148,7 +148,7 @@ export const campaignTableConfig: TableConfig<Campaign> = {
 
 // Ad Groups Table Configuration
 export const adGroupsTableConfig: TableConfig<AdGroup> = {
-  queryKey: 'ad-sets',
+  queryKey: 'adSets',
   apiEndpoint: '/api/ad-sets',
   title: 'Ad Sets',
   
@@ -410,7 +410,7 @@ export const adsTableConfig: TableConfig<Ad> = {
     custom: [
       {
         label: 'preview',
-        icon: BarChart3, // TODO: Change to Eye icon
+        icon: Eye,
         onClick: (ids) => {
           // TODO: Implement ad preview
           console.log('Preview ads:', ids);
