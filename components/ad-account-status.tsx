@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Wifi, WifiOff, Activity, Calendar, DollarSign, Clock } from 'lucide-react';
+import { Wifi, WifiOff, Activity, Calendar, DollarSign, Clock, AlertTriangle } from 'lucide-react';
 import { useFacebookConnection } from '@/hooks/use-facebook-connection';
 
 interface AdAccountStatusProps {
@@ -11,9 +11,8 @@ interface AdAccountStatusProps {
 }
 
 function AdAccountStatusComponent({ adAccountId, className = '' }: AdAccountStatusProps) {
-  // Simplified approach to avoid duplicate calls
-  const connected = !!adAccountId; // Simple check - if we have an account ID, assume connected
-  
+  const { connected, loading, tokenExpiryWarning, requiresReconnect, reason, errorDetails } = useFacebookConnection(adAccountId);
+
   if (!adAccountId) {
     return (
       <div className={`flex items-center gap-1 text-xs text-muted-foreground ${className}`}>
@@ -23,10 +22,53 @@ function AdAccountStatusComponent({ adAccountId, className = '' }: AdAccountStat
     );
   }
 
+  if (loading) {
+    return (
+      <div className={`flex items-center gap-1 text-xs text-muted-foreground ${className}`}>
+        <Activity className="h-3 w-3 animate-pulse" />
+        <span>checking...</span>
+      </div>
+    );
+  }
+
+  if (!connected && requiresReconnect) {
+    let message = 'connection required';
+    if (reason === 'TOKEN_EXPIRED') {
+      message = 'token expired - reconnect needed';
+    } else if (reason === 'TOKEN_INVALID') {
+      message = 'token invalid - reconnect needed';
+    }
+
+    return (
+      <div className={`flex items-center gap-1 text-xs text-destructive ${className}`}>
+        <WifiOff className="h-3 w-3" />
+        <span>{message}</span>
+      </div>
+    );
+  }
+
+  if (connected && tokenExpiryWarning) {
+    return (
+      <div className={`flex items-center gap-1 text-xs text-yellow-600 ${className}`}>
+        <AlertTriangle className="h-3 w-3" />
+        <span>token expiring soon</span>
+      </div>
+    );
+  }
+
+  if (connected) {
+    return (
+      <div className={`flex items-center gap-1 text-xs ${className}`}>
+        <Wifi className="h-3 w-3 text-green-600" />
+        <span className="text-muted-foreground">connected</span>
+      </div>
+    );
+  }
+
   return (
-    <div className={`flex items-center gap-1 text-xs ${className}`}>
-      <Calendar className="h-3 w-3 text-muted-foreground" />
-      <span className="text-muted-foreground">last sync: 2 min ago</span>
+    <div className={`flex items-center gap-1 text-xs text-muted-foreground ${className}`}>
+      <Calendar className="h-3 w-3" />
+      <span>no connection</span>
     </div>
   );
 }

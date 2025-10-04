@@ -52,34 +52,82 @@ export async function GET(req: NextRequest) {
     });
 
     if (!adAccount) {
-      return NextResponse.json({ connected: false, error: 'Ad account not found' }, { status: 404 });
+      return NextResponse.json({
+        connected: false,
+        error: 'Ad account not found',
+        requiresReconnect: true,
+        reason: 'AD_ACCOUNT_NOT_FOUND'
+      }, { status: 404 });
     }
 
     if (!adAccount.facebookAccessToken) {
-      return NextResponse.json({ connected: false, message: 'No Facebook token found' });
+      return NextResponse.json({
+        connected: false,
+        message: 'No Facebook token found',
+        requiresReconnect: true,
+        reason: 'TOKEN_MISSING'
+      });
     }
 
+    // Check if token is expired based on stored expiry
     if (adAccount.facebookTokenExpiry && adAccount.facebookTokenExpiry < new Date()) {
-      return NextResponse.json({ connected: false, message: 'Token expired' });
+      // Mark account as inactive
+      await prisma.adAccount.update({
+        where: { id: adAccount.id },
+        data: { status: 'paused' },
+      });
+
+      return NextResponse.json({
+        connected: false,
+        message: 'Token expired',
+        requiresReconnect: true,
+        reason: 'TOKEN_EXPIRED',
+        expiredAt: adAccount.facebookTokenExpiry
+      });
     }
 
+    // Validate token with Facebook API
     const api = new FacebookMarketingAPI(adAccount.facebookAccessToken);
     const validation = await api.validateToken();
 
     if (!validation.isValid) {
-      return NextResponse.json({ connected: false, message: 'Token is invalid' });
+      // Mark account as inactive
+      await prisma.adAccount.update({
+        where: { id: adAccount.id },
+        data: { status: 'paused' },
+      });
+
+      return NextResponse.json({
+        connected: false,
+        message: validation.error || 'Token is invalid',
+        requiresReconnect: true,
+        reason: 'TOKEN_INVALID',
+        errorDetails: validation.error
+      });
     }
+
+    // Check if token is about to expire (within 7 days)
+    const tokenExpiryWarning = validation.expiresAt
+      ? new Date(validation.expiresAt * 1000) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      : false;
 
     return NextResponse.json({
       connected: true,
       adAccountId: adAccount.id,
       facebookAdAccountId: adAccount.facebookAdAccountId,
       tokenExpiry: adAccount.facebookTokenExpiry,
+      tokenExpiryWarning,
+      scopes: validation.scopes,
     });
   } catch (error) {
     console.error('Error checking Facebook connection:', error);
     return NextResponse.json(
-      { connected: false, error: 'Failed to check connection' },
+      {
+        connected: false,
+        error: 'Failed to check connection',
+        requiresReconnect: true,
+        reason: 'CONNECTION_ERROR'
+      },
       { status: 500 }
     );
   }
