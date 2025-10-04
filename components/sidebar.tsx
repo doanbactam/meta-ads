@@ -1,10 +1,10 @@
 'use client';
 
-import { LayoutDashboard, Megaphone, BarChart3, HelpCircle, Sun, Moon, Terminal, ChevronLeft } from 'lucide-react';
+import { LayoutDashboard, Megaphone, Sun, Moon, Terminal, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -14,23 +14,27 @@ interface SidebarProps {
 export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   const menuItems = [
-    { icon: LayoutDashboard, label: 'dashboard', active: false },
-    { icon: Megaphone, label: 'campaigns', active: true },
-    { icon: BarChart3, label: 'analytics', active: false },
-    { icon: HelpCircle, label: 'support', active: false },
+    { icon: LayoutDashboard, label: 'dashboard', href: '/dashboard' },
+    { icon: Megaphone, label: 'campaigns', href: '/' },
   ];
+
+  const handleNavigation = (href: string) => {
+    router.push(href);
+  };
 
   return (
     <div
       className={`bg-card border-r border-border flex flex-col transition-all duration-300 ${
         collapsed ? 'w-16' : 'w-52'
-      }`}
+      } hidden lg:flex`}
     >
       <div className="h-12 px-4 border-b border-border flex items-center justify-between gap-2">
         {!collapsed && (
@@ -63,25 +67,32 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
 
       <nav className="flex-1 p-2">
         <ul className="space-y-0.5">
-          {menuItems.map((item) => (
-            <li key={item.label}>
-              <Button
-                variant="ghost"
-                className={`w-full ${collapsed ? 'justify-center' : 'justify-start'} h-8 px-3 text-xs font-normal ${
-                  item.active ? 'bg-muted' : 'hover:bg-muted/50'
-                }`}
-                title={collapsed ? item.label : undefined}
-              >
-                <item.icon className={`${collapsed ? '' : 'mr-2'} h-3.5 w-3.5`} />
-                {!collapsed && <span>{item.label}</span>}
-              </Button>
-            </li>
-          ))}
+          {menuItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <li key={item.label}>
+                <Button
+                  variant="ghost"
+                  className={`w-full ${collapsed ? 'justify-center' : 'justify-start'} h-8 px-3 text-xs font-normal ${
+                    isActive ? 'bg-muted' : 'hover:bg-muted/50'
+                  }`}
+                  title={collapsed ? item.label : undefined}
+                  onClick={() => handleNavigation(item.href)}
+                >
+                  <item.icon className={`${collapsed ? '' : 'mr-2'} h-3.5 w-3.5`} />
+                  {!collapsed && <span>{item.label}</span>}
+                </Button>
+              </li>
+            );
+          })}
         </ul>
       </nav>
 
       <div className="p-2 border-t border-border">
-        {!collapsed ? (
+        {!mounted ? (
+          // Render placeholder during SSR to avoid hydration mismatch
+          <div className={collapsed ? 'h-20' : 'h-8'} />
+        ) : !collapsed ? (
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"

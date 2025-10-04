@@ -34,7 +34,7 @@ export interface AdGroup {
   updated_at?: string;
 }
 
-export interface Creative {
+export interface Ad {
   id: string;
   ad_group_id: string;
   name: string;
@@ -51,6 +51,9 @@ export interface Creative {
   created_at?: string;
   updated_at?: string;
 }
+
+// Alias for backward compatibility
+export type Creative = Ad;
 
 export interface DateRange {
   from: Date | undefined;

@@ -4,6 +4,8 @@ import { JetBrains_Mono } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ClerkProvider } from '@clerk/nextjs';
 import { QueryProvider } from '@/lib/providers/query-provider';
+import { UserSettingsProvider } from '@/lib/contexts/user-settings-context';
+import { Toaster } from '@/components/ui/toaster';
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
@@ -11,8 +13,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Ad Manager | Developer Dashboard',
-  description: 'Minimalist campaign management dashboard for developers',
+  title: 'ad_manager | developer dashboard',
+  description: 'minimalist campaign management dashboard for developers',
 };
 
 export default function RootLayout({
@@ -38,14 +40,17 @@ export default function RootLayout({
       <html lang="en" suppressHydrationWarning>
         <body className={jetbrainsMono.className}>
           <QueryProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="dark"
-              enableSystem
-              disableTransitionOnChange
-            >
-              {children}
-            </ThemeProvider>
+            <UserSettingsProvider>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="dark"
+                enableSystem
+                disableTransitionOnChange
+              >
+                {children}
+                <Toaster />
+              </ThemeProvider>
+            </UserSettingsProvider>
           </QueryProvider>
         </body>
       </html>

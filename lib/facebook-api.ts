@@ -49,62 +49,99 @@ export class FacebookMarketingAPI {
   }
 
   async validateToken(): Promise<FacebookTokenValidation> {
-    try {
-      const response = await fetch(
-        `https://graph.facebook.com/v23.0/debug_token?input_token=${this.accessToken}&access_token=${this.accessToken}`,
-        {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-          },
+    const maxRetries = 2;
+    let lastError: Error | null = null;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
+        const response = await fetch(
+          `https://graph.facebook.com/v23.0/debug_token?input_token=${this.accessToken}&access_token=${this.accessToken}`,
+          {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+            },
+            signal: controller.signal,
+          }
+        );
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          return {
+            isValid: false,
+            error: errorData.error?.message || `HTTP ${response.status}: Failed to validate token`,
+          };
         }
-      );
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const data = await response.json();
+
+        if (data.error) {
+          return {
+            isValid: false,
+            error: data.error.message || 'Token validation failed',
+          };
+        }
+
+        const tokenData = data.data;
+
+        if (!tokenData) {
+          return {
+            isValid: false,
+            error: 'Invalid response from Facebook API',
+          };
+        }
+
+        return {
+          isValid: tokenData.is_valid || false,
+          appId: tokenData.app_id,
+          userId: tokenData.user_id,
+          expiresAt: tokenData.expires_at,
+          scopes: tokenData.scopes || [],
+          error: !tokenData.is_valid ? 'Token is not valid' : undefined,
+        };
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error('Unknown error');
+        
+        // Check if it's a timeout or connection error
+        const isNetworkError = lastError.name === 'AbortError' || 
+                               lastError.message.includes('timeout') ||
+                               lastError.message.includes('ECONNREFUSED') ||
+                               lastError.message.includes('ETIMEDOUT') ||
+                               lastError.message.includes('ConnectTimeoutError');
+
+        // Only retry on network errors
+        if (isNetworkError && attempt < maxRetries) {
+          console.log(`Token validation attempt ${attempt + 1} failed, retrying...`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1))); // Exponential backoff
+          continue;
+        }
+
+        console.error('Token validation error:', error);
         return {
           isValid: false,
-          error: errorData.error?.message || `HTTP ${response.status}: Failed to validate token`,
+          error: isNetworkError 
+            ? 'Unable to connect to Facebook. Please check your internet connection and try again.'
+            : (lastError.message || 'Unknown error occurred during validation'),
         };
       }
-
-      const data = await response.json();
-
-      if (data.error) {
-        return {
-          isValid: false,
-          error: data.error.message || 'Token validation failed',
-        };
-      }
-
-      const tokenData = data.data;
-
-      if (!tokenData) {
-        return {
-          isValid: false,
-          error: 'Invalid response from Facebook API',
-        };
-      }
-
-      return {
-        isValid: tokenData.is_valid || false,
-        appId: tokenData.app_id,
-        userId: tokenData.user_id,
-        expiresAt: tokenData.expires_at,
-        scopes: tokenData.scopes || [],
-        error: !tokenData.is_valid ? 'Token is not valid' : undefined,
-      };
-    } catch (error) {
-      console.error('Token validation error:', error);
-      return {
-        isValid: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred during validation',
-      };
     }
+
+    return {
+      isValid: false,
+      error: 'Connection timeout. Please check your internet connection and try again.',
+    };
   }
 
   async getUserAdAccounts(): Promise<FacebookAdAccountData[]> {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
       const response = await fetch(
         `https://graph.facebook.com/v23.0/me/adaccounts?fields=id,name,account_status,currency,timezone_name&access_token=${this.accessToken}`,
         {
@@ -112,8 +149,11 @@ export class FacebookMarketingAPI {
           headers: {
             'Accept': 'application/json',
           },
+          signal: controller.signal,
         }
       );
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -140,7 +180,13 @@ export class FacebookMarketingAPI {
       }));
     } catch (error) {
       console.error('Error fetching ad accounts:', error);
-      throw error instanceof Error ? error : new Error('Unknown error fetching ad accounts');
+      const isNetworkError = error instanceof Error && 
+        (error.name === 'AbortError' || error.message.includes('timeout') || error.message.includes('fetch failed'));
+      
+      throw new Error(isNetworkError 
+        ? 'Unable to connect to Facebook. Please check your internet connection.'
+        : (error instanceof Error ? error.message : 'Unknown error fetching ad accounts')
+      );
     }
   }
 
@@ -150,6 +196,9 @@ export class FacebookMarketingAPI {
         ? adAccountId
         : `act_${adAccountId}`;
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
       const response = await fetch(
         `https://graph.facebook.com/v23.0/${formattedAccountId}/campaigns?fields=id,name,status,objective,spend_cap,daily_budget,lifetime_budget&access_token=${this.accessToken}`,
         {
@@ -157,12 +206,21 @@ export class FacebookMarketingAPI {
           headers: {
             'Accept': 'application/json',
           },
+          signal: controller.signal,
         }
       );
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         const errorMessage = errorData.error?.message || `HTTP ${response.status}: Failed to fetch campaigns`;
+        
+        // Check if it's a token expiry error
+        if (errorMessage.includes('Session has expired') || errorMessage.includes('access token')) {
+          throw new Error('FACEBOOK_TOKEN_EXPIRED');
+        }
+        
         throw new Error(errorMessage);
       }
 
@@ -187,7 +245,13 @@ export class FacebookMarketingAPI {
       }));
     } catch (error) {
       console.error('Error fetching campaigns:', error);
-      throw error instanceof Error ? error : new Error('Unknown error fetching campaigns');
+      const isNetworkError = error instanceof Error && 
+        (error.name === 'AbortError' || error.message.includes('timeout') || error.message.includes('fetch failed'));
+      
+      throw new Error(isNetworkError 
+        ? 'Unable to connect to Facebook. Please check your internet connection.'
+        : (error instanceof Error ? error.message : 'Unknown error fetching campaigns')
+      );
     }
   }
 
@@ -257,6 +321,54 @@ export class FacebookMarketingAPI {
     }
   }
 
+  async getAdSetInsights(
+    adSetId: string,
+    datePreset: string = 'last_30d'
+  ): Promise<FacebookCampaignInsights | null> {
+    try {
+      const fields = [
+        'impressions',
+        'clicks',
+        'spend',
+        'reach',
+        'frequency',
+        'ctr',
+        'cpc',
+        'cpm',
+      ];
+
+      const response = await fetch(
+        `https://graph.facebook.com/v23.0/${adSetId}/insights?fields=${fields.join(',')}&date_preset=${datePreset}&access_token=${this.accessToken}`
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch ad set insights');
+      }
+
+      const data = await response.json();
+
+      if (!data.data || data.data.length === 0) {
+        return null;
+      }
+
+      const insights = data.data[0];
+
+      return {
+        impressions: insights.impressions,
+        clicks: insights.clicks,
+        spend: insights.spend,
+        reach: insights.reach,
+        frequency: insights.frequency,
+        ctr: insights.ctr,
+        cpc: insights.cpc,
+        cpm: insights.cpm,
+      };
+    } catch (error) {
+      console.error('Error fetching ad set insights:', error);
+      return null;
+    }
+  }
+
   async getAds(adSetId: string) {
     try {
       const response = await fetch(
@@ -272,6 +384,54 @@ export class FacebookMarketingAPI {
     } catch (error) {
       console.error('Error fetching ads:', error);
       throw error;
+    }
+  }
+
+  async getAdInsights(
+    adId: string,
+    datePreset: string = 'last_30d'
+  ): Promise<FacebookCampaignInsights | null> {
+    try {
+      const fields = [
+        'impressions',
+        'clicks',
+        'spend',
+        'reach',
+        'frequency',
+        'ctr',
+        'cpc',
+        'cpm',
+      ];
+
+      const response = await fetch(
+        `https://graph.facebook.com/v23.0/${adId}/insights?fields=${fields.join(',')}&date_preset=${datePreset}&access_token=${this.accessToken}`
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch ad insights');
+      }
+
+      const data = await response.json();
+
+      if (!data.data || data.data.length === 0) {
+        return null;
+      }
+
+      const insights = data.data[0];
+
+      return {
+        impressions: insights.impressions,
+        clicks: insights.clicks,
+        spend: insights.spend,
+        reach: insights.reach,
+        frequency: insights.frequency,
+        ctr: insights.ctr,
+        cpc: insights.cpc,
+        cpm: insights.cpm,
+      };
+    } catch (error) {
+      console.error('Error fetching ad insights:', error);
+      return null;
     }
   }
 }

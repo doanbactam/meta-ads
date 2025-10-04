@@ -13,22 +13,35 @@ async function checkFacebookConnection(adAccountId?: string): Promise<FacebookCo
     return { connected: false };
   }
 
-  const response = await fetch(
-    `/api/facebook/check-connection?adAccountId=${adAccountId}`
-  );
+  try {
+    const response = await fetch(
+      `/api/facebook/check-connection?adAccountId=${adAccountId}`
+    );
 
-  const data = await response.json();
+    if (!response.ok) {
+      // Don't throw error for 404 or other expected errors
+      if (response.status === 404 || response.status === 401) {
+        return { connected: false };
+      }
+      throw new Error(`HTTP ${response.status}`);
+    }
 
-  if (response.ok && data.connected) {
-    return {
-      connected: true,
-      adAccountId: data.adAccountId,
-      facebookAdAccountId: data.facebookAdAccountId,
-      tokenExpiry: data.tokenExpiry ? new Date(data.tokenExpiry) : undefined,
-    };
+    const data = await response.json();
+
+    if (data.connected) {
+      return {
+        connected: true,
+        adAccountId: data.adAccountId,
+        facebookAdAccountId: data.facebookAdAccountId,
+        tokenExpiry: data.tokenExpiry ? new Date(data.tokenExpiry) : undefined,
+      };
+    }
+
+    return { connected: false };
+  } catch (error) {
+    console.warn('Facebook connection check failed:', error);
+    return { connected: false };
   }
-
-  return { connected: false };
 }
 
 async function connectFacebookAccount(accessToken: string, fbAdAccountId?: string) {
@@ -65,7 +78,10 @@ export function useFacebookConnection(adAccountId?: string) {
     queryKey: ['facebook-connection', adAccountId],
     queryFn: () => checkFacebookConnection(adAccountId),
     enabled: !!adAccountId,
-    refetchOnMount: true,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    retry: 1,
   });
 
   const connectMutation = useMutation({
@@ -73,10 +89,12 @@ export function useFacebookConnection(adAccountId?: string) {
       connectFacebookAccount(accessToken, fbAdAccountId),
     onSuccess: (data) => {
       setConnected(true, data.adAccountId, data.facebookAdAccountId, data.tokenExpiry);
+      // Invalidate all related queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['facebook-connection'] });
       queryClient.invalidateQueries({ queryKey: ['facebook-campaigns'] });
       queryClient.invalidateQueries({ queryKey: ['facebook-adsets'] });
       queryClient.invalidateQueries({ queryKey: ['facebook-ads'] });
+      queryClient.invalidateQueries({ queryKey: ['ad-accounts'] });
     },
     onError: (error) => {
       console.error('Facebook connection error:', error);
@@ -86,6 +104,10 @@ export function useFacebookConnection(adAccountId?: string) {
   const connectFacebook = async (accessToken: string, fbAdAccountId?: string) => {
     try {
       const result = await connectMutation.mutateAsync({ accessToken, fbAdAccountId });
+      
+      // Close dialog and show success
+      setShowConnectionDialog(false);
+      
       return { success: true, data: result };
     } catch (error) {
       console.error('Connect Facebook error:', error);

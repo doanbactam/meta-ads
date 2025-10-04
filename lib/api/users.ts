@@ -128,6 +128,9 @@ export async function getOrCreateUserFromClerk(clerkId: string) {
         email: clerkUser.emailAddresses[0]?.emailAddress || '',
         name: `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || null,
         imageUrl: clerkUser.imageUrl || null,
+        preferredCurrency: 'USD',
+        preferredLocale: 'en-US',
+        preferredTimezone: 'UTC',
       },
     });
   }

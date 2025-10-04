@@ -32,6 +32,12 @@ model User {
   role                UserRole             @default(USER)
   subscriptionPackage SubscriptionPackage  @default(FREE) @map("subscription_package")
   subscriptionExpiry  DateTime?            @map("subscription_expiry")
+  
+  // User preferences
+  preferredCurrency   String               @default("USD") @map("preferred_currency")
+  preferredLocale     String               @default("en-US") @map("preferred_locale")
+  preferredTimezone   String               @default("UTC") @map("preferred_timezone")
+  
   createdAt           DateTime             @default(now()) @map("created_at")
   updatedAt           DateTime             @updatedAt @map("updated_at")
 

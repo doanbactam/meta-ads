@@ -45,23 +45,23 @@ export function ColumnsSelector({ columns, visibleColumns, onColumnsChange }: Co
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="gap-2">
-          <Columns3 className="w-4 h-4" />
-          Columns
+        <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 text-xs">
+          <Columns3 className="h-3.5 w-3.5" />
+          columns
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64" align="end">
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-sm font-semibold">Customize columns</h4>
-            <div className="flex gap-2">
+            <h4 className="text-sm font-semibold">customize columns</h4>
+            <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-7 text-xs"
                 onClick={selectAll}
               >
-                Select all
+                select all
               </Button>
               <Button
                 variant="ghost"
@@ -69,12 +69,12 @@ export function ColumnsSelector({ columns, visibleColumns, onColumnsChange }: Co
                 className="h-7 text-xs"
                 onClick={clearAll}
               >
-                Clear
+                clear
               </Button>
             </div>
           </div>
           <Separator />
-          <div className="space-y-3 max-h-[400px] overflow-y-auto">
+          <div className="flex flex-col gap-3 max-h-[400px] overflow-y-auto">
             {columns.map((column) => (
               <div key={column.id} className="flex items-center space-x-2">
                 <Checkbox

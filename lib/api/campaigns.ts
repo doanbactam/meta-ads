@@ -2,28 +2,10 @@ import { prisma } from '@/lib/prisma';
 import { Campaign } from '@/types';
 
 export async function getCampaigns(adAccountId?: string): Promise<Campaign[]> {
-  const campaigns = await prisma.campaign.findMany({
-    where: adAccountId ? { adAccountId } : undefined,
-    orderBy: { createdAt: 'desc' },
-  });
-
-  return campaigns.map((c) => ({
-    id: c.id,
-    name: c.name,
-    status: c.status as Campaign['status'],
-    budget: c.budget,
-    spent: c.spent,
-    impressions: c.impressions,
-    clicks: c.clicks,
-    ctr: c.ctr,
-    conversions: c.conversions,
-    cost_per_conversion: c.costPerConversion,
-    date_start: c.dateStart,
-    date_end: c.dateEnd,
-    schedule: c.schedule,
-    created_at: c.createdAt.toISOString(),
-    updated_at: c.updatedAt.toISOString(),
-  }));
+  // This function is now deprecated as we fetch directly from Facebook API
+  // Keeping it for backward compatibility but returning empty array
+  console.warn('getCampaigns function is deprecated. Use Facebook API directly.');
+  return [];
 }
 
 export async function getCampaignById(id: string): Promise<Campaign | null> {

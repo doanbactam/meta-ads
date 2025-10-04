@@ -12,7 +12,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Loader2, Facebook, AlertCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface FacebookConnectDialogProps {
   open: boolean;
@@ -21,6 +29,7 @@ interface FacebookConnectDialogProps {
 }
 
 export function FacebookConnectDialog({ open, onOpenChange, onConnect }: FacebookConnectDialogProps) {
+  const { toast } = useToast();
   const [accessToken, setAccessToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -115,7 +124,15 @@ export function FacebookConnectDialog({ open, onOpenChange, onConnect }: Faceboo
       const result = await onConnect(accessToken, accountId);
 
       if (result.success) {
-        onOpenChange(false);
+        toast({
+          title: 'Success!',
+          description: 'Facebook account connected successfully. Refreshing data...',
+        });
+        
+        // Reload page to refresh all data
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
         const errorMsg = result.error || 'Failed to connect to Facebook';
         setError(errorMsg);
@@ -257,13 +274,13 @@ export function FacebookConnectDialog({ open, onOpenChange, onConnect }: Faceboo
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Facebook className="h-5 w-5 text-blue-600" />
-            Connect Facebook Account
+            <Facebook className="h-5 w-5" />
+            connect facebook account
           </DialogTitle>
           <DialogDescription>
             {step === 'token'
-              ? 'Enter your Facebook access token or login with Facebook to connect your ad account.'
-              : 'Select the ad account you want to connect.'}
+              ? 'enter your facebook access token or login with facebook to connect your ad account.'
+              : 'select the ad account you want to connect.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -277,24 +294,24 @@ export function FacebookConnectDialog({ open, onOpenChange, onConnect }: Faceboo
         {step === 'token' ? (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="access-token">Facebook Access Token</Label>
+              <Label htmlFor="access-token">facebook access token</Label>
               <Input
                 id="access-token"
                 type="password"
-                placeholder="Enter your Facebook access token"
+                placeholder="enter your facebook access token"
                 value={accessToken}
                 onChange={(e) => setAccessToken(e.target.value)}
                 disabled={loading}
               />
               <p className="text-xs text-muted-foreground">
-                You can get an access token from the{' '}
+                you can get an access token from the{' '}
                 <a
                   href="https://developers.facebook.com/tools/explorer/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
+                  className="text-primary hover:underline"
                 >
-                  Facebook Graph API Explorer
+                  facebook graph api explorer
                 </a>
               </p>
             </div>
@@ -308,10 +325,10 @@ export function FacebookConnectDialog({ open, onOpenChange, onConnect }: Faceboo
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Validating...
+                    validating...
                   </>
                 ) : (
-                  'Continue'
+                  'continue'
                 )}
               </Button>
 
@@ -319,9 +336,9 @@ export function FacebookConnectDialog({ open, onOpenChange, onConnect }: Faceboo
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t" />
                 </div>
-                <div className="relative flex justify-center text-xs uppercase">
+                <div className="relative flex justify-center text-xs">
                   <span className="bg-background px-2 text-muted-foreground">
-                    Or
+                    or
                   </span>
                 </div>
               </div>
@@ -333,28 +350,30 @@ export function FacebookConnectDialog({ open, onOpenChange, onConnect }: Faceboo
                 className="w-full"
               >
                 <Facebook className="mr-2 h-4 w-4" />
-                Login with Facebook
+                login with facebook
               </Button>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="ad-account">Select Ad Account</Label>
-              <select
-                id="ad-account"
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              <Label htmlFor="ad-account">select ad account</Label>
+              <Select
                 value={selectedAccount}
-                onChange={(e) => setSelectedAccount(e.target.value)}
+                onValueChange={setSelectedAccount}
                 disabled={loading}
               >
-                <option value="">Select an account</option>
-                {accounts.map((account) => (
-                  <option key={account.id} value={account.id.replace('act_', '')}>
-                    {account.name} ({account.id})
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="ad-account">
+                  <SelectValue placeholder="select an account" />
+                </SelectTrigger>
+                <SelectContent>
+                  {accounts.map((account) => (
+                    <SelectItem key={account.id} value={account.id.replace('act_', '')}>
+                      {account.name} ({account.id})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex gap-2">
@@ -364,7 +383,7 @@ export function FacebookConnectDialog({ open, onOpenChange, onConnect }: Faceboo
                 disabled={loading}
                 className="flex-1"
               >
-                Back
+                back
               </Button>
               <Button
                 onClick={handleConnect}
@@ -374,10 +393,10 @@ export function FacebookConnectDialog({ open, onOpenChange, onConnect }: Faceboo
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Connecting...
+                    connecting...
                   </>
                 ) : (
-                  'Connect'
+                  'connect'
                 )}
               </Button>
             </div>
