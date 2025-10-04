@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutDashboard, Megaphone, Sun, Moon, Terminal, ChevronLeft } from 'lucide-react';
+import { LayoutDashboard, Megaphone, Sun, Moon, Terminal, ChevronLeft, Target, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
@@ -23,7 +23,9 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'dashboard', href: '/dashboard' },
-    { icon: Megaphone, label: 'campaigns', href: '/' },
+    { icon: Megaphone, label: 'campaigns', href: '/campaigns' },
+    { icon: Target, label: 'ad sets', href: '/ad-sets' },
+    { icon: Image, label: 'ads', href: '/ads' },
   ];
 
   const handleNavigation = (href: string) => {
