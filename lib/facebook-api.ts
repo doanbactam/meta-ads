@@ -279,7 +279,7 @@ export class FacebookMarketingAPI {
 
   async getCampaignInsights(
     campaignId: string,
-    datePreset: string = 'last_30d'
+    options?: { datePreset?: string; dateFrom?: string; dateTo?: string }
   ): Promise<FacebookCampaignInsights | null> {
     try {
       const fields = [
@@ -293,8 +293,17 @@ export class FacebookMarketingAPI {
         'cpm',
       ];
 
+      let dateParams = '';
+      if (options?.dateFrom && options?.dateTo) {
+        dateParams = `&time_range={"since":"${options.dateFrom}","until":"${options.dateTo}"}`;
+      } else if (options?.datePreset) {
+        dateParams = `&date_preset=${options.datePreset}`;
+      } else {
+        dateParams = '&date_preset=last_30d';
+      }
+
       const response = await fetch(
-        `https://graph.facebook.com/v23.0/${campaignId}/insights?fields=${fields.join(',')}&date_preset=${datePreset}&access_token=${this.accessToken}`
+        `https://graph.facebook.com/v23.0/${campaignId}/insights?fields=${fields.join(',')}${dateParams}&access_token=${this.accessToken}`
       );
 
       if (!response.ok) {
@@ -345,7 +354,7 @@ export class FacebookMarketingAPI {
 
   async getAdSetInsights(
     adSetId: string,
-    datePreset: string = 'last_30d'
+    options?: { datePreset?: string; dateFrom?: string; dateTo?: string }
   ): Promise<FacebookCampaignInsights | null> {
     try {
       const fields = [
@@ -359,8 +368,17 @@ export class FacebookMarketingAPI {
         'cpm',
       ];
 
+      let dateParams = '';
+      if (options?.dateFrom && options?.dateTo) {
+        dateParams = `&time_range={"since":"${options.dateFrom}","until":"${options.dateTo}"}`;
+      } else if (options?.datePreset) {
+        dateParams = `&date_preset=${options.datePreset}`;
+      } else {
+        dateParams = '&date_preset=last_30d';
+      }
+
       const response = await fetch(
-        `https://graph.facebook.com/v23.0/${adSetId}/insights?fields=${fields.join(',')}&date_preset=${datePreset}&access_token=${this.accessToken}`
+        `https://graph.facebook.com/v23.0/${adSetId}/insights?fields=${fields.join(',')}${dateParams}&access_token=${this.accessToken}`
       );
 
       if (!response.ok) {
@@ -411,7 +429,7 @@ export class FacebookMarketingAPI {
 
   async getAdInsights(
     adId: string,
-    datePreset: string = 'last_30d'
+    options?: { datePreset?: string; dateFrom?: string; dateTo?: string }
   ): Promise<FacebookCampaignInsights | null> {
     try {
       const fields = [
@@ -425,8 +443,17 @@ export class FacebookMarketingAPI {
         'cpm',
       ];
 
+      let dateParams = '';
+      if (options?.dateFrom && options?.dateTo) {
+        dateParams = `&time_range={"since":"${options.dateFrom}","until":"${options.dateTo}"}`;
+      } else if (options?.datePreset) {
+        dateParams = `&date_preset=${options.datePreset}`;
+      } else {
+        dateParams = '&date_preset=last_30d';
+      }
+
       const response = await fetch(
-        `https://graph.facebook.com/v23.0/${adId}/insights?fields=${fields.join(',')}&date_preset=${datePreset}&access_token=${this.accessToken}`
+        `https://graph.facebook.com/v23.0/${adId}/insights?fields=${fields.join(',')}${dateParams}&access_token=${this.accessToken}`
       );
 
       if (!response.ok) {

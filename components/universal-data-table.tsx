@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ColumnsSelector } from '@/components/columns-selector';
-import { DateRangePicker } from '@/components/date-range-picker';
+import { FacebookDateRangePicker } from '@/components/facebook-date-range-picker';
 import { TablePagination } from '@/components/table-pagination';
 import { StatusBadge } from '@/components/status-badge';
 import { FormatBadge } from '@/components/format-badge';
@@ -270,7 +270,7 @@ export function UniversalDataTable<T extends { id: string }>({
             </div>
           )}
           {features.dateRange && (
-            <DateRangePicker value={dateRange} onChange={setDateRange} />
+            <FacebookDateRangePicker value={dateRange} onChange={setDateRange} />
           )}
         </div>
       )}
