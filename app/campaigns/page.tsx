@@ -6,9 +6,9 @@ import { campaignTableConfig, adGroupsTableConfig, adsTableConfig } from '@/lib/
 import { Campaign, AdGroup, Ad } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 
-export default function CampaignsPage() {
+function CampaignsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState('campaigns');
@@ -65,5 +65,13 @@ export default function CampaignsPage() {
         </div>
       )}
     </AppLayout>
+  );
+}
+
+export default function CampaignsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CampaignsContent />
+    </Suspense>
   );
 }
