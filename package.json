@@ -1,5 +1,5 @@
 {
-  "name": "nextjs",
+  "name": "ad-manager-dashboard",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -59,6 +59,6 @@
     "tsx": "^4.20.6"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx src/prisma/seed.ts"
   }
 }
