@@ -6,6 +6,11 @@ interface FacebookConnectionStatus {
   adAccountId?: string;
   facebookAdAccountId?: string;
   tokenExpiry?: Date;
+  tokenExpiryWarning?: boolean;
+  requiresReconnect?: boolean;
+  reason?: string;
+  errorDetails?: string;
+  scopes?: string[];
 }
 
 async function checkFacebookConnection(adAccountId?: string): Promise<FacebookConnectionStatus> {
@@ -18,15 +23,17 @@ async function checkFacebookConnection(adAccountId?: string): Promise<FacebookCo
       `/api/facebook/check-connection?adAccountId=${adAccountId}`
     );
 
-    if (!response.ok) {
-      // Don't throw error for 404 or other expected errors
-      if (response.status === 404 || response.status === 401) {
-        return { connected: false };
-      }
-      throw new Error(`HTTP ${response.status}`);
-    }
-
     const data = await response.json();
+
+    if (!response.ok) {
+      // Handle expected error responses with reconnection info
+      return {
+        connected: false,
+        requiresReconnect: data.requiresReconnect,
+        reason: data.reason,
+        errorDetails: data.errorDetails || data.message || data.error,
+      };
+    }
 
     if (data.connected) {
       return {
@@ -34,13 +41,25 @@ async function checkFacebookConnection(adAccountId?: string): Promise<FacebookCo
         adAccountId: data.adAccountId,
         facebookAdAccountId: data.facebookAdAccountId,
         tokenExpiry: data.tokenExpiry ? new Date(data.tokenExpiry) : undefined,
+        tokenExpiryWarning: data.tokenExpiryWarning,
+        scopes: data.scopes,
       };
     }
 
-    return { connected: false };
+    return {
+      connected: false,
+      requiresReconnect: data.requiresReconnect,
+      reason: data.reason,
+      errorDetails: data.message,
+    };
   } catch (error) {
     console.warn('Facebook connection check failed:', error);
-    return { connected: false };
+    return {
+      connected: false,
+      requiresReconnect: true,
+      reason: 'CONNECTION_ERROR',
+      errorDetails: error instanceof Error ? error.message : 'Unknown error',
+    };
   }
 }
 
@@ -125,6 +144,11 @@ export function useFacebookConnection(adAccountId?: string) {
     adAccountId: status?.adAccountId,
     facebookAdAccountId: status?.facebookAdAccountId,
     tokenExpiry: status?.tokenExpiry,
+    tokenExpiryWarning: status?.tokenExpiryWarning,
+    requiresReconnect: status?.requiresReconnect,
+    reason: status?.reason,
+    errorDetails: status?.errorDetails,
+    scopes: status?.scopes,
     checkConnection: refetch,
     connectFacebook,
   };
