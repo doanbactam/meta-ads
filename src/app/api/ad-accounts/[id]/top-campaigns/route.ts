@@ -1,11 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/server/prisma';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -61,10 +58,11 @@ export async function GET(
     });
 
     // Calculate ROAS and CPC for each campaign
-    const enrichedCampaigns = topCampaigns.map(campaign => {
+    const enrichedCampaigns = topCampaigns.map((campaign) => {
       const cpc = campaign.clicks > 0 ? (campaign.spent || 0) / campaign.clicks : 0;
-      const roas = (campaign.spent || 0) > 0 ? ((campaign.conversions || 0) * 100) / (campaign.spent || 0) : 0;
-      
+      const roas =
+        (campaign.spent || 0) > 0 ? ((campaign.conversions || 0) * 100) / (campaign.spent || 0) : 0;
+
       return {
         ...campaign,
         spend: campaign.spent, // Map spent to spend for frontend compatibility
@@ -76,9 +74,6 @@ export async function GET(
     return NextResponse.json(enrichedCampaigns);
   } catch (error) {
     console.error('Error fetching top campaigns:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch top campaigns' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch top campaigns' }, { status: 500 });
   }
 }

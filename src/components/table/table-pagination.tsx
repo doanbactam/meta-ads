@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -30,11 +30,11 @@ export function TablePagination({
   className = '',
 }: TablePaginationProps) {
   const [goToPage, setGoToPage] = useState(currentPage.toString());
-  
+
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endItem = Math.min(currentPage * pageSize, totalItems);
-  
+
   const canGoPrevious = currentPage > 1;
   const canGoNext = currentPage < totalPages;
 
@@ -72,18 +72,19 @@ export function TablePagination({
           'No items'
         ) : (
           <>
-            showing {startItem.toLocaleString()}-{endItem.toLocaleString()} of {totalItems.toLocaleString()}
+            showing {startItem.toLocaleString()}-{endItem.toLocaleString()} of{' '}
+            {totalItems.toLocaleString()}
           </>
         )}
       </div>
-      
+
       <div className="flex items-center gap-3">
         {/* Page Navigation */}
         <div className="flex items-center gap-1">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-7 w-7 p-0" 
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0"
             onClick={handlePreviousPage}
             disabled={!canGoPrevious}
           >
@@ -92,10 +93,10 @@ export function TablePagination({
           <span className="text-muted-foreground min-w-[60px] text-center">
             {totalPages === 0 ? '0 / 0' : `${currentPage} / ${totalPages}`}
           </span>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-7 w-7 p-0" 
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0"
             onClick={handleNextPage}
             disabled={!canGoNext}
           >
@@ -106,7 +107,10 @@ export function TablePagination({
         {/* Page Size Selector */}
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground">rows:</span>
-          <Select value={pageSize.toString()} onValueChange={(value) => onPageSizeChange(parseInt(value))}>
+          <Select
+            value={pageSize.toString()}
+            onValueChange={(value) => onPageSizeChange(parseInt(value))}
+          >
             <SelectTrigger size="sm" className="w-14 text-xs">
               <SelectValue />
             </SelectTrigger>
@@ -124,9 +128,9 @@ export function TablePagination({
         {totalPages > 1 && (
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground">go to:</span>
-            <Input 
-              type="number" 
-              className="h-7 w-14 text-xs" 
+            <Input
+              type="number"
+              className="h-7 w-14 text-xs"
               value={goToPage}
               onChange={(e) => setGoToPage(e.target.value)}
               onBlur={handleGoToPage}

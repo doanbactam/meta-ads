@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/server/prisma';
 
 const EMPTY_DAILY_STATS = {
@@ -9,10 +9,7 @@ const EMPTY_DAILY_STATS = {
   conversions: 0,
 } as const;
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -62,14 +59,17 @@ export async function GET(
     });
 
     // Group by date and aggregate
-    const dailyStatsMap = new Map<string, {
-      spend: number;
-      impressions: number;
-      clicks: number;
-      conversions: number;
-    }>();
+    const dailyStatsMap = new Map<
+      string,
+      {
+        spend: number;
+        impressions: number;
+        clicks: number;
+        conversions: number;
+      }
+    >();
 
-    campaigns.forEach(campaign => {
+    campaigns.forEach((campaign) => {
       const dateKey = campaign.createdAt.toISOString().split('T')[0];
       const existing = dailyStatsMap.get(dateKey) || { ...EMPTY_DAILY_STATS };
 
@@ -92,9 +92,6 @@ export async function GET(
     return NextResponse.json(dailyStats);
   } catch (error) {
     console.error('Error fetching daily stats:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch daily stats' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch daily stats' }, { status: 500 });
   }
 }

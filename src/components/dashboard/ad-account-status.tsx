@@ -1,8 +1,8 @@
 'use client';
 
+import { Activity, AlertTriangle, Calendar, Clock, DollarSign, Wifi, WifiOff } from 'lucide-react';
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Wifi, WifiOff, Activity, Calendar, DollarSign, Clock, AlertTriangle } from 'lucide-react';
 import { useFacebookConnection } from '@/hooks/use-facebook-connection';
 
 interface AdAccountStatusProps {
@@ -11,7 +11,8 @@ interface AdAccountStatusProps {
 }
 
 function AdAccountStatusComponent({ adAccountId, className = '' }: AdAccountStatusProps) {
-  const { connected, loading, tokenExpiryWarning, requiresReconnect, reason, errorDetails } = useFacebookConnection(adAccountId);
+  const { connected, loading, tokenExpiryWarning, requiresReconnect, reason, errorDetails } =
+    useFacebookConnection(adAccountId);
 
   if (!adAccountId) {
     return (

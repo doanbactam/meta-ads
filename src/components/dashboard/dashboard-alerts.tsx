@@ -1,8 +1,8 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertTriangle, CheckCircle, Clock, TrendingDown, TrendingUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, TrendingDown, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface DashboardAlertsProps {
   adAccountId?: string;
@@ -85,18 +85,22 @@ export function DashboardAlerts({ adAccountId }: DashboardAlertsProps) {
               {alerts.map((alert) => {
                 const Icon = getAlertIcon(alert.type);
                 return (
-                  <div key={alert.id} className="flex items-start gap-3 p-3 border border-border rounded-sm hover:bg-muted/30 transition-colors">
+                  <div
+                    key={alert.id}
+                    className="flex items-start gap-3 p-3 border border-border rounded-sm hover:bg-muted/30 transition-colors"
+                  >
                     <Icon className={`h-4 w-4 mt-0.5 ${getAlertColor(alert.type)}`} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <div className="font-medium text-sm truncate">{alert.title}</div>
-                        <Badge variant="secondary" className={`text-xs px-2 py-0.5 ${getSeverityColor(alert.severity)}`}>
+                        <Badge
+                          variant="secondary"
+                          className={`text-xs px-2 py-0.5 ${getSeverityColor(alert.severity)}`}
+                        >
                           {alert.severity}
                         </Badge>
                       </div>
-                      <div className="text-xs text-muted-foreground mb-1">
-                        {alert.description}
-                      </div>
+                      <div className="text-xs text-muted-foreground mb-1">{alert.description}</div>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Clock className="h-3 w-3" />
                         {alert.time}

@@ -1,6 +1,6 @@
 'use client';
 
-import { QueryClient } from '@tanstack/react-query';
+import type { QueryClient } from '@tanstack/react-query';
 
 class BackgroundSyncService {
   private queryClient: QueryClient | null = null;
@@ -13,15 +13,18 @@ class BackgroundSyncService {
 
   start(adAccountId: string) {
     if (this.isActive || !this.queryClient) return;
-    
+
     this.isActive = true;
-    
+
     // Sync data mỗi 10 phút khi tab active
-    this.syncInterval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        this.syncCriticalData(adAccountId);
-      }
-    }, 10 * 60 * 1000); // 10 minutes
+    this.syncInterval = setInterval(
+      () => {
+        if (document.visibilityState === 'visible') {
+          this.syncCriticalData(adAccountId);
+        }
+      },
+      10 * 60 * 1000
+    ); // 10 minutes
 
     // Sync ngay khi start
     this.syncCriticalData(adAccountId);
@@ -42,15 +45,15 @@ class BackgroundSyncService {
       // Chỉ sync data quan trọng và thay đổi thường xuyên
       await Promise.allSettled([
         // Overview stats - thay đổi thường xuyên
-        this.queryClient.refetchQueries({ 
+        this.queryClient.refetchQueries({
           queryKey: ['overview-stats', adAccountId],
-          type: 'active' 
+          type: 'active',
         }),
-        
+
         // Campaign performance - cần update thường xuyên
-        this.queryClient.refetchQueries({ 
+        this.queryClient.refetchQueries({
           queryKey: ['campaigns', adAccountId],
-          type: 'active'
+          type: 'active',
         }),
       ]);
     } catch (error) {
@@ -76,7 +79,7 @@ class BackgroundSyncService {
             staleTime: 5 * 60 * 1000,
           });
           break;
-          
+
         case 'ad-sets':
           await this.queryClient.prefetchQuery({
             queryKey: ['ad-sets', adAccountId],

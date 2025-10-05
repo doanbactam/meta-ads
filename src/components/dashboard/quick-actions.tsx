@@ -1,19 +1,10 @@
 'use client';
 
+import { BarChart3, Copy, Download, Pause, Play, Plus, RefreshCw, Settings } from 'lucide-react';
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Plus, 
-  Play, 
-  Pause, 
-  Copy, 
-  BarChart3, 
-  Settings, 
-  Download,
-  RefreshCw
-} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface QuickActionsProps {
   adAccountId?: string;
@@ -132,14 +123,14 @@ export function QuickActions({ adAccountId, onRefresh }: QuickActionsProps) {
                 onClick={action.action}
                 className="w-full flex items-center gap-3 p-3 text-left border border-border rounded-sm hover:bg-muted/30 transition-colors"
               >
-                <div className={`flex items-center justify-center w-8 h-8 rounded-sm ${action.color}`}>
+                <div
+                  className={`flex items-center justify-center w-8 h-8 rounded-sm ${action.color}`}
+                >
                   <Icon className="h-4 w-4" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-sm">{action.title}</div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    {action.description}
-                  </div>
+                  <div className="text-xs text-muted-foreground truncate">{action.description}</div>
                 </div>
               </button>
             );

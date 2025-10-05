@@ -1,12 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getValidFacebookToken, handleFacebookTokenError } from '@/lib/server/api/facebook-auth';
+import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { userId: clerkId } = await auth();
 
@@ -27,7 +24,7 @@ export async function GET(
           {
             error: tokenResult.error,
             code: 'TOKEN_EXPIRED',
-            requiresReconnect: true
+            requiresReconnect: true,
           },
           { status: 401 }
         );
@@ -35,10 +32,7 @@ export async function GET(
 
       // Return 404 for ad account not found
       if (tokenResult.status === 404) {
-        return NextResponse.json(
-          { error: tokenResult.error },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: tokenResult.error }, { status: 404 });
       }
 
       // Return empty stats for other errors (not connected, etc.)
@@ -102,7 +96,7 @@ export async function GET(
             {
               error: 'Facebook access token has expired. Please reconnect your Facebook account.',
               code: 'TOKEN_EXPIRED',
-              requiresReconnect: true
+              requiresReconnect: true,
             },
             { status: 401 }
           );
@@ -129,9 +123,6 @@ export async function GET(
     });
   } catch (error) {
     console.error('Error fetching ad account stats:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch stats' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 });
   }
 }

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 interface RateLimitConfig {
   windowMs: number; // Time window in milliseconds
@@ -142,7 +142,10 @@ export function withRateLimit(
         );
 
     // Add rate limit headers
-    response.headers.set('X-RateLimit-Limit', String(config?.maxRequests || RATE_LIMIT_CONFIGS.facebook_api.maxRequests));
+    response.headers.set(
+      'X-RateLimit-Limit',
+      String(config?.maxRequests || RATE_LIMIT_CONFIGS.facebook_api.maxRequests)
+    );
     response.headers.set('X-RateLimit-Remaining', String(rateLimitResult.remaining));
     response.headers.set('X-RateLimit-Reset', new Date(rateLimitResult.resetTime).toISOString());
 

@@ -1,6 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { AlertCircle, Facebook, Loader2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -8,18 +12,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Facebook, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface FacebookConnectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConnect: (accessToken: string, adAccountId?: string) => Promise<{ success: boolean; error?: string; data?: any }>;
+  onConnect: (
+    accessToken: string,
+    adAccountId?: string
+  ) => Promise<{ success: boolean; error?: string; data?: any }>;
 }
 
-export function FacebookConnectDialog({ open, onOpenChange, onConnect }: FacebookConnectDialogProps) {
+export function FacebookConnectDialog({
+  open,
+  onOpenChange,
+  onConnect,
+}: FacebookConnectDialogProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const cleanupRef = useRef<(() => void) | null>(null);
@@ -49,7 +56,7 @@ export function FacebookConnectDialog({ open, onOpenChange, onConnect }: Faceboo
         toast.success('Facebook connection successful', {
           description: `Synchronized ${accountCount} ad account${accountCount !== 1 ? 's' : ''}. Refreshing...`,
         });
-        
+
         // Reload page to refresh all data
         setTimeout(() => {
           window.location.reload();
@@ -86,11 +93,7 @@ export function FacebookConnectDialog({ open, onOpenChange, onConnect }: Faceboo
     const scope = 'ads_read,ads_management,business_management';
     const authUrl = `https://www.facebook.com/v23.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_type=token`;
 
-    const popup = window.open(
-      authUrl,
-      'Facebook Login',
-      'width=600,height=700,top=100,left=100'
-    );
+    const popup = window.open(authUrl, 'Facebook Login', 'width=600,height=700,top=100,left=100');
 
     if (!popup) {
       setError('Failed to open popup window. Please allow popups for this site.');
@@ -169,11 +172,7 @@ export function FacebookConnectDialog({ open, onOpenChange, onConnect }: Faceboo
         )}
 
         <div className="space-y-4">
-          <Button
-            onClick={handleFacebookLogin}
-            disabled={loading}
-            className="w-full"
-          >
+          <Button onClick={handleFacebookLogin} disabled={loading} className="w-full">
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
-import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getValidFacebookToken, handleFacebookTokenError } from '@/lib/server/api/facebook-auth';
+import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
+import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
 
 export async function GET(req: NextRequest) {
   try {
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
     const user = await getOrCreateUserFromClerk(userId);
     const tokenResult = await getValidFacebookToken(adAccountId, user.id);
-    
+
     if ('error' in tokenResult) {
       return NextResponse.json({ error: tokenResult.error }, { status: tokenResult.status });
     }
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       // Batch requests in groups of 10 to avoid overwhelming the API
       const BATCH_SIZE = 10;
       const campaignsWithInsights = [];
-      
+
       for (let i = 0; i < campaigns.length; i += BATCH_SIZE) {
         const batch = campaigns.slice(i, i + BATCH_SIZE);
         const batchResults = await Promise.all(
@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ campaigns: campaignsWithInsights });
     } catch (apiError: any) {
       await handleFacebookTokenError(adAccount.id, apiError);
-      
+
       if (apiError.message === 'FACEBOOK_TOKEN_EXPIRED') {
         return NextResponse.json({ error: 'Token expired', tokenExpired: true }, { status: 401 });
       }
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
 
     const user = await getOrCreateUserFromClerk(userId);
     const tokenResult = await getValidFacebookToken(adAccountId, user.id);
-    
+
     if ('error' in tokenResult) {
       return NextResponse.json({ error: tokenResult.error }, { status: tokenResult.status });
     }
@@ -155,7 +155,7 @@ export async function DELETE(req: NextRequest) {
 
     const user = await getOrCreateUserFromClerk(userId);
     const tokenResult = await getValidFacebookToken(adAccountId, user.id);
-    
+
     if ('error' in tokenResult) {
       return NextResponse.json({ error: tokenResult.error }, { status: tokenResult.status });
     }

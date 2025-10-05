@@ -1,15 +1,15 @@
-import { TableConfig } from '@/components/table/universal-data-table';
-import { Campaign, AdGroup, Ad } from '@/types';
 import { Eye } from 'lucide-react';
 import { toast } from 'sonner';
+import type { TableConfig } from '@/components/table/universal-data-table';
 import { useFacebookStore } from '@/lib/client/stores/facebook-store';
+import type { Ad, AdGroup, Campaign } from '@/types';
 
 // Campaign Table Configuration
 export const campaignTableConfig: TableConfig<Campaign> = {
   queryKey: 'campaigns',
   apiEndpoint: '/api/campaigns',
   title: 'Campaigns',
-  
+
   columns: [
     {
       id: 'name',
@@ -69,9 +69,21 @@ export const campaignTableConfig: TableConfig<Campaign> = {
       render: (value) => <span className="text-muted-foreground">{value || '--'}</span>,
     },
   ],
-  
-  defaultColumns: ['name', 'status', 'budget', 'spent', 'impressions', 'clicks', 'ctr', 'conversions', 'cost', 'dateRange', 'schedule'],
-  
+
+  defaultColumns: [
+    'name',
+    'status',
+    'budget',
+    'spent',
+    'impressions',
+    'clicks',
+    'ctr',
+    'conversions',
+    'cost',
+    'dateRange',
+    'schedule',
+  ],
+
   actions: {
     create: {
       label: 'new',
@@ -92,12 +104,14 @@ export const campaignTableConfig: TableConfig<Campaign> = {
       onClick: async (ids) => {
         try {
           toast.promise(
-            Promise.all(ids.map(async (id) => {
-              const response = await fetch(`/api/campaigns/${id}/duplicate`, {
-                method: 'POST',
-              });
-              if (!response.ok) throw new Error('Failed to duplicate campaign');
-            })),
+            Promise.all(
+              ids.map(async (id) => {
+                const response = await fetch(`/api/campaigns/${id}/duplicate`, {
+                  method: 'POST',
+                });
+                if (!response.ok) throw new Error('Failed to duplicate campaign');
+              })
+            ),
             {
               loading: 'Duplicating campaigns...',
               success: () => {
@@ -119,12 +133,14 @@ export const campaignTableConfig: TableConfig<Campaign> = {
 
         try {
           toast.promise(
-            Promise.all(ids.map(async (id) => {
-              const response = await fetch(`/api/campaigns/${id}`, {
-                method: 'DELETE',
-              });
-              if (!response.ok) throw new Error('Failed to delete campaign');
-            })),
+            Promise.all(
+              ids.map(async (id) => {
+                const response = await fetch(`/api/campaigns/${id}`, {
+                  method: 'DELETE',
+                });
+                if (!response.ok) throw new Error('Failed to delete campaign');
+              })
+            ),
             {
               loading: 'Deleting campaigns...',
               success: () => {
@@ -140,7 +156,7 @@ export const campaignTableConfig: TableConfig<Campaign> = {
       },
     },
   },
-  
+
   emptyState: {
     title: 'No campaigns found in your Facebook ad account',
     description: 'Connect your Facebook account to sync and view your campaigns',
@@ -152,7 +168,7 @@ export const adGroupsTableConfig: TableConfig<AdGroup> = {
   queryKey: 'adSets',
   apiEndpoint: '/api/ad-sets',
   title: 'Ad Sets',
-  
+
   columns: [
     {
       id: 'name',
@@ -199,7 +215,7 @@ export const adGroupsTableConfig: TableConfig<AdGroup> = {
     {
       id: 'cpc',
       label: 'cpc',
-      accessor: (item) => item.clicks > 0 ? (item.spent || 0) / item.clicks : 0,
+      accessor: (item) => (item.clicks > 0 ? (item.spent || 0) / item.clicks : 0),
     },
     {
       id: 'conversions',
@@ -212,9 +228,21 @@ export const adGroupsTableConfig: TableConfig<AdGroup> = {
       accessor: (item) => ({ date_start: item.date_start, date_end: item.date_end }),
     },
   ],
-  
-  defaultColumns: ['name', 'campaign', 'status', 'budget', 'spent', 'impressions', 'clicks', 'ctr', 'cpc', 'conversions', 'dateRange'],
-  
+
+  defaultColumns: [
+    'name',
+    'campaign',
+    'status',
+    'budget',
+    'spent',
+    'impressions',
+    'clicks',
+    'ctr',
+    'cpc',
+    'conversions',
+    'dateRange',
+  ],
+
   actions: {
     create: {
       label: 'new ad set',
@@ -235,12 +263,14 @@ export const adGroupsTableConfig: TableConfig<AdGroup> = {
       onClick: async (ids) => {
         try {
           toast.promise(
-            Promise.all(ids.map(async (id) => {
-              const response = await fetch(`/api/ad-sets/${id}/duplicate`, {
-                method: 'POST',
-              });
-              if (!response.ok) throw new Error('Failed to duplicate ad set');
-            })),
+            Promise.all(
+              ids.map(async (id) => {
+                const response = await fetch(`/api/ad-sets/${id}/duplicate`, {
+                  method: 'POST',
+                });
+                if (!response.ok) throw new Error('Failed to duplicate ad set');
+              })
+            ),
             {
               loading: 'Duplicating ad sets...',
               success: () => {
@@ -262,12 +292,14 @@ export const adGroupsTableConfig: TableConfig<AdGroup> = {
 
         try {
           toast.promise(
-            Promise.all(ids.map(async (id) => {
-              const response = await fetch(`/api/ad-sets/${id}`, {
-                method: 'DELETE',
-              });
-              if (!response.ok) throw new Error('Failed to delete ad set');
-            })),
+            Promise.all(
+              ids.map(async (id) => {
+                const response = await fetch(`/api/ad-sets/${id}`, {
+                  method: 'DELETE',
+                });
+                if (!response.ok) throw new Error('Failed to delete ad set');
+              })
+            ),
             {
               loading: 'Deleting ad sets...',
               success: () => {
@@ -283,7 +315,7 @@ export const adGroupsTableConfig: TableConfig<AdGroup> = {
       },
     },
   },
-  
+
   emptyState: {
     title: 'No ad sets found',
     description: 'Ad sets will appear here once your campaigns have targeting groups',
@@ -295,7 +327,7 @@ export const adsTableConfig: TableConfig<Ad> = {
   queryKey: 'ads',
   apiEndpoint: '/api/ads',
   title: 'Ads',
-  
+
   columns: [
     {
       id: 'name',
@@ -355,9 +387,21 @@ export const adsTableConfig: TableConfig<Ad> = {
       accessor: (item) => ({ date_start: item.date_start, date_end: item.date_end }),
     },
   ],
-  
-  defaultColumns: ['name', 'adSet', 'format', 'status', 'impressions', 'clicks', 'ctr', 'engagement', 'spend', 'roas', 'dateRange'],
-  
+
+  defaultColumns: [
+    'name',
+    'adSet',
+    'format',
+    'status',
+    'impressions',
+    'clicks',
+    'ctr',
+    'engagement',
+    'spend',
+    'roas',
+    'dateRange',
+  ],
+
   actions: {
     create: {
       label: 'new ad',
@@ -378,12 +422,14 @@ export const adsTableConfig: TableConfig<Ad> = {
       onClick: async (ids) => {
         try {
           toast.promise(
-            Promise.all(ids.map(async (id) => {
-              const response = await fetch(`/api/ads/${id}/duplicate`, {
-                method: 'POST',
-              });
-              if (!response.ok) throw new Error('Failed to duplicate ad');
-            })),
+            Promise.all(
+              ids.map(async (id) => {
+                const response = await fetch(`/api/ads/${id}/duplicate`, {
+                  method: 'POST',
+                });
+                if (!response.ok) throw new Error('Failed to duplicate ad');
+              })
+            ),
             {
               loading: 'Duplicating ads...',
               success: () => {
@@ -405,12 +451,14 @@ export const adsTableConfig: TableConfig<Ad> = {
 
         try {
           toast.promise(
-            Promise.all(ids.map(async (id) => {
-              const response = await fetch(`/api/ads/${id}`, {
-                method: 'DELETE',
-              });
-              if (!response.ok) throw new Error('Failed to delete ad');
-            })),
+            Promise.all(
+              ids.map(async (id) => {
+                const response = await fetch(`/api/ads/${id}`, {
+                  method: 'DELETE',
+                });
+                if (!response.ok) throw new Error('Failed to delete ad');
+              })
+            ),
             {
               loading: 'Deleting ads...',
               success: () => {
@@ -437,7 +485,7 @@ export const adsTableConfig: TableConfig<Ad> = {
       },
     ],
   },
-  
+
   emptyState: {
     title: 'No ads found',
     description: 'Ads will appear here once you create creatives for your ad sets',

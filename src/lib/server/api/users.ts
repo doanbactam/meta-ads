@@ -1,5 +1,5 @@
+import type { SubscriptionPackage, UserRole } from '@prisma/client';
 import { prisma } from '@/lib/server/prisma';
-import { UserRole, SubscriptionPackage } from '@prisma/client';
 
 export interface User {
   id: string;
@@ -87,7 +87,9 @@ export async function updateUser(
       ...(updates.imageUrl !== undefined && { imageUrl: updates.imageUrl }),
       ...(updates.role && { role: updates.role }),
       ...(updates.subscriptionPackage && { subscriptionPackage: updates.subscriptionPackage }),
-      ...(updates.subscriptionExpiry !== undefined && { subscriptionExpiry: updates.subscriptionExpiry }),
+      ...(updates.subscriptionExpiry !== undefined && {
+        subscriptionExpiry: updates.subscriptionExpiry,
+      }),
     },
   });
 

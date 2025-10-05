@@ -1,12 +1,16 @@
 'use client';
 
-import { UniversalDataTable } from '@/components/table/universal-data-table';
-import { campaignTableConfig, adGroupsTableConfig, adsTableConfig } from '@/lib/client/table-configs';
-import { Campaign, AdGroup, Ad } from '@/types';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState, Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import { UniversalDataTable } from '@/components/table/universal-data-table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAdAccount } from '@/lib/client/contexts/ad-account-context';
+import {
+  adGroupsTableConfig,
+  adsTableConfig,
+  campaignTableConfig,
+} from '@/lib/client/table-configs';
+import type { Ad, AdGroup, Campaign } from '@/types';
 
 function CampaignsContent() {
   const router = useRouter();
@@ -55,10 +59,7 @@ function CampaignsContent() {
         </TabsContent>
 
         <TabsContent value="ads" className="mt-4">
-          <UniversalDataTable<Ad>
-            adAccountId={selectedAdAccount}
-            config={adsTableConfig}
-          />
+          <UniversalDataTable<Ad> adAccountId={selectedAdAccount} config={adsTableConfig} />
         </TabsContent>
       </Tabs>
     </div>

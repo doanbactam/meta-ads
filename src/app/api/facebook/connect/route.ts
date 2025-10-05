@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { prisma } from '@/lib/server/prisma';
-import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
-import { checkRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/server/rate-limiter';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
+import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
+import { prisma } from '@/lib/server/prisma';
+import { checkRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/server/rate-limiter';
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,7 +15,11 @@ export async function POST(req: NextRequest) {
     // Apply rate limiting
     const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
     const identifier = userId || ip;
-    const rateLimitResult = checkRateLimit(identifier, 'facebook_connect', RATE_LIMIT_CONFIGS.facebook_connect);
+    const rateLimitResult = checkRateLimit(
+      identifier,
+      'facebook_connect',
+      RATE_LIMIT_CONFIGS.facebook_connect
+    );
 
     if (!rateLimitResult.allowed) {
       const response = NextResponse.json(
@@ -26,7 +30,10 @@ export async function POST(req: NextRequest) {
         },
         { status: 429 }
       );
-      response.headers.set('X-RateLimit-Limit', String(RATE_LIMIT_CONFIGS.facebook_connect.maxRequests));
+      response.headers.set(
+        'X-RateLimit-Limit',
+        String(RATE_LIMIT_CONFIGS.facebook_connect.maxRequests)
+      );
       response.headers.set('X-RateLimit-Remaining', String(rateLimitResult.remaining));
       response.headers.set('X-RateLimit-Reset', new Date(rateLimitResult.resetTime).toISOString());
       if (rateLimitResult.retryAfter) {
@@ -46,10 +53,13 @@ export async function POST(req: NextRequest) {
     const validation = await api.validateToken();
 
     if (!validation.isValid) {
-      return NextResponse.json({
-        error: 'Invalid access token',
-        message: validation.error || 'The provided access token is invalid or expired',
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: 'Invalid access token',
+          message: validation.error || 'The provided access token is invalid or expired',
+        },
+        { status: 400 }
+      );
     }
 
     const user = await getOrCreateUserFromClerk(userId);
@@ -62,14 +72,18 @@ export async function POST(req: NextRequest) {
     const fbAccounts = await api.getUserAdAccounts();
 
     if (fbAccounts.length === 0) {
-      return NextResponse.json({
-        error: 'No ad accounts found',
-        message: 'No Facebook ad accounts found for this token. Please ensure you have ad accounts set up in your Facebook Business Manager.',
-      }, { status: 404 });
+      return NextResponse.json(
+        {
+          error: 'No ad accounts found',
+          message:
+            'No Facebook ad accounts found for this token. Please ensure you have ad accounts set up in your Facebook Business Manager.',
+        },
+        { status: 404 }
+      );
     }
 
     // Extract authorized account IDs (normalize by removing 'act_' prefix)
-    const authorizedAccountIds = fbAccounts.map(acc => acc.id.replace('act_', ''));
+    const authorizedAccountIds = fbAccounts.map((acc) => acc.id.replace('act_', ''));
 
     // Use transaction to ensure data consistency
     const result = await prisma.$transaction(async (tx) => {
@@ -83,7 +97,7 @@ export async function POST(req: NextRequest) {
 
       // Find accounts that are no longer authorized (should be removed)
       const accountsToRemove = existingAccounts.filter(
-        acc => acc.facebookAdAccountId && !authorizedAccountIds.includes(acc.facebookAdAccountId)
+        (acc) => acc.facebookAdAccountId && !authorizedAccountIds.includes(acc.facebookAdAccountId)
       );
 
       // Remove unauthorized accounts
@@ -91,7 +105,7 @@ export async function POST(req: NextRequest) {
       if (accountsToRemove.length > 0) {
         const deleteResult = await tx.adAccount.deleteMany({
           where: {
-            id: { in: accountsToRemove.map(acc => acc.id) },
+            id: { in: accountsToRemove.map((acc) => acc.id) },
           },
         });
         removedCount = deleteResult.count;
@@ -101,7 +115,7 @@ export async function POST(req: NextRequest) {
       // Upsert all authorized accounts (much faster than loop)
       const upsertPromises = fbAccounts.map((fbAccount) => {
         const cleanAccountId = fbAccount.id.replace('act_', '');
-        
+
         return tx.adAccount.upsert({
           where: {
             unique_user_facebook_account: {

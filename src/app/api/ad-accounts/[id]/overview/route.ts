@@ -1,16 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/server/prisma';
-import { 
-  withAuth, 
-  verifyAdAccountAccess, 
-  parseDateRange, 
-  calculatePercentageChange 
+import { type NextRequest, NextResponse } from 'next/server';
+import {
+  calculatePercentageChange,
+  parseDateRange,
+  verifyAdAccountAccess,
+  withAuth,
 } from '@/lib/server/api-utils';
+import { prisma } from '@/lib/server/prisma';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withAuth(params, async (userId, { id: adAccountId }) => {
     const { searchParams } = new URL(request.url);
     const { dateFilter, from, to } = parseDateRange(searchParams);

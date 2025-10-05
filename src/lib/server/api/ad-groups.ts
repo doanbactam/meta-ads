@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/server/prisma';
-import { AdGroup } from '@/types';
+import type { AdGroup } from '@/types';
 
 const EMPTY_AD_GROUP_STATS = {
   spent: 0,
@@ -61,7 +61,9 @@ export async function getAdGroupById(id: string): Promise<AdGroup | null> {
   };
 }
 
-export async function createAdGroup(data: Omit<AdGroup, 'id' | 'created_at' | 'updated_at'>): Promise<AdGroup> {
+export async function createAdGroup(
+  data: Omit<AdGroup, 'id' | 'created_at' | 'updated_at'>
+): Promise<AdGroup> {
   const adGroup = await prisma.adGroup.create({
     data: {
       campaignId: data.campaign_id,

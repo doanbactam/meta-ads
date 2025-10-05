@@ -16,9 +16,9 @@ class DataPersistence {
       const item: CacheItem<T> = {
         data,
         timestamp: now,
-        expiresAt: now + (ttlMinutes * 60 * 1000),
+        expiresAt: now + ttlMinutes * 60 * 1000,
       };
-      
+
       localStorage.setItem(this.prefix + key, JSON.stringify(item));
     } catch (error) {
       console.warn('Failed to save to localStorage:', error);
@@ -32,7 +32,7 @@ class DataPersistence {
       if (!item) return null;
 
       const cached: CacheItem<T> = JSON.parse(item);
-      
+
       // Kiểm tra expiration
       if (Date.now() > cached.expiresAt) {
         this.remove(key);
@@ -60,8 +60,8 @@ class DataPersistence {
     try {
       const now = Date.now();
       const keys = Object.keys(localStorage);
-      
-      keys.forEach(key => {
+
+      keys.forEach((key) => {
         if (key.startsWith(this.prefix)) {
           try {
             const item = localStorage.getItem(key);
@@ -87,8 +87,8 @@ class DataPersistence {
     try {
       let size = 0;
       const keys = Object.keys(localStorage);
-      
-      keys.forEach(key => {
+
+      keys.forEach((key) => {
         if (key.startsWith(this.prefix)) {
           const item = localStorage.getItem(key);
           if (item) {
@@ -96,7 +96,7 @@ class DataPersistence {
           }
         }
       });
-      
+
       return size;
     } catch {
       return 0;
@@ -108,7 +108,10 @@ export const dataPersistence = new DataPersistence();
 
 // Auto cleanup mỗi 30 phút
 if (typeof window !== 'undefined') {
-  setInterval(() => {
-    dataPersistence.cleanup();
-  }, 30 * 60 * 1000);
+  setInterval(
+    () => {
+      dataPersistence.cleanup();
+    },
+    30 * 60 * 1000
+  );
 }

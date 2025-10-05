@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useFacebookStore } from '@/lib/client/stores/facebook-store';
 
 interface FacebookConnectionStatus {
@@ -19,9 +19,7 @@ async function checkFacebookConnection(adAccountId?: string): Promise<FacebookCo
   }
 
   try {
-    const response = await fetch(
-      `/api/facebook/check-connection?adAccountId=${adAccountId}`
-    );
+    const response = await fetch(`/api/facebook/check-connection?adAccountId=${adAccountId}`);
 
     const data = await response.json();
 
@@ -93,7 +91,12 @@ export function useFacebookConnection(adAccountId?: string) {
   const queryClient = useQueryClient();
   const { setConnected, setShowConnectionDialog } = useFacebookStore();
 
-  const { data: status, isLoading, error, refetch } = useQuery({
+  const {
+    data: status,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['facebook-connection', adAccountId],
     queryFn: () => checkFacebookConnection(adAccountId),
     enabled: !!adAccountId,
@@ -109,10 +112,10 @@ export function useFacebookConnection(adAccountId?: string) {
       connectFacebookAccount(accessToken, fbAdAccountId),
     onSuccess: async (data) => {
       setConnected(true, data.adAccountId, data.facebookAdAccountId, data.tokenExpiry);
-      
+
       // Small delay to ensure database changes are committed
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       // Invalidate all related queries to refresh data
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['facebook-connection'] }),
@@ -125,11 +128,11 @@ export function useFacebookConnection(adAccountId?: string) {
         queryClient.invalidateQueries({ queryKey: ['ad-sets'] }),
         queryClient.invalidateQueries({ queryKey: ['ads'] }),
       ]);
-      
+
       // Also remove any stale queries from the cache
-      queryClient.removeQueries({ 
-        queryKey: ['facebook-connection'], 
-        exact: false 
+      queryClient.removeQueries({
+        queryKey: ['facebook-connection'],
+        exact: false,
       });
     },
     onError: (error) => {
@@ -141,10 +144,10 @@ export function useFacebookConnection(adAccountId?: string) {
   const connectFacebook = async (accessToken: string, fbAdAccountId?: string) => {
     try {
       const result = await connectMutation.mutateAsync({ accessToken, fbAdAccountId });
-      
+
       // Close dialog and show success
       setShowConnectionDialog(false);
-      
+
       return { success: true, data: result };
     } catch (error) {
       console.error('Connect Facebook error:', error);

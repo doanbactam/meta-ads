@@ -1,11 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/server/prisma';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -48,7 +45,7 @@ export async function GET(
     // Get today's spend
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const todaySpend = await prisma.campaign.aggregate({
       where: {
         adAccountId: adAccountId,
@@ -78,9 +75,6 @@ export async function GET(
     return NextResponse.json(statusData);
   } catch (error) {
     console.error('Error fetching account status:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch account status' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch account status' }, { status: 500 });
   }
 }

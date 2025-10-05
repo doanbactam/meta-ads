@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { prisma } from '@/lib/server/prisma';
-import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
-import { checkRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/server/rate-limiter';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
+import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
+import { prisma } from '@/lib/server/prisma';
+import { checkRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/server/rate-limiter';
 
 export async function GET(req: NextRequest) {
   try {
@@ -15,7 +15,11 @@ export async function GET(req: NextRequest) {
     // Apply rate limiting
     const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
     const identifier = userId || ip;
-    const rateLimitResult = checkRateLimit(identifier, 'facebook_api', RATE_LIMIT_CONFIGS.facebook_api);
+    const rateLimitResult = checkRateLimit(
+      identifier,
+      'facebook_api',
+      RATE_LIMIT_CONFIGS.facebook_api
+    );
 
     if (!rateLimitResult.allowed) {
       const response = NextResponse.json(
@@ -26,7 +30,10 @@ export async function GET(req: NextRequest) {
         },
         { status: 429 }
       );
-      response.headers.set('X-RateLimit-Limit', String(RATE_LIMIT_CONFIGS.facebook_api.maxRequests));
+      response.headers.set(
+        'X-RateLimit-Limit',
+        String(RATE_LIMIT_CONFIGS.facebook_api.maxRequests)
+      );
       response.headers.set('X-RateLimit-Remaining', String(rateLimitResult.remaining));
       response.headers.set('X-RateLimit-Reset', new Date(rateLimitResult.resetTime).toISOString());
       if (rateLimitResult.retryAfter) {
@@ -52,12 +59,15 @@ export async function GET(req: NextRequest) {
     });
 
     if (!adAccount) {
-      return NextResponse.json({
-        connected: false,
-        error: 'Ad account not found',
-        requiresReconnect: true,
-        reason: 'AD_ACCOUNT_NOT_FOUND'
-      }, { status: 404 });
+      return NextResponse.json(
+        {
+          connected: false,
+          error: 'Ad account not found',
+          requiresReconnect: true,
+          reason: 'AD_ACCOUNT_NOT_FOUND',
+        },
+        { status: 404 }
+      );
     }
 
     if (!adAccount.facebookAccessToken) {
@@ -65,7 +75,7 @@ export async function GET(req: NextRequest) {
         connected: false,
         message: 'No Facebook token found',
         requiresReconnect: true,
-        reason: 'TOKEN_MISSING'
+        reason: 'TOKEN_MISSING',
       });
     }
 
@@ -82,18 +92,20 @@ export async function GET(req: NextRequest) {
         message: 'Token expired',
         requiresReconnect: true,
         reason: 'TOKEN_EXPIRED',
-        expiredAt: adAccount.facebookTokenExpiry
+        expiredAt: adAccount.facebookTokenExpiry,
       });
     }
 
     // If token was recently updated (within last 2 minutes) and status is active,
     // skip Facebook API validation to prevent race conditions and unnecessary API calls
-    const recentlyUpdated = adAccount.updatedAt && 
-      new Date().getTime() - adAccount.updatedAt.getTime() < 2 * 60 * 1000;
+    const recentlyUpdated =
+      adAccount.updatedAt && new Date().getTime() - adAccount.updatedAt.getTime() < 2 * 60 * 1000;
 
     if (recentlyUpdated && adAccount.status === 'ACTIVE') {
       // Token was just updated, trust it without re-validating
-      console.log(`[Check Connection] Skipping validation for recently updated account ${adAccount.id}`);
+      console.log(
+        `[Check Connection] Skipping validation for recently updated account ${adAccount.id}`
+      );
       return NextResponse.json({
         connected: true,
         adAccountId: adAccount.id,
@@ -120,7 +132,7 @@ export async function GET(req: NextRequest) {
         message: validation.error || 'Token is invalid',
         requiresReconnect: true,
         reason: 'TOKEN_INVALID',
-        errorDetails: validation.error
+        errorDetails: validation.error,
       });
     }
 
@@ -144,7 +156,7 @@ export async function GET(req: NextRequest) {
         connected: false,
         error: 'Failed to check connection',
         requiresReconnect: true,
-        reason: 'CONNECTION_ERROR'
+        reason: 'CONNECTION_ERROR',
       },
       { status: 500 }
     );

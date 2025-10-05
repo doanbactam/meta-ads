@@ -1,11 +1,11 @@
 'use client';
 
-import { Search, Plus, Edit, Copy, Trash2, RefreshCw } from 'lucide-react';
+import { Copy, Edit, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { FacebookDateRangePicker } from '@/components/facebook/facebook-date-range-picker';
+import { ColumnsSelector } from '@/components/table/columns-selector';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ColumnsSelector } from '@/components/table/columns-selector';
-import { FacebookDateRangePicker } from '@/components/facebook/facebook-date-range-picker';
-import { TableConfig, TableColumn } from './types';
+import { TableColumn, type TableConfig } from './types';
 
 interface TableToolbarProps<T> {
   config: TableConfig<T>;
@@ -47,7 +47,7 @@ export function TableToolbar<T>({
           {features.search && (
             <div className="relative w-64">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input 
+              <Input
                 placeholder={`search ${config.title.toLowerCase()}...`}
                 className="h-8 pl-8 text-xs"
                 value={searchQuery}
@@ -66,8 +66,8 @@ export function TableToolbar<T>({
         <div className="flex items-center justify-between">
           <div className="flex gap-1.5">
             {config.actions?.create && (
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 className="h-8 gap-1.5 px-3 text-xs"
                 onClick={config.actions?.create?.onClick}
               >
@@ -75,13 +75,13 @@ export function TableToolbar<T>({
                 {config.actions?.create?.label}
               </Button>
             )}
-            
+
             {features.bulkActions && selectedRows.length > 0 && (
               <>
                 {config.actions?.edit && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="h-8 gap-1.5 px-3 text-xs"
                     onClick={() => config.actions?.edit?.onClick(selectedRows)}
                   >
@@ -89,11 +89,11 @@ export function TableToolbar<T>({
                     {config.actions?.edit?.label}
                   </Button>
                 )}
-                
+
                 {config.actions?.duplicate && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="h-8 gap-1.5 px-3 text-xs"
                     onClick={() => config.actions?.duplicate?.onClick(selectedRows)}
                   >
@@ -101,11 +101,11 @@ export function TableToolbar<T>({
                     {config.actions?.duplicate?.label}
                   </Button>
                 )}
-                
+
                 {config.actions?.delete && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="h-8 gap-1.5 px-3 text-xs"
                     onClick={() => config.actions?.delete?.onClick(selectedRows)}
                   >
@@ -116,16 +116,16 @@ export function TableToolbar<T>({
               </>
             )}
           </div>
-          
+
           <div className="flex gap-1.5">
             {features.columnSelector && (
               <ColumnsSelector
-                columns={config.columns.map(col => ({ id: col.id, label: col.label }))}
+                columns={config.columns.map((col) => ({ id: col.id, label: col.label }))}
                 visibleColumns={visibleColumns}
                 onColumnsChange={onColumnsChange}
               />
             )}
-            
+
             {config.actions?.custom?.map((action, index) => (
               <Button
                 key={index}
@@ -138,14 +138,14 @@ export function TableToolbar<T>({
                 {action.label}
               </Button>
             ))}
-            
-            <Button 
-              variant="outline" 
-              size="sm" 
+
+            <Button
+              variant="outline"
+              size="sm"
               className="h-8 gap-1.5 px-3 text-xs"
               onClick={onRefresh}
               disabled={isRefreshing}
-              title={isRefreshing ? "Refreshing..." : "Refresh data"}
+              title={isRefreshing ? 'Refreshing...' : 'Refresh data'}
             >
               <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
               {isRefreshing ? 'refreshing...' : 'refresh'}

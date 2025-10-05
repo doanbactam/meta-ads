@@ -15,14 +15,10 @@ export async function register() {
       'DATABASE_URL',
     ];
 
-    const missingEnvVars = requiredEnvVars.filter(
-      (envVar) => !process.env[envVar]
-    );
+    const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
 
     if (missingEnvVars.length > 0) {
-      console.warn(
-        `⚠️  Missing environment variables: ${missingEnvVars.join(', ')}`
-      );
+      console.warn(`⚠️  Missing environment variables: ${missingEnvVars.join(', ')}`);
     }
 
     // Log startup

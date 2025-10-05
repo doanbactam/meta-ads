@@ -1,4 +1,4 @@
-import { FacebookAdsApi, AdAccount, Campaign, AdSet, Ad } from 'facebook-nodejs-business-sdk';
+import { Ad, AdAccount, AdSet, Campaign, FacebookAdsApi } from 'facebook-nodejs-business-sdk';
 
 // Facebook API V23 Error Codes
 export const FACEBOOK_ERROR_CODES = {
@@ -82,7 +82,7 @@ export class FacebookMarketingAPI {
           {
             method: 'GET',
             headers: {
-              'Accept': 'application/json',
+              Accept: 'application/json',
             },
             signal: controller.signal,
           }
@@ -126,27 +126,28 @@ export class FacebookMarketingAPI {
         };
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Unknown error');
-        
+
         // Check if it's a timeout or connection error
-        const isNetworkError = lastError.name === 'AbortError' || 
-                               lastError.message.includes('timeout') ||
-                               lastError.message.includes('ECONNREFUSED') ||
-                               lastError.message.includes('ETIMEDOUT') ||
-                               lastError.message.includes('ConnectTimeoutError');
+        const isNetworkError =
+          lastError.name === 'AbortError' ||
+          lastError.message.includes('timeout') ||
+          lastError.message.includes('ECONNREFUSED') ||
+          lastError.message.includes('ETIMEDOUT') ||
+          lastError.message.includes('ConnectTimeoutError');
 
         // Only retry on network errors
         if (isNetworkError && attempt < maxRetries) {
           console.log(`Token validation attempt ${attempt + 1} failed, retrying...`);
-          await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1))); // Exponential backoff
+          await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1))); // Exponential backoff
           continue;
         }
 
         console.error('Token validation error:', error);
         return {
           isValid: false,
-          error: isNetworkError 
+          error: isNetworkError
             ? 'Unable to connect to Facebook. Please check your internet connection and try again.'
-            : (lastError.message || 'Unknown error occurred during validation'),
+            : lastError.message || 'Unknown error occurred during validation',
         };
       }
     }
@@ -168,7 +169,7 @@ export class FacebookMarketingAPI {
         {
           method: 'GET',
           headers: {
-            'Accept': 'application/json',
+            Accept: 'application/json',
           },
           signal: controller.signal,
         }
@@ -178,7 +179,8 @@ export class FacebookMarketingAPI {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.error?.message || `HTTP ${response.status}: Failed to fetch ad accounts`;
+        const errorMessage =
+          errorData.error?.message || `HTTP ${response.status}: Failed to fetch ad accounts`;
         throw new Error(errorMessage);
       }
 
@@ -201,12 +203,18 @@ export class FacebookMarketingAPI {
       }));
     } catch (error) {
       console.error('Error fetching ad accounts:', error);
-      const isNetworkError = error instanceof Error && 
-        (error.name === 'AbortError' || error.message.includes('timeout') || error.message.includes('fetch failed'));
-      
-      throw new Error(isNetworkError 
-        ? 'Unable to connect to Facebook. Please check your internet connection.'
-        : (error instanceof Error ? error.message : 'Unknown error fetching ad accounts')
+      const isNetworkError =
+        error instanceof Error &&
+        (error.name === 'AbortError' ||
+          error.message.includes('timeout') ||
+          error.message.includes('fetch failed'));
+
+      throw new Error(
+        isNetworkError
+          ? 'Unable to connect to Facebook. Please check your internet connection.'
+          : error instanceof Error
+            ? error.message
+            : 'Unknown error fetching ad accounts'
       );
     }
   }
@@ -226,7 +234,7 @@ export class FacebookMarketingAPI {
         {
           method: 'GET',
           headers: {
-            'Accept': 'application/json',
+            Accept: 'application/json',
           },
           signal: controller.signal,
         }
@@ -236,7 +244,8 @@ export class FacebookMarketingAPI {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.error?.message || `HTTP ${response.status}: Failed to fetch campaigns`;
+        const errorMessage =
+          errorData.error?.message || `HTTP ${response.status}: Failed to fetch campaigns`;
         const errorCode = errorData.error?.code;
 
         // Check if it's a token expiry error using standardized error codes
@@ -289,12 +298,18 @@ export class FacebookMarketingAPI {
       }));
     } catch (error) {
       console.error('Error fetching campaigns:', error);
-      const isNetworkError = error instanceof Error && 
-        (error.name === 'AbortError' || error.message.includes('timeout') || error.message.includes('fetch failed'));
-      
-      throw new Error(isNetworkError 
-        ? 'Unable to connect to Facebook. Please check your internet connection.'
-        : (error instanceof Error ? error.message : 'Unknown error fetching campaigns')
+      const isNetworkError =
+        error instanceof Error &&
+        (error.name === 'AbortError' ||
+          error.message.includes('timeout') ||
+          error.message.includes('fetch failed'));
+
+      throw new Error(
+        isNetworkError
+          ? 'Unable to connect to Facebook. Please check your internet connection.'
+          : error instanceof Error
+            ? error.message
+            : 'Unknown error fetching campaigns'
       );
     }
   }

@@ -1,12 +1,12 @@
 import './globals.css';
-import type { Metadata } from 'next';
-import { JetBrains_Mono } from 'next/font/google';
-import { ThemeProvider } from '@/components/common/theme-provider';
 import { ClerkProvider } from '@clerk/nextjs';
 import { dark } from '@clerk/themes';
-import { QueryProvider } from '@/lib/client/providers/query-provider';
-import { UserSettingsProvider } from '@/lib/client/contexts/user-settings-context';
+import type { Metadata } from 'next';
+import { JetBrains_Mono } from 'next/font/google';
 import { Toaster } from 'sonner';
+import { ThemeProvider } from '@/components/common/theme-provider';
+import { UserSettingsProvider } from '@/lib/client/contexts/user-settings-context';
+import { QueryProvider } from '@/lib/client/providers/query-provider';
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
@@ -20,11 +20,7 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic';
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider
       appearance={{

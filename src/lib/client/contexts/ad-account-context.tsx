@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, type ReactNode, useContext } from 'react';
 
 interface AdAccountContextType {
   selectedAdAccount: string;
@@ -23,8 +23,6 @@ interface AdAccountProviderProps {
 
 export function AdAccountProvider({ children, selectedAdAccount }: AdAccountProviderProps) {
   return (
-    <AdAccountContext.Provider value={{ selectedAdAccount }}>
-      {children}
-    </AdAccountContext.Provider>
+    <AdAccountContext.Provider value={{ selectedAdAccount }}>{children}</AdAccountContext.Provider>
   );
 }

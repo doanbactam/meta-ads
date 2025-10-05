@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
 import { prisma } from '@/lib/server/prisma';
 
@@ -20,10 +20,7 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error fetching user settings:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch user settings' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch user settings' }, { status: 500 });
   }
 }
 
@@ -71,9 +68,6 @@ export async function PATCH(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error updating user settings:', error);
-    return NextResponse.json(
-      { error: 'Failed to update user settings' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to update user settings' }, { status: 500 });
   }
 }

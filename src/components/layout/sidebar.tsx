@@ -1,10 +1,10 @@
 'use client';
 
-import { LayoutDashboard, Megaphone, Sun, Moon, Terminal, ChevronLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ChevronLeft, LayoutDashboard, Megaphone, Moon, Sun, Terminal } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -43,23 +43,13 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
               <Terminal className="h-4 w-4" />
               <span className="text-sm font-medium">ad_manager</span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0"
-              onClick={onToggle}
-            >
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={onToggle}>
               <ChevronLeft className="h-3.5 w-3.5" />
             </Button>
           </>
         )}
         {collapsed && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 mx-auto"
-            onClick={onToggle}
-          >
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 mx-auto" onClick={onToggle}>
             <ChevronLeft className="h-3.5 w-3.5 rotate-180" />
           </Button>
         )}

@@ -88,8 +88,8 @@ export function DashboardCharts({ adAccountId, dateRange }: DashboardChartsProps
   }
 
   // Simple bar chart visualization using CSS
-  const maxSpend = Math.max(...dailyStats.map(d => d.spend));
-  const maxImpressions = Math.max(...dailyStats.map(d => d.impressions));
+  const maxSpend = Math.max(...dailyStats.map((d) => d.spend));
+  const maxImpressions = Math.max(...dailyStats.map((d) => d.impressions));
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
@@ -103,16 +103,16 @@ export function DashboardCharts({ adAccountId, dateRange }: DashboardChartsProps
             {dailyStats.slice(-7).map((day, index) => (
               <div key={day.date} className="flex items-center gap-2">
                 <div className="text-xs text-muted-foreground w-16">
-                  {new Date(day.date).toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric' 
+                  {new Date(day.date).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
                   })}
                 </div>
                 <div className="flex-1 bg-muted rounded-sm h-4 relative overflow-hidden">
-                  <div 
+                  <div
                     className="bg-chart-1 h-full rounded-sm transition-all duration-300"
-                    style={{ 
-                      width: maxSpend > 0 ? `${(day.spend / maxSpend) * 100}%` : '0%' 
+                    style={{
+                      width: maxSpend > 0 ? `${(day.spend / maxSpend) * 100}%` : '0%',
                     }}
                   />
                 </div>
@@ -135,27 +135,31 @@ export function DashboardCharts({ adAccountId, dateRange }: DashboardChartsProps
             {dailyStats.slice(-7).map((day, index) => (
               <div key={day.date} className="flex items-center gap-2">
                 <div className="text-xs text-muted-foreground w-16">
-                  {new Date(day.date).toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric' 
+                  {new Date(day.date).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
                   })}
                 </div>
                 <div className="flex-1 space-y-1">
                   {/* Impressions bar */}
                   <div className="bg-muted rounded-sm h-2 relative overflow-hidden">
-                    <div 
+                    <div
                       className="bg-chart-2 h-full rounded-sm transition-all duration-300"
-                      style={{ 
-                        width: maxImpressions > 0 ? `${(day.impressions / maxImpressions) * 100}%` : '0%' 
+                      style={{
+                        width:
+                          maxImpressions > 0
+                            ? `${(day.impressions / maxImpressions) * 100}%`
+                            : '0%',
                       }}
                     />
                   </div>
                   {/* Clicks bar */}
                   <div className="bg-muted rounded-sm h-2 relative overflow-hidden">
-                    <div 
+                    <div
                       className="bg-chart-3 h-full rounded-sm transition-all duration-300"
-                      style={{ 
-                        width: maxImpressions > 0 ? `${(day.clicks / maxImpressions) * 100}%` : '0%' 
+                      style={{
+                        width:
+                          maxImpressions > 0 ? `${(day.clicks / maxImpressions) * 100}%` : '0%',
                       }}
                     />
                   </div>
