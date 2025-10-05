@@ -29,24 +29,7 @@ export default function RootLayout({
     <ClerkProvider
       appearance={{
         baseTheme: dark,
-        variables: {
-          colorPrimary: 'hsl(var(--primary))',
-          colorBackground: 'hsl(var(--background))',
-          colorInputBackground: 'hsl(var(--input))',
-          colorInputText: 'hsl(var(--foreground))',
-          colorText: 'hsl(var(--foreground))',
-          colorTextSecondary: 'hsl(var(--muted-foreground))',
-          colorDanger: 'hsl(var(--destructive))',
-          borderRadius: '0.375rem',
-        },
-        elements: {
-          card: 'bg-card border-border',
-          headerTitle: 'text-foreground',
-          headerSubtitle: 'text-muted-foreground',
-          socialButtonsBlockButton: 'border-border hover:bg-accent',
-          formButtonPrimary: 'bg-primary text-primary-foreground hover:bg-primary/90',
-          footerActionLink: 'text-primary hover:text-primary/80',
-        },
+        variables: { colorPrimary: 'hsl(var(--primary))' },
       }}
     >
       <html lang="en" suppressHydrationWarning>
