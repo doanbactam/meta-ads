@@ -86,6 +86,24 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    // If token was recently updated (within last 2 minutes) and status is active,
+    // skip Facebook API validation to prevent race conditions and unnecessary API calls
+    const recentlyUpdated = adAccount.updatedAt && 
+      new Date().getTime() - adAccount.updatedAt.getTime() < 2 * 60 * 1000;
+
+    if (recentlyUpdated && adAccount.status === 'active') {
+      // Token was just updated, trust it without re-validating
+      console.log(`[Check Connection] Skipping validation for recently updated account ${adAccount.id}`);
+      return NextResponse.json({
+        connected: true,
+        adAccountId: adAccount.id,
+        facebookAdAccountId: adAccount.facebookAdAccountId,
+        tokenExpiry: adAccount.facebookTokenExpiry,
+        tokenExpiryWarning: false,
+        scopes: [],
+      });
+    }
+
     // Validate token with Facebook API
     const api = new FacebookMarketingAPI(adAccount.facebookAccessToken);
     const validation = await api.validateToken();

@@ -98,9 +98,10 @@ export function useFacebookConnection(adAccountId?: string) {
     queryFn: () => checkFacebookConnection(adAccountId),
     enabled: !!adAccountId,
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    staleTime: 1 * 60 * 1000, // 1 minute
-    retry: 2,
+    refetchOnWindowFocus: false, // Prevent excessive refetching
+    staleTime: 2 * 60 * 1000, // 2 minutes (matches our recent update window)
+    retry: 1, // Reduce retries to prevent loops
+    retryDelay: 1000,
   });
 
   const connectMutation = useMutation({
@@ -108,6 +109,10 @@ export function useFacebookConnection(adAccountId?: string) {
       connectFacebookAccount(accessToken, fbAdAccountId),
     onSuccess: async (data) => {
       setConnected(true, data.adAccountId, data.facebookAdAccountId, data.tokenExpiry);
+      
+      // Small delay to ensure database changes are committed
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       // Invalidate all related queries to refresh data
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['facebook-connection'] }),
@@ -120,6 +125,12 @@ export function useFacebookConnection(adAccountId?: string) {
         queryClient.invalidateQueries({ queryKey: ['ad-sets'] }),
         queryClient.invalidateQueries({ queryKey: ['ads'] }),
       ]);
+      
+      // Also remove any stale queries from the cache
+      queryClient.removeQueries({ 
+        queryKey: ['facebook-connection'], 
+        exact: false 
+      });
     },
     onError: (error) => {
       console.error('Facebook connection error:', error);

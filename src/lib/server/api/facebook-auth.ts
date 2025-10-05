@@ -9,7 +9,8 @@ import { AdAccount } from '@prisma/client';
  */
 export async function getValidFacebookToken(
   adAccountId: string,
-  userId: string
+  userId: string,
+  options?: { skipFacebookValidation?: boolean }
 ): Promise<{ token: string; adAccount: AdAccount } | { error: string; status: number }> {
   const adAccount = await prisma.adAccount.findFirst({
     where: {
@@ -35,6 +36,21 @@ export async function getValidFacebookToken(
     });
 
     return { error: 'Facebook token expired. Please reconnect your account.', status: 401 };
+  }
+
+  // Skip Facebook API validation if requested (e.g., token was just updated)
+  // This prevents race conditions and unnecessary API calls after reconnection
+  if (options?.skipFacebookValidation) {
+    return { token: adAccount.facebookAccessToken, adAccount };
+  }
+
+  // Check if token was recently updated (within last 2 minutes)
+  // If so, trust the stored token without re-validating with Facebook
+  const recentlyUpdated = adAccount.updatedAt && 
+    new Date().getTime() - adAccount.updatedAt.getTime() < 2 * 60 * 1000;
+
+  if (recentlyUpdated && adAccount.status === 'active') {
+    return { token: adAccount.facebookAccessToken, adAccount };
   }
 
   // Validate token with Facebook API

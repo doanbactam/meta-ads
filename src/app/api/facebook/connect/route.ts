@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
 
       if (existingAccount) {
         // Overwrite access token for reconnection
-        await prisma.adAccount.update({
+        const updated = await prisma.adAccount.update({
           where: { id: existingAccount.id },
           data: {
             facebookAccessToken: accessToken,
@@ -129,9 +129,13 @@ export async function POST(req: NextRequest) {
           },
         });
 
+        console.log(`[Facebook Connect] Reconnected account ${existingAccount.id}, updatedAt: ${updated.updatedAt}`);
+
         return NextResponse.json({
           success: true,
           adAccountId: existingAccount.id,
+          facebookAdAccountId: cleanAccountId,
+          tokenExpiry: expiryDate,
           message: 'Facebook account reconnected successfully',
         });
       }
@@ -207,9 +211,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    console.log(`[Facebook Connect] Synchronized ${updatedAccounts.length} accounts`);
+
     return NextResponse.json({
       success: true,
       adAccountId: updatedAccounts[0]?.id,
+      facebookAdAccountId: updatedAccounts[0]?.facebookAdAccountId || undefined,
+      tokenExpiry: expiryDate,
       accounts: fbAccounts,
       removedAccounts: accountsToRemove.length,
       message: `Facebook ${updatedAccounts.length > 1 ? 'accounts' : 'account'} synchronized successfully`,
