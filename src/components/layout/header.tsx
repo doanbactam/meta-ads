@@ -14,10 +14,10 @@ import { useEffect } from 'react';
 import { type AdAccount } from '@/lib/server/api/ad-accounts';
 import { UserButton, useUser, SignedIn, SignedOut } from '@clerk/nextjs';
 import { useQuery } from '@tanstack/react-query';
-import { AdAccountStatus } from '@/components/ad-account-status';
-import { AdAccountInfo } from '@/components/ad-account-info';
-import { AdAccountStats } from '@/components/ad-account-stats';
-import { SettingsDialog } from '@/components/settings-dialog';
+import { AdAccountStatus } from '@/components/dashboard/ad-account-status';
+import { AdAccountInfo } from '@/components/dashboard/ad-account-info';
+import { AdAccountStats } from '@/components/dashboard/ad-account-stats';
+import { SettingsDialog } from '@/components/common/settings-dialog';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;

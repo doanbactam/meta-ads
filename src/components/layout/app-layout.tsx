@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, ReactNode } from 'react';
-import { Sidebar } from '@/components/sidebar';
-import { MobileSidebar } from '@/components/mobile-sidebar';
-import { Header } from '@/components/header';
-import { FacebookConnectDialog } from '@/components/facebook-connect-dialog';
+import { Sidebar } from '@/components/layout/sidebar';
+import { MobileSidebar } from '@/components/layout/mobile-sidebar';
+import { Header } from '@/components/layout/header';
+import { FacebookConnectDialog } from '@/components/facebook/facebook-connect-dialog';
 import { useFacebookConnection } from '@/hooks/use-facebook-connection';
 import { useFacebookStore } from '@/lib/client/stores/facebook-store';
 

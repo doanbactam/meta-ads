@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useOverviewStats } from '@/hooks/use-shared-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import { FacebookDateRangePicker } from '@/components/facebook-date-range-picker';
+import { FacebookDateRangePicker } from '@/components/facebook/facebook-date-range-picker';
 
 import { formatCurrency } from '@/lib/shared/formatters';
 import { TrendingUp, TrendingDown, DollarSign, Eye, MousePointer, Target, Percent, CreditCard, BarChart3 } from 'lucide-react';
