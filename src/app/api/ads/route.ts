@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
 import { prisma } from '@/lib/server/prisma';
+import { mapFacebookStatus } from '@/lib/shared/formatters';
 
 export async function GET(request: NextRequest) {
   try {
@@ -127,14 +128,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-function mapFacebookStatus(status: string): string {
-  const statusMap: { [key: string]: string } = {
-    'ACTIVE': 'Active',
-    'PAUSED': 'Paused',
-    'DELETED': 'Removed',
-    'ARCHIVED': 'Ended',
-  };
-  return statusMap[status] || 'Pending';
 }

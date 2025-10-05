@@ -64,3 +64,13 @@ export function formatDateRange(start: string | Date | null | undefined, end: st
   }
   return `${formatDate(start)} - ${formatDate(end)}`;
 }
+
+export function mapFacebookStatus(status: string, entityType: 'campaign' | 'adset' | 'ad' = 'ad'): string {
+  const statusMap: { [key: string]: string } = {
+    'ACTIVE': entityType === 'campaign' ? 'Eligible' : 'Active',
+    'PAUSED': 'Paused',
+    'DELETED': 'Removed',
+    'ARCHIVED': 'Ended',
+  };
+  return statusMap[status] || 'Pending';
+}

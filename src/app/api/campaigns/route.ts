@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { getCampaigns } from '@/lib/server/api/campaigns';
 import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
 import { prisma } from '@/lib/server/prisma';
+import { mapFacebookStatus } from '@/lib/shared/formatters';
 
 export async function GET(request: NextRequest) {
   try {
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
           return {
             id: campaign.id,
             name: campaign.name,
-            status: mapFacebookStatus(campaign.status),
+            status: mapFacebookStatus(campaign.status, 'campaign'),
             budget: parseFloat(campaign.lifetimeBudget || campaign.dailyBudget || '0') / 100, // Convert cents to dollars
             spent: parseFloat(insights?.spend || '0'),
             impressions: parseInt(insights?.impressions || '0'),
@@ -107,14 +107,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-function mapFacebookStatus(status: string): string {
-  const statusMap: { [key: string]: string } = {
-    'ACTIVE': 'Eligible',
-    'PAUSED': 'Paused',
-    'DELETED': 'Removed',
-    'ARCHIVED': 'Ended',
-  };
-  return statusMap[status] || 'Pending';
 }
