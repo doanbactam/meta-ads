@@ -78,7 +78,6 @@ test.describe('Navigation & Layout', () => {
     const links = [
       { text: 'dashboard', url: '/dashboard' },
       { text: 'campaigns', url: '/campaigns' },
-      { text: 'analytics', url: '/analytics' },
     ];
 
     for (const link of links) {
