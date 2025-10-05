@@ -18,6 +18,11 @@ export async function withAuth<T extends { id: string }>(
     const resolvedParams = await params;
     return await handler(userId, resolvedParams);
   } catch (error) {
+    // If error is already a NextResponse (from verifyAdAccountAccess), return it directly
+    if (error instanceof NextResponse) {
+      return error;
+    }
+    
     console.error('API Error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -28,6 +33,7 @@ export async function withAuth<T extends { id: string }>(
 
 /**
  * Utility function để verify user có access đến ad account
+ * Returns the ad account if found, throws NextResponse if not found (for proper error handling)
  */
 export async function verifyAdAccountAccess(
   userId: string,
@@ -41,7 +47,14 @@ export async function verifyAdAccountAccess(
   });
 
   if (!adAccount) {
-    throw new Error('Ad account not found or access denied');
+    // Return a NextResponse instead of throwing generic Error
+    // This allows proper HTTP status codes and error handling
+    const error = NextResponse.json(
+      { error: 'Ad account not found or access denied' },
+      { status: 404 }
+    );
+    // Throw as a special marker that can be caught by withAuth
+    throw error;
   }
 
   return adAccount;
