@@ -1,5 +1,16 @@
 import { FacebookAdsApi, AdAccount, Campaign, AdSet, Ad } from 'facebook-nodejs-business-sdk';
 
+// Facebook API V23 Error Codes
+export const FACEBOOK_ERROR_CODES = {
+  INVALID_TOKEN: 190,
+  API_TOO_MANY_CALLS: 17,
+  API_USER_TOO_MANY_CALLS: 4,
+  TEMPORARY_ISSUE: 2,
+  RATE_LIMIT_REACHED: 613,
+  ACCOUNT_DELETED: 100,
+  PERMISSION_DENIED: 200,
+} as const;
+
 export interface FacebookTokenValidation {
   isValid: boolean;
   appId?: string;
@@ -39,6 +50,15 @@ export interface FacebookCampaignInsights {
   conversions?: string;
   costPerConversion?: string;
 }
+
+// Optimized field sets for API requests to reduce data transfer
+const OPTIMIZED_FIELDS = {
+  adAccount: 'id,name,account_status,currency,timezone_name',
+  campaign: 'id,name,status,effective_status,objective,spend_cap,daily_budget,lifetime_budget',
+  adSet: 'id,name,status,effective_status,daily_budget,lifetime_budget,bid_amount,targeting',
+  ad: 'id,name,status,effective_status,creative',
+  insights: 'impressions,clicks,spend,reach,frequency,ctr,cpc,cpm',
+} as const;
 
 export class FacebookMarketingAPI {
   private accessToken: string;
@@ -142,8 +162,9 @@ export class FacebookMarketingAPI {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
+      // Use optimized field selection
       const response = await fetch(
-        `https://graph.facebook.com/v23.0/me/adaccounts?fields=id,name,account_status,currency,timezone_name&access_token=${this.accessToken}`,
+        `https://graph.facebook.com/v23.0/me/adaccounts?fields=${OPTIMIZED_FIELDS.adAccount}&access_token=${this.accessToken}`,
         {
           method: 'GET',
           headers: {
@@ -199,8 +220,9 @@ export class FacebookMarketingAPI {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
+      // Use optimized field selection to reduce data transfer
       const response = await fetch(
-        `https://graph.facebook.com/v23.0/${formattedAccountId}/campaigns?fields=id,name,status,objective,spend_cap,daily_budget,lifetime_budget&access_token=${this.accessToken}`,
+        `https://graph.facebook.com/v23.0/${formattedAccountId}/campaigns?fields=${OPTIMIZED_FIELDS.campaign}&access_token=${this.accessToken}`,
         {
           method: 'GET',
           headers: {
@@ -217,13 +239,13 @@ export class FacebookMarketingAPI {
         const errorMessage = errorData.error?.message || `HTTP ${response.status}: Failed to fetch campaigns`;
         const errorCode = errorData.error?.code;
 
-        // Check if it's a token expiry error
+        // Check if it's a token expiry error using standardized error codes
         if (
           errorMessage.includes('Session has expired') ||
           errorMessage.includes('access token') ||
           errorMessage.includes('token is invalid') ||
           errorMessage.includes('Error validating access token') ||
-          errorCode === 190 || // Invalid OAuth 2.0 Access Token
+          errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN ||
           response.status === 401
         ) {
           throw new Error('FACEBOOK_TOKEN_EXPIRED');
@@ -238,13 +260,13 @@ export class FacebookMarketingAPI {
         const errorMessage = data.error.message || 'Failed to fetch campaigns';
         const errorCode = data.error.code;
 
-        // Check if it's a token expiry error
+        // Check if it's a token expiry error using standardized error codes
         if (
           errorMessage.includes('Session has expired') ||
           errorMessage.includes('access token') ||
           errorMessage.includes('token is invalid') ||
           errorMessage.includes('Error validating access token') ||
-          errorCode === 190
+          errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN
         ) {
           throw new Error('FACEBOOK_TOKEN_EXPIRED');
         }
@@ -282,17 +304,7 @@ export class FacebookMarketingAPI {
     options?: { datePreset?: string; dateFrom?: string; dateTo?: string }
   ): Promise<FacebookCampaignInsights | null> {
     try {
-      const fields = [
-        'impressions',
-        'clicks',
-        'spend',
-        'reach',
-        'frequency',
-        'ctr',
-        'cpc',
-        'cpm',
-      ];
-
+      // Use optimized field selection
       let dateParams = '';
       if (options?.dateFrom && options?.dateTo) {
         dateParams = `&time_range={"since":"${options.dateFrom}","until":"${options.dateTo}"}`;
@@ -302,9 +314,15 @@ export class FacebookMarketingAPI {
         dateParams = '&date_preset=last_30d';
       }
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
       const response = await fetch(
-        `https://graph.facebook.com/v23.0/${campaignId}/insights?fields=${fields.join(',')}${dateParams}&access_token=${this.accessToken}`
+        `https://graph.facebook.com/v23.0/${campaignId}/insights?fields=${OPTIMIZED_FIELDS.insights}${dateParams}&access_token=${this.accessToken}`,
+        { signal: controller.signal }
       );
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error('Failed to fetch campaign insights');
@@ -336,9 +354,16 @@ export class FacebookMarketingAPI {
 
   async getAdSets(campaignId: string) {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      // Use optimized field selection
       const response = await fetch(
-        `https://graph.facebook.com/v23.0/${campaignId}/adsets?fields=id,name,status,daily_budget,lifetime_budget,bid_amount,targeting&access_token=${this.accessToken}`
+        `https://graph.facebook.com/v23.0/${campaignId}/adsets?fields=${OPTIMIZED_FIELDS.adSet}&access_token=${this.accessToken}`,
+        { signal: controller.signal }
       );
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error('Failed to fetch ad sets');
@@ -357,17 +382,7 @@ export class FacebookMarketingAPI {
     options?: { datePreset?: string; dateFrom?: string; dateTo?: string }
   ): Promise<FacebookCampaignInsights | null> {
     try {
-      const fields = [
-        'impressions',
-        'clicks',
-        'spend',
-        'reach',
-        'frequency',
-        'ctr',
-        'cpc',
-        'cpm',
-      ];
-
+      // Use optimized field selection
       let dateParams = '';
       if (options?.dateFrom && options?.dateTo) {
         dateParams = `&time_range={"since":"${options.dateFrom}","until":"${options.dateTo}"}`;
@@ -377,9 +392,15 @@ export class FacebookMarketingAPI {
         dateParams = '&date_preset=last_30d';
       }
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
       const response = await fetch(
-        `https://graph.facebook.com/v23.0/${adSetId}/insights?fields=${fields.join(',')}${dateParams}&access_token=${this.accessToken}`
+        `https://graph.facebook.com/v23.0/${adSetId}/insights?fields=${OPTIMIZED_FIELDS.insights}${dateParams}&access_token=${this.accessToken}`,
+        { signal: controller.signal }
       );
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error('Failed to fetch ad set insights');
@@ -411,9 +432,16 @@ export class FacebookMarketingAPI {
 
   async getAds(adSetId: string) {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      // Use optimized field selection
       const response = await fetch(
-        `https://graph.facebook.com/v23.0/${adSetId}/ads?fields=id,name,status,creative&access_token=${this.accessToken}`
+        `https://graph.facebook.com/v23.0/${adSetId}/ads?fields=${OPTIMIZED_FIELDS.ad}&access_token=${this.accessToken}`,
+        { signal: controller.signal }
       );
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error('Failed to fetch ads');
@@ -432,17 +460,7 @@ export class FacebookMarketingAPI {
     options?: { datePreset?: string; dateFrom?: string; dateTo?: string }
   ): Promise<FacebookCampaignInsights | null> {
     try {
-      const fields = [
-        'impressions',
-        'clicks',
-        'spend',
-        'reach',
-        'frequency',
-        'ctr',
-        'cpc',
-        'cpm',
-      ];
-
+      // Use optimized field selection
       let dateParams = '';
       if (options?.dateFrom && options?.dateTo) {
         dateParams = `&time_range={"since":"${options.dateFrom}","until":"${options.dateTo}"}`;
@@ -452,9 +470,15 @@ export class FacebookMarketingAPI {
         dateParams = '&date_preset=last_30d';
       }
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
       const response = await fetch(
-        `https://graph.facebook.com/v23.0/${adId}/insights?fields=${fields.join(',')}${dateParams}&access_token=${this.accessToken}`
+        `https://graph.facebook.com/v23.0/${adId}/insights?fields=${OPTIMIZED_FIELDS.insights}${dateParams}&access_token=${this.accessToken}`,
+        { signal: controller.signal }
       );
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error('Failed to fetch ad insights');
