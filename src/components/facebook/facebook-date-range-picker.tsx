@@ -78,6 +78,17 @@ const datePresets: DatePreset[] = [
   },
 ];
 
+/**
+ * Component chọn khoảng ngày với các preset phổ biến và lịch tương tác.
+ *
+ * Hiển thị nút bật Popover chứa danh sách preset (Today, Yesterday, Last 7/14/30 days, This month, Last month) và một Calendar ở chế độ range; cập nhật lựa chọn nội bộ và gọi `onChange` khi người dùng chọn một khoảng ngày (nếu chỉ chọn ngày bắt đầu thì `to` được gán bằng `from`).
+ *
+ * @param value - Giá trị khoảng ngày hiện tại, gồm `from` và `to`; có thể là undefined để chưa chọn.
+ * @param onChange - Hàm callback được gọi với khoảng ngày mới mỗi khi người dùng hoàn tất lựa chọn hoặc chọn preset.
+ * @param className - Lớp CSS bổ sung áp dụng cho nút trình kích hoạt.
+ * @param disabled - Nếu true thì vô hiệu hóa nút và không cho mở popover.
+ * @returns Phần tử React hiển thị bộ chọn khoảng ngày (Popover + Presets + Calendar)
+ */
 export function FacebookDateRangePicker({
   value,
   onChange,

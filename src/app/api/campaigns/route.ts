@@ -4,6 +4,18 @@ import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
 import { getValidFacebookToken, handleFacebookTokenError } from '@/lib/server/api/facebook-auth';
 import { mapFacebookStatus } from '@/lib/shared/formatters';
 
+/**
+ * Xử lý yêu cầu GET để lấy danh sách chiến dịch Facebook kèm số liệu tổng quan.
+ *
+ * Truy xuất `clerkId` từ phiên, xác thực tham số `adAccountId`, lấy hoặc tạo người dùng tương ứng, xác thực token Facebook cho ad account, gọi API Facebook để lấy danh sách chiến dịch và insights theo khoảng ngày (nếu cung cấp), và trả về mảng chiến dịch đã chuẩn hoá. Trả về lỗi rõ ràng khi không được ủy quyền, token hết hạn hoặc khi không thể kết nối tới Facebook.
+ *
+ * @returns Một đối tượng JSON với một trong những cấu trúc sau:
+ * - `{ campaigns: Array<Object> }` khi thành công; mỗi phần tử chứa các trường như `id`, `name`, `status`, `budget`, `spent`, `impressions`, `clicks`, `ctr`, `conversions`, `cost_per_conversion`, `date_start`, `date_end`, `schedule`, `created_at`, `updated_at`.
+ * - `{ campaigns: [], error: string, code: 'TOKEN_EXPIRED' }` với status `401` khi token Facebook đã hết hạn.
+ * - `{ campaigns: [], error: string }` với status tương ứng khi có lỗi xác thực token hoặc lỗi từ Facebook.
+ * - `{ error: 'Unauthorized' }` với status `401` khi người dùng không xác thực.
+ * - `{ error: 'Failed to fetch campaigns' }` với status `500` khi xảy ra lỗi không lường trước.
+ */
 export async function GET(request: NextRequest) {
   try {
     const { userId: clerkId } = await auth();

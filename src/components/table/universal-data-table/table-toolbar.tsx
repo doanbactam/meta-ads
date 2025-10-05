@@ -26,6 +26,22 @@ interface TableToolbarProps<T> {
   };
 }
 
+/**
+ * Hiển thị thanh công cụ cho bảng dữ liệu với tìm kiếm, bộ lọc khoảng ngày, lựa chọn cột và các hành động (tạo, chỉnh sửa, nhân bản, xóa, tùy chỉnh, làm mới).
+ *
+ * @param config - Cấu hình bảng gồm `title`, định nghĩa `columns` và các `actions` (create, edit, duplicate, delete, custom)
+ * @param searchQuery - Giá trị hiện tại của ô tìm kiếm
+ * @param onSearchChange - Hàm được gọi khi giá trị tìm kiếm thay đổi
+ * @param dateRange - Khoảng ngày hiện tại { from, to }
+ * @param onDateRangeChange - Hàm được gọi khi khoảng ngày thay đổi
+ * @param visibleColumns - Danh sách id các cột đang hiển thị
+ * @param onColumnsChange - Hàm được gọi khi thay đổi các cột hiển thị
+ * @param selectedRows - Danh sách id các hàng đang được chọn (dùng cho bulk actions)
+ * @param onRefresh - Hàm được gọi khi nhấn nút làm mới
+ * @param isRefreshing - Nếu là `true`, nút làm mới bị vô hiệu hóa và hiển thị trạng thái đang làm mới
+ * @param features - Cờ bật/tắt các tính năng hiển thị: `{ search, dateRange, columnSelector, bulkActions }`
+ * @returns Phần tử React chứa các điều khiển toolbar phù hợp với cấu hình và các feature được bật
+ */
 export function TableToolbar<T>({
   config,
   searchQuery,

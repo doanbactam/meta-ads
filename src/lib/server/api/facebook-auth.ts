@@ -3,9 +3,13 @@ import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
 import { AdAccount } from '@prisma/client';
 
 /**
- * Validates and returns a Facebook access token for an ad account.
- * Returns null if token is expired or invalid.
- * Automatically marks accounts with expired tokens as paused.
+ * Xác thực và trả về access token Facebook hợp lệ cho một ad account.
+ *
+ * Nếu token bị hết hạn hoặc không hợp lệ, hàm sẽ đánh dấu ad account là "paused" và trả về đối tượng lỗi có mã trạng thái phù hợp.
+ *
+ * @param adAccountId - ID của ad account cần kiểm tra
+ * @param userId - ID người dùng sở hữu ad account
+ * @returns Đối tượng chứa `token` và `adAccount` khi token hợp lệ; hoặc `{ error, status }` khi có lỗi (ví dụ: không tìm thấy tài khoản, chưa kết nối Facebook, token hết hạn/không hợp lệ)
  */
 export async function getValidFacebookToken(
   adAccountId: string,
@@ -58,7 +62,10 @@ export async function getValidFacebookToken(
 }
 
 /**
- * Checks if Facebook token is expired for an error response
+ * Xác định xem lỗi trả về có chỉ ra rằng token Facebook đã hết hạn hoặc không hợp lệ hay không.
+ *
+ * @param error - Đối tượng lỗi nhận được từ API (có thể chứa `message`, `error`, hoặc `code`)
+ * @returns `true` nếu lỗi chỉ ra token Facebook hết hạn hoặc không hợp lệ, `false` nếu không
  */
 export function isFacebookTokenExpiredError(error: any): boolean {
   if (!error) return false;
@@ -77,7 +84,10 @@ export function isFacebookTokenExpiredError(error: any): boolean {
 }
 
 /**
- * Handles Facebook API errors and marks account as inactive if token expired
+ * Đặt trạng thái tài khoản quảng cáo sang "paused" và cập nhật `facebookTokenExpiry` nếu lỗi Facebook chỉ ra token đã hết hạn hoặc không hợp lệ.
+ *
+ * @param adAccountId - ID của ad account cần xử lý
+ * @param error - Lỗi nhận được từ Facebook API, được kiểm tra để xác định xem có phải lỗi liên quan đến token hay không
  */
 export async function handleFacebookTokenError(
   adAccountId: string,
