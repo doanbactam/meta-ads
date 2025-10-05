@@ -13,6 +13,14 @@ import { TableEmptyState } from './table-empty-state';
 import { UniversalDataTableProps } from './types';
 import { toast } from 'sonner';
 
+/**
+ * Hiển thị bảng dữ liệu có cấu hình tuỳ chỉnh, hỗ trợ tìm kiếm, chọn cột, lọc theo khoảng ngày, phân trang và hành động hàng loạt.
+ *
+ * @param adAccountId - ID tài khoản quảng cáo Facebook dùng để truy vấn dữ liệu; nếu không có thì không thực hiện gọi API.
+ * @param config - Cấu hình bảng (các cột, điểm cuối API, khóa truy vấn, cột mặc định và các tính năng bật/tắt).
+ * @param className - Lớp CSS bổ sung cho container ngoài cùng của bảng.
+ * @returns React element chứa giao diện bảng dữ liệu đã cấu hình, gồm thanh công cụ, thân bảng và phân trang.
+ */
 export function UniversalDataTable<T extends { id: string }>({ 
   adAccountId, 
   config,

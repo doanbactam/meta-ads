@@ -4,6 +4,16 @@ import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
 import { getValidFacebookToken, handleFacebookTokenError } from '@/lib/server/api/facebook-auth';
 import { mapFacebookStatus } from '@/lib/shared/formatters';
 
+/**
+ * Xử lý yêu cầu GET để thu thập và trả về danh sách quảng cáo Facebook cho adAccount được chỉ định.
+ *
+ * Trả về một phản hồi JSON với cấu trúc phụ thuộc vào kết quả:
+ * - Thành công: `{ ads: [...] }` — `ads` là mảng các đối tượng quảng cáo thu thập từ Facebook.
+ * - Không được phép: 401 với `{ error: 'Unauthorized' }` nếu người dùng chưa xác thực.
+ * - Token Facebook hết hạn: 401 với `{ ads: [], error: <message>, code: 'TOKEN_EXPIRED' }`.
+ * - Lỗi khi truy vấn Facebook: `{ ads: [], error: 'Failed to fetch ads from Facebook. Please check your connection.' }`.
+ * - Lỗi server khác: 500 với `{ error: 'Failed to fetch ads' }`.
+ */
 export async function GET(request: NextRequest) {
   try {
     const { userId: clerkId } = await auth();

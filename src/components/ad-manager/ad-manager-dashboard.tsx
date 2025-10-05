@@ -12,6 +12,13 @@ import { useFacebookConnection } from '@/hooks/use-facebook-connection';
 import { useFacebookStore } from '@/lib/client/stores/facebook-store';
 
 
+/**
+ * Hiển thị giao diện dashboard quản lý quảng cáo với sidebar thu/gập, header chọn Ad Account và ba bảng theo tab (campaigns, ad sets, ads) lọc theo Ad Account hiện tại.
+ *
+ * Ghi chú: trạng thái kết nối Facebook được đọc nhưng hành vi yêu cầu kết nối (dialog) được xử lý bởi các thành phần bảng riêng lẻ.
+ *
+ * @returns Một JSX.Element đại diện cho toàn bộ giao diện dashboard
+ */
 export function AdManagerDashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedAdAccount, setSelectedAdAccount] = useState<string>('');

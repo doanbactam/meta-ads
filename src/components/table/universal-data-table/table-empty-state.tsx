@@ -16,6 +16,23 @@ interface TableEmptyStateProps<T> {
   onConnect: () => void;
 }
 
+/**
+ * Hiển thị một hàng bảng (<tr>) mô tả trạng thái trống của bảng: đang tải, lỗi hoặc không có dữ liệu.
+ *
+ * Hiển thị nội dung tương ứng với `type`: trạng thái "loading" hiển thị thông báo tải, "error" hiển thị thông báo lỗi kèm nút thử lại (và nút kết nối lại Facebook khi token hết hạn), còn trạng thái rỗng hiển thị tiêu đề mô tả, mô tả phụ (nếu có) và các hành động (làm mới, kết nối Facebook, hành động tùy chỉnh).
+ *
+ * @param type - Kiểu trạng thái hiển thị: 'loading' | 'error' | 'empty'
+ * @param config - Cấu hình hiển thị bao gồm `title` và tùy chọn `emptyState` ({ title?, description?, action? }) để tùy chỉnh nội dung trạng thái rỗng
+ * @param error - Đối tượng Error dùng khi `type` là 'error'; nếu `error.message` bằng 'FACEBOOK_TOKEN_EXPIRED' sẽ hiển thị thông báo token hết hạn và nút kết nối lại
+ * @param visibleColumnsCount - Số cột hiển thị hiện tại dùng để tính `colSpan`
+ * @param showBulkActions - Nếu true sẽ cộng thêm một cột cho các hành động hàng loạt khi tính `colSpan`
+ * @param connected - Trạng thái kết nối Facebook; ảnh hưởng đến việc hiện nút "Connect Facebook" trong trạng thái rỗng
+ * @param adAccountId - Nếu có và `connected` là false, sẽ hiển thị nút "Connect Facebook" trong trạng thái rỗng
+ * @param onRefresh - Callback được gọi khi người dùng nhấn nút làm mới / thử lại
+ * @param onConnect - Callback được gọi khi người dùng nhấn nút kết nối hoặc kết nối lại Facebook
+ *
+ * @returns Một phần tử React <tr> phù hợp với trạng thái được chỉ định, với nội dung trải rộng theo `colSpan`
+ */
 export function TableEmptyState<T>({
   type,
   config,

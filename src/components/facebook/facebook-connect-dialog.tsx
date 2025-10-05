@@ -28,6 +28,14 @@ interface FacebookConnectDialogProps {
   onConnect: (accessToken: string, adAccountId?: string) => Promise<{ success: boolean; error?: string; data?: any }>;
 }
 
+/**
+ * Hiển thị hộp thoại cho phép người dùng kết nối tài khoản Facebook bằng access token hoặc OAuth, rồi chọn ad account để kết nối.
+ *
+ * @param open - Quyết định hộp thoại đang mở hay đóng
+ * @param onOpenChange - Callback khi trạng thái mở/đóng của hộp thoại thay đổi
+ * @param onConnect - Hàm bất đồng bộ gọi để kết nối; nhận `accessToken` và tùy chọn `adAccountId`, trả về một đối tượng chứa `success`, `error` và `data`
+ * @returns Phần tử React cho hộp thoại kết nối Facebook
+ */
 export function FacebookConnectDialog({ open, onOpenChange, onConnect }: FacebookConnectDialogProps) {
   const [accessToken, setAccessToken] = useState('');
   const [loading, setLoading] = useState(false);

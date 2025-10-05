@@ -25,6 +25,16 @@ interface HeaderProps {
   onAdAccountChange?: (accountId: string) => void;
 }
 
+/**
+ * Hiển thị thanh header của bảng điều khiển với bộ chọn tài khoản quảng cáo, nút làm mới và điều khiển người dùng.
+ *
+ * Hiển thị danh sách tài khoản quảng cáo (khi người dùng đã đăng nhập), tự động chọn tài khoản đầu tiên nếu chưa có lựa chọn, đảm bảo lựa chọn hiện tại hợp lệ, và hiển thị thông tin/trạng thái/thống kê tài khoản khi có lựa chọn.
+ *
+ * @param onToggleSidebar - Hàm gọi khi người dùng bật/tắt sidebar (có thể undefined).
+ * @param selectedAdAccount - ID của tài khoản quảng cáo đang được chọn (có thể undefined).
+ * @param onAdAccountChange - Hàm gọi với ID tài khoản mới khi người dùng thay đổi lựa chọn (có thể undefined).
+ * @returns Phần tử header của giao diện chứa bộ chọn tài khoản, nút làm mới, cấu hình người dùng và khu vực thống kê có điều kiện.
+ */
 export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }: HeaderProps) {
   const { user, isSignedIn } = useUser();
 

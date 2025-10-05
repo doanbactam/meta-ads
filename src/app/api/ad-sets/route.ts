@@ -4,6 +4,12 @@ import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
 import { getValidFacebookToken, handleFacebookTokenError } from '@/lib/server/api/facebook-auth';
 import { mapFacebookStatus } from '@/lib/shared/formatters';
 
+/**
+ * Trả về danh sách ad set cho một Facebook ad account dựa trên tham số truy vấn.
+ *
+ * @param request - Yêu cầu HTTP; đọc các query param `adAccountId` (bắt buộc), `from` và `to` (định dạng YYYY-MM-DD) từ URL và sử dụng thông tin xác thực của người dùng.
+ * @returns Một đối tượng JSON. Khi thành công trả `{ adSets: Array<...> }` với từng ad set có các trường như `id`, `name`, `campaign_name`, `campaign_id`, `status`, `budget`, `spent`, `impressions`, `clicks`, `ctr`, `cpc`, `conversions`, `date_start`, `date_end`, `created_at`, `updated_at`. Khi gặp lỗi liên quan tới token trả `{ adSets: [], error: string, code: 'TOKEN_EXPIRED' }` với trạng thái 401; các lỗi khác trả `{ adSets: [], error: string }` hoặc `{ error: 'Failed to fetch ad sets' }` cùng mã trạng thái tương ứng.
+ */
 export async function GET(request: NextRequest) {
   try {
     const { userId: clerkId } = await auth();
