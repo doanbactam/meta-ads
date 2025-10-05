@@ -208,16 +208,7 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
 
           <Separator orientation="vertical" className="h-4" />
           <SignedIn>
-            <UserButton
-              appearance={{
-                elements: {
-                  avatarBox: "h-8 w-8",
-                  userButtonPopoverCard: "shadow-lg border-border",
-                  userButtonPopoverActionButton: "hover:bg-accent",
-                  userButtonPopoverActionButtonText: "text-foreground",
-                },
-              }}
-            />
+            <UserButton />
           </SignedIn>
           <SignedOut>
             <Button variant="ghost" size="sm" className="h-8 px-3 text-xs">
