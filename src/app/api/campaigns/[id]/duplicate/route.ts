@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { duplicateCampaign } from '@/lib/api/campaigns';
+import { duplicateCampaign } from '@/lib/server/api/campaigns';
 
 export async function POST(
   request: NextRequest,

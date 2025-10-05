@@ -5,12 +5,12 @@ import { useUser } from '@clerk/nextjs';
 import { Sidebar } from '@/components/sidebar';
 import { Header } from '@/components/header';
 import { UniversalDataTable } from '@/components/universal-data-table';
-import { campaignTableConfig, adGroupsTableConfig, adsTableConfig } from '@/lib/table-configs';
+import { campaignTableConfig, adGroupsTableConfig, adsTableConfig } from '@/lib/client/table-configs';
 import { Campaign, AdGroup, Ad } from '@/types';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { FacebookConnectDialog } from '@/components/facebook-connect-dialog';
 import { useFacebookConnection } from '@/hooks/use-facebook-connection';
-import { useFacebookStore } from '@/lib/stores/facebook-store';
+import { useFacebookStore } from '@/lib/client/stores/facebook-store';
 
 
 export function AdManagerDashboard() {

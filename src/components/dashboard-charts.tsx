@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatCurrency } from '@/lib/formatters';
+import { formatCurrency } from '@/lib/shared/formatters';
 
 interface DashboardChartsProps {
   adAccountId?: string;

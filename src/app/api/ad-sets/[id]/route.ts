@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { deleteAdGroup } from '@/lib/api/ad-groups';
+import { deleteAdGroup } from '@/lib/server/api/ad-groups';
 
 export async function DELETE(
   request: NextRequest,

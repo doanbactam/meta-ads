@@ -5,7 +5,7 @@ import { addDays, startOfDay, endOfDay, subDays, startOfMonth, endOfMonth, subMo
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/shared/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {

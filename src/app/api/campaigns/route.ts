@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { getCampaigns } from '@/lib/api/campaigns';
-import { getOrCreateUserFromClerk } from '@/lib/api/users';
-import { prisma } from '@/lib/prisma';
+import { getCampaigns } from '@/lib/server/api/campaigns';
+import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
+import { prisma } from '@/lib/server/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch campaigns from Facebook API
     try {
-      const { FacebookMarketingAPI } = await import('@/lib/facebook-api');
+      const { FacebookMarketingAPI } = await import('@/lib/server/facebook-api');
       const api = new FacebookMarketingAPI(adAccount.facebookAccessToken);
       
       const facebookCampaigns = await api.getCampaigns(adAccount.facebookAdAccountId);

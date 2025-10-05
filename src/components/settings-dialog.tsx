@@ -19,8 +19,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { useUserSettings } from '@/lib/contexts/user-settings-context';
-import { SUPPORTED_CURRENCIES, SUPPORTED_LOCALES, getCurrencyByCode, getLocaleByCode } from '@/lib/currency';
+import { useUserSettings } from '@/lib/client/contexts/user-settings-context';
+import { SUPPORTED_CURRENCIES, SUPPORTED_LOCALES, getCurrencyByCode, getLocaleByCode } from '@/lib/shared/currency';
 
 const TIMEZONES = [
   { code: 'UTC', name: 'UTC (Coordinated Universal Time)', offset: '+00:00' },

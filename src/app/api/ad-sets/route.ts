@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { getOrCreateUserFromClerk } from '@/lib/api/users';
-import { prisma } from '@/lib/prisma';
+import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
+import { prisma } from '@/lib/server/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch ad sets from Facebook API
     try {
-      const { FacebookMarketingAPI } = await import('@/lib/facebook-api');
+      const { FacebookMarketingAPI } = await import('@/lib/server/facebook-api');
       const api = new FacebookMarketingAPI(adAccount.facebookAccessToken);
       
       // First get all campaigns for this ad account

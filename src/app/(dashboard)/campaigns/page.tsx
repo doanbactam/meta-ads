@@ -2,7 +2,7 @@
 
 import { AppLayout } from '@/components/app-layout';
 import { UniversalDataTable } from '@/components/universal-data-table';
-import { campaignTableConfig, adGroupsTableConfig, adsTableConfig } from '@/lib/table-configs';
+import { campaignTableConfig, adGroupsTableConfig, adsTableConfig } from '@/lib/client/table-configs';
 import { Campaign, AdGroup, Ad } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRouter, useSearchParams } from 'next/navigation';

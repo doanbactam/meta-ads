@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { formatCurrency } from '@/lib/formatters';
+import { formatCurrency } from '@/lib/shared/formatters';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
 interface TopCampaignsProps {

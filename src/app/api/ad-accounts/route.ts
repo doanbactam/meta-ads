@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { getAdAccounts } from '@/lib/api/ad-accounts';
-import { getOrCreateUserFromClerk } from '@/lib/api/users';
+import { getAdAccounts } from '@/lib/server/api/ad-accounts';
+import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
 
 export async function GET(request: NextRequest) {
   try {

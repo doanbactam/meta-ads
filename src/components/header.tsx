@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useEffect } from 'react';
-import { type AdAccount } from '@/lib/api/ad-accounts';
+import { type AdAccount } from '@/lib/server/api/ad-accounts';
 import { UserButton, useUser, SignedIn, SignedOut } from '@clerk/nextjs';
 import { useQuery } from '@tanstack/react-query';
 import { AdAccountStatus } from '@/components/ad-account-status';

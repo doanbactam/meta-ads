@@ -3,8 +3,8 @@ import type { Metadata } from 'next';
 import { JetBrains_Mono } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ClerkProvider } from '@clerk/nextjs';
-import { QueryProvider } from '@/lib/providers/query-provider';
-import { UserSettingsProvider } from '@/lib/contexts/user-settings-context';
+import { QueryProvider } from '@/lib/client/providers/query-provider';
+import { UserSettingsProvider } from '@/lib/client/contexts/user-settings-context';
 import { Toaster } from 'sonner';
 
 const jetbrainsMono = JetBrains_Mono({

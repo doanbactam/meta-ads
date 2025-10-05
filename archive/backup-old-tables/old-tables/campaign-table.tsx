@@ -10,8 +10,8 @@ import { ColumnsSelector } from '@/components/columns-selector';
 import { DateRangePicker } from '@/components/date-range-picker';
 import { Campaign } from '@/types';
 
-import { formatCurrency, formatNumber, formatPercentage, formatDateRange } from '@/lib/formatters';
-import { useUserSettings } from '@/lib/contexts/user-settings-context';
+import { formatCurrency, formatNumber, formatPercentage, formatDateRange } from '@/lib/shared/formatters';
+import { useUserSettings } from '@/lib/client/contexts/user-settings-context';
 import { TablePagination } from '@/components/table-pagination';
 import { StatusBadge } from '@/components/status-badge';
 import { useFacebookConnection } from '@/hooks/use-facebook-connection';

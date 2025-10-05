@@ -6,7 +6,7 @@ import { MobileSidebar } from '@/components/mobile-sidebar';
 import { Header } from '@/components/header';
 import { FacebookConnectDialog } from '@/components/facebook-connect-dialog';
 import { useFacebookConnection } from '@/hooks/use-facebook-connection';
-import { useFacebookStore } from '@/lib/stores/facebook-store';
+import { useFacebookStore } from '@/lib/client/stores/facebook-store';
 
 interface AppLayoutProps {
   children: ReactNode | ((props: { selectedAdAccount: string }) => ReactNode);

@@ -2,7 +2,7 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
-import { dataPersistence } from '@/lib/data-persistence';
+import { dataPersistence } from '@/lib/client/data-persistence';
 
 // Shared hook cho ad account data
 export function useAdAccountData(adAccountId?: string) {

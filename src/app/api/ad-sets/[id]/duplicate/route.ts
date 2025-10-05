@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { duplicateAdGroup } from '@/lib/api/ad-groups';
+import { duplicateAdGroup } from '@/lib/server/api/ad-groups';
 
 export async function POST(
   request: NextRequest,
