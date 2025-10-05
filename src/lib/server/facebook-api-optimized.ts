@@ -481,7 +481,13 @@ export class FacebookMarketingAPIOptimized {
     }));
 
     try {
-      const batchResults = await this.makeBatchRequest(batchRequests);
+      // Split into chunks of 50 to avoid “Batch request is too large” errors
+      const batchResults: BatchResponse<any>[] = [];
+      for (let i = 0; i < batchRequests.length; i += 50) {
+        const chunk = batchRequests.slice(i, i + 50);
+        const chunkResults = await this.makeBatchRequest(chunk);
+        batchResults.push(...chunkResults);
+      }
 
       // Merge campaigns with insights
       return campaigns.map((campaign, index) => {
@@ -498,6 +504,7 @@ export class FacebookMarketingAPIOptimized {
         };
       });
     } catch (error) {
+      // ...
       console.error('Error fetching campaigns with insights:', error);
       // Fallback: return campaigns without insights
       return campaigns;
