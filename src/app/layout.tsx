@@ -1,6 +1,5 @@
 import './globals.css';
 import { ClerkProvider } from '@clerk/nextjs';
-import { dark } from '@clerk/themes';
 import type { Metadata } from 'next';
 import { JetBrains_Mono } from 'next/font/google';
 import { Toaster } from 'sonner';
@@ -22,12 +21,7 @@ export const dynamic = 'force-dynamic';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider
-      appearance={{
-        baseTheme: dark,
-        variables: { colorPrimary: 'hsl(var(--primary))' },
-      }}
-    >
+    <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
         <body className={jetbrainsMono.className}>
           <QueryProvider>
