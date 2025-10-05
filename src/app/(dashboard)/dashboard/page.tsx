@@ -1,14 +1,10 @@
 'use client';
 
-import { AppLayout } from '@/components/layout/app-layout';
 import { DashboardOverview } from '@/components/dashboard/dashboard-overview';
+import { useAdAccount } from '@/lib/client/contexts/ad-account-context';
 
 export default function DashboardPage() {
-  return (
-    <AppLayout>
-      {({ selectedAdAccount }: { selectedAdAccount: string }) => (
-        <DashboardOverview adAccountId={selectedAdAccount} />
-      )}
-    </AppLayout>
-  );
+  const { selectedAdAccount } = useAdAccount();
+  
+  return <DashboardOverview adAccountId={selectedAdAccount} />;
 }
