@@ -30,7 +30,7 @@ export function AdAccountStats({ adAccountId }: AdAccountStatsProps) {
       return response.json();
     },
     enabled: !!adAccountId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30 * 60 * 1000, // 30 minutes - Facebook stats don't change frequently
   });
 
   if (!adAccountId || isLoading) {

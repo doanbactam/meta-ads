@@ -19,6 +19,7 @@ export function AdAccountInfo({ adAccountId, className = '' }: AdAccountInfoProp
       return response.json();
     },
     enabled: !!adAccountId,
+    staleTime: 60 * 60 * 1000, // 1 hour - Account info rarely changes
   });
 
   if (!adAccountId || isLoading) {

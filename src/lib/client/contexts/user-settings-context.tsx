@@ -37,7 +37,7 @@ export function UserSettingsProvider({ children }: { children: React.ReactNode }
       return response.json();
     },
     enabled: isSignedIn,
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 60 * 60 * 1000, // 1 hour - Settings rarely change, and we invalidate on updates
   });
 
   const updateSettingsMutation = useMutation({
