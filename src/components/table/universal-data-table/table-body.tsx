@@ -36,16 +36,28 @@ export function TableBody<T extends { id: string }>({
   const renderCellValue = (column: TableColumn<T>, item: T) => {
     let value: any;
 
+    // Extract value from item using accessor
     if (column.accessor) {
       if (typeof column.accessor === 'function') {
-        value = column.accessor(item);
+        try {
+          value = column.accessor(item);
+        } catch (error) {
+          console.error(`Error in accessor for column ${column.id}:`, error);
+          value = undefined;
+        }
       } else {
         value = item[column.accessor];
       }
     }
 
+    // Use custom render function if provided
     if (column.render) {
-      return column.render(value, item);
+      try {
+        return column.render(value, item);
+      } catch (error) {
+        console.error(`Error in render for column ${column.id}:`, error);
+        return '--';
+      }
     }
 
     // Default renderers based on column id
@@ -60,15 +72,22 @@ export function TableBody<T extends { id: string }>({
       case 'cpc':
       case 'cost':
       case 'costPerConversion':
-        return formatCurrency(value, settings.preferredCurrency, settings.preferredLocale);
+        return formatCurrency(
+          value !== undefined && value !== null ? value : 0,
+          settings.preferredCurrency,
+          settings.preferredLocale
+        );
       case 'impressions':
       case 'clicks':
       case 'conversions':
       case 'engagement':
-        return formatNumber(value, settings.preferredLocale);
+        return formatNumber(
+          value !== undefined && value !== null ? value : 0,
+          settings.preferredLocale
+        );
       case 'ctr':
       case 'roas':
-        return formatPercentage(value);
+        return formatPercentage(value !== undefined && value !== null ? value : 0);
       case 'dateRange':
         return (
           <span className="text-muted-foreground">
@@ -76,7 +95,14 @@ export function TableBody<T extends { id: string }>({
           </span>
         );
       default:
-        return value || '--';
+        // Handle various types of values
+        if (value === undefined || value === null) {
+          return '--';
+        }
+        if (typeof value === 'object') {
+          return JSON.stringify(value);
+        }
+        return String(value);
     }
   };
 
