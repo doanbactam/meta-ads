@@ -130,7 +130,7 @@ export function UniversalDataTable<T extends { id: string }>({
 
   const handleRefresh = async () => {
     toast.promise(
-      refetch(),
+      refetch({ throwOnError: true }),
       {
         loading: 'Refreshing data...',
         success: 'Data refreshed successfully',
