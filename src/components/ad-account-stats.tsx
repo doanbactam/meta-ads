@@ -2,8 +2,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { TrendingUp, TrendingDown, DollarSign, Eye, MousePointer } from 'lucide-react';
-import { formatCurrency, formatNumber } from '@/lib/formatters';
-import { useUserSettings } from '@/lib/contexts/user-settings-context';
+import { formatCurrency, formatNumber } from '@/lib/shared/formatters';
+import { useUserSettings } from '@/lib/client/contexts/user-settings-context';
 
 interface AdAccountStatsProps {
   adAccountId?: string;

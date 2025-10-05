@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { deleteCampaign } from '@/lib/api/campaigns';
+import { deleteCampaign } from '@/lib/server/api/campaigns';
 
 export async function DELETE(
   request: NextRequest,

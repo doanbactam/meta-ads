@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/server/prisma';
 import { Campaign } from '@/types';
 
 export async function getCampaigns(adAccountId?: string): Promise<Campaign[]> {

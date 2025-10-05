@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useFacebookStore } from '@/lib/stores/facebook-store';
+import { useFacebookStore } from '@/lib/client/stores/facebook-store';
 
 interface FacebookConnectionStatus {
   connected: boolean;

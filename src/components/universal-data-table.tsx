@@ -13,8 +13,8 @@ import { FacebookDateRangePicker } from '@/components/facebook-date-range-picker
 import { TablePagination } from '@/components/table-pagination';
 import { StatusBadge } from '@/components/status-badge';
 import { FormatBadge } from '@/components/format-badge';
-import { formatCurrency, formatNumber, formatPercentage, formatDateRange } from '@/lib/formatters';
-import { useUserSettings } from '@/lib/contexts/user-settings-context';
+import { formatCurrency, formatNumber, formatPercentage, formatDateRange } from '@/lib/shared/formatters';
+import { useUserSettings } from '@/lib/client/contexts/user-settings-context';
 
 // Generic column definition
 export interface TableColumn<T = any> {

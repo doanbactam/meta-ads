@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { getAdAccountById } from '@/lib/api/ad-accounts';
-import { getOrCreateUserFromClerk } from '@/lib/api/users';
-import { prisma } from '@/lib/prisma';
+import { getAdAccountById } from '@/lib/server/api/ad-accounts';
+import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
+import { prisma } from '@/lib/server/prisma';
 
 export async function GET(
   request: NextRequest,

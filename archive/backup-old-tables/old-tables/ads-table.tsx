@@ -10,7 +10,7 @@ import { ColumnsSelector } from '@/components/columns-selector';
 import { DateRangePicker } from '@/components/date-range-picker';
 import { Ad } from '@/types';
 
-import { formatCurrency, formatNumber, formatPercentage, formatDateRange } from '@/lib/formatters';
+import { formatCurrency, formatNumber, formatPercentage, formatDateRange } from '@/lib/shared/formatters';
 import { TablePagination } from '@/components/table-pagination';
 import { StatusBadge } from '@/components/status-badge';
 import { FormatBadge } from '@/components/format-badge';

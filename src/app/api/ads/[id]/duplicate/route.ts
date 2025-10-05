@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { duplicateCreative } from '@/lib/api/creatives';
+import { duplicateCreative } from '@/lib/server/api/creatives';
 
 export async function POST(
   request: NextRequest,

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/server/prisma';
 import { 
   withAuth, 
   verifyAdAccountAccess, 
   parseDateRange, 
   calculatePercentageChange 
-} from '@/lib/api-utils';
+} from '@/lib/server/api-utils';
 
 export async function GET(
   request: NextRequest,

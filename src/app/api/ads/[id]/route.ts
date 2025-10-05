@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { deleteCreative } from '@/lib/api/creatives';
+import { deleteCreative } from '@/lib/server/api/creatives';
 
 export async function DELETE(
   request: NextRequest,

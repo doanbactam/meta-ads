@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/server/prisma';
 import { Creative } from '@/types';
 
 export async function getCreatives(adGroupId?: string): Promise<Creative[]> {
