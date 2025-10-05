@@ -42,23 +42,31 @@ export async function duplicateAdAction(
       return { success: false, error: 'Unauthorized' };
     }
 
-    // Get the original ad
-    const ad = await prisma.ad.findUnique({
+    // Get the original campaign
+    const campaign = await prisma.campaign.findUnique({
       where: { id: validated.id },
     });
 
-    if (!ad) {
-      return { success: false, error: 'Ad not found' };
+    if (!campaign) {
+      return { success: false, error: 'Campaign not found' };
     }
 
     // Create duplicate
-    await prisma.ad.create({
+    await prisma.campaign.create({
       data: {
-        ...ad,
-        id: undefined, // Let Prisma generate new ID
-        name: `${ad.name} (Copy)`,
-        createdAt: undefined,
-        updatedAt: undefined,
+        adAccountId: campaign.adAccountId,
+        name: `${campaign.name} (Copy)`,
+        status: campaign.status,
+        budget: campaign.budget,
+        spent: 0,
+        impressions: 0,
+        clicks: 0,
+        ctr: 0,
+        conversions: 0,
+        costPerConversion: 0,
+        dateStart: campaign.dateStart,
+        dateEnd: campaign.dateEnd,
+        schedule: campaign.schedule,
       },
     });
 
@@ -89,8 +97,8 @@ export async function deleteAdAction(
       return { success: false, error: 'Unauthorized' };
     }
 
-    // Delete ad
-    await prisma.ad.delete({
+    // Delete campaign
+    await prisma.campaign.delete({
       where: { id: validated.id },
     });
 
@@ -121,8 +129,8 @@ export async function updateAdStatusAction(
       return { success: false, error: 'Unauthorized' };
     }
 
-    // Update ad status
-    await prisma.ad.update({
+    // Update campaign status
+    await prisma.campaign.update({
       where: { id: validated.id },
       data: { status: validated.status },
     });

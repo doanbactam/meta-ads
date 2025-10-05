@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
-import { backgroundSync } from '@/lib/background-sync';
+import { backgroundSync } from '@/lib/client/background-sync';
 
 interface SmartNavigationProps {
   adAccountId?: string;
