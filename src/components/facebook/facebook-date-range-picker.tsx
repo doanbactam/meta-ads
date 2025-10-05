@@ -205,7 +205,7 @@ export function FacebookDateRangePicker({
               caption: 'flex justify-center pt-1 relative items-center',
               caption_label: 'text-xs font-medium',
               nav: 'flex items-center gap-1',
-              nav_button: 'h-6 w-6 bg-transparent p-0 opacity-50 hover:opacity-100 border border-input hover:bg-accent hover:text-accent-foreground rounded-md',
+              nav_button: 'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 border border-input hover:bg-accent hover:text-accent-foreground rounded-md',
               nav_button_previous: 'absolute left-1',
               nav_button_next: 'absolute right-1',
               table: 'w-full border-collapse space-y-1',
