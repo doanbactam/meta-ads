@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   description: 'minimalist campaign management dashboard for developers',
 };
 
+export const dynamic = 'force-dynamic';
+
 export default function RootLayout({
   children,
 }: {

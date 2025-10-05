@@ -42,7 +42,7 @@ export async function updateUserSettingsAction(
 
     // Update user settings
     await prisma.user.update({
-      where: { clerkUserId: userId },
+      where: { clerkId: userId },
       data: validated,
     });
 
@@ -75,7 +75,7 @@ export async function updateUserPreferencesAction(
 
     // Update user preferences
     await prisma.user.update({
-      where: { clerkUserId: userId },
+      where: { clerkId: userId },
       data: validated,
     });
 
