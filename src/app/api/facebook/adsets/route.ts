@@ -4,6 +4,31 @@ import { prisma } from '@/lib/server/prisma';
 import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
 import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
 
+async function getAdAccountWithValidation(userId: string, adAccountId: string) {
+  const user = await getOrCreateUserFromClerk(userId);
+
+  const adAccount = await prisma.adAccount.findFirst({
+    where: {
+      id: adAccountId,
+      userId: user.id,
+    },
+  });
+
+  if (!adAccount) {
+    return { error: 'Ad account not found', status: 404 };
+  }
+
+  if (!adAccount.facebookAccessToken) {
+    return { error: 'Facebook not connected', status: 400 };
+  }
+
+  if (adAccount.facebookTokenExpiry && adAccount.facebookTokenExpiry < new Date()) {
+    return { error: 'Token expired', status: 401 };
+  }
+
+  return { adAccount };
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { userId } = await auth();
@@ -19,39 +44,134 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Ad account ID is required' }, { status: 400 });
     }
 
-    const user = await getOrCreateUserFromClerk(userId);
-
-    const adAccount = await prisma.adAccount.findFirst({
-      where: {
-        id: adAccountId,
-        userId: user.id,
-      },
-    });
-
-    if (!adAccount) {
-      return NextResponse.json({ error: 'Ad account not found' }, { status: 404 });
+    if (!campaignId) {
+      return NextResponse.json({ error: 'Campaign ID is required' }, { status: 400 });
     }
 
-    if (!adAccount.facebookAccessToken) {
-      return NextResponse.json({ error: 'Facebook not connected' }, { status: 400 });
+    const result = await getAdAccountWithValidation(userId, adAccountId);
+    if ('error' in result) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
     }
 
-    if (adAccount.facebookTokenExpiry && adAccount.facebookTokenExpiry < new Date()) {
-      return NextResponse.json({ error: 'Token expired' }, { status: 401 });
-    }
+    const { adAccount } = result;
+    const api = new FacebookMarketingAPI(adAccount.facebookAccessToken!);
 
-    const api = new FacebookMarketingAPI(adAccount.facebookAccessToken);
-
-    if (campaignId) {
+    try {
       const adSets = await api.getAdSets(campaignId);
       return NextResponse.json({ adSets });
+    } catch (apiError: any) {
+      if (apiError.message === 'FACEBOOK_TOKEN_EXPIRED') {
+        await prisma.adAccount.update({
+          where: { id: adAccount.id },
+          data: { facebookTokenExpiry: new Date(0) },
+        });
+        return NextResponse.json({ error: 'Token expired', tokenExpired: true }, { status: 401 });
+      }
+      throw apiError;
     }
-
-    return NextResponse.json({ error: 'Campaign ID is required' }, { status: 400 });
   } catch (error) {
     console.error('Error fetching Facebook ad sets:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch ad sets' },
+      { error: error instanceof Error ? error.message : 'Failed to fetch ad sets' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { adAccountId, campaignId, name, status, dailyBudget, lifetimeBudget, bidAmount, targeting } = body;
+
+    if (!adAccountId || !campaignId || !name) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    const result = await getAdAccountWithValidation(userId, adAccountId);
+    if ('error' in result) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+
+    const { adAccount } = result;
+
+    const adSetData: any = {
+      campaign_id: campaignId,
+      name,
+      status: status || 'PAUSED',
+    };
+
+    if (dailyBudget) adSetData.daily_budget = dailyBudget;
+    if (lifetimeBudget) adSetData.lifetime_budget = lifetimeBudget;
+    if (bidAmount) adSetData.bid_amount = bidAmount;
+    if (targeting) adSetData.targeting = targeting;
+
+    const response = await fetch(
+      `https://graph.facebook.com/v23.0/${campaignId}/adsets?access_token=${adAccount.facebookAccessToken!}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(adSetData),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || 'Failed to create ad set');
+    }
+
+    const data = await response.json();
+    return NextResponse.json({ success: true, adSet: data });
+  } catch (error) {
+    console.error('Error creating Facebook ad set:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to create ad set' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const adAccountId = searchParams.get('adAccountId');
+    const adSetId = searchParams.get('adSetId');
+
+    if (!adAccountId || !adSetId) {
+      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+    }
+
+    const result = await getAdAccountWithValidation(userId, adAccountId);
+    if ('error' in result) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+
+    const { adAccount } = result;
+
+    const response = await fetch(
+      `https://graph.facebook.com/v23.0/${adSetId}?access_token=${adAccount.facebookAccessToken!}`,
+      { method: 'DELETE' }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || 'Failed to delete ad set');
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting Facebook ad set:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to delete ad set' },
       { status: 500 }
     );
   }

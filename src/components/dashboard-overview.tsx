@@ -73,21 +73,18 @@ export function DashboardOverview({ adAccountId }: DashboardOverviewProps) {
     {
       title: 'avg ctr',
       value: `${((overviewStats?.averageCtr || 0) * 100).toFixed(2)}%`,
-      change: 2.3, // Mock change data
       icon: Percent,
       color: 'text-chart-1',
     },
     {
       title: 'avg cpc',
       value: formatCurrency(overviewStats?.averageCpc || 0),
-      change: -1.2, // Mock change data
       icon: CreditCard,
       color: 'text-chart-2',
     },
     {
       title: 'avg roas',
       value: `${(overviewStats?.averageRoas || 0).toFixed(2)}x`,
-      change: 5.7, // Mock change data
       icon: BarChart3,
       color: 'text-chart-3',
     },
@@ -150,9 +147,7 @@ export function DashboardOverview({ adAccountId }: DashboardOverviewProps) {
       <div className="grid gap-4 md:grid-cols-3">
         {performanceCards.map((metric) => {
           const Icon = metric.icon;
-          const isPositive = metric.change > 0;
-          const TrendIcon = isPositive ? TrendingUp : TrendingDown;
-          
+
           return (
             <Card key={metric.title}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -163,13 +158,6 @@ export function DashboardOverview({ adAccountId }: DashboardOverviewProps) {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{metric.value}</div>
-                <div className="flex items-center text-xs text-muted-foreground">
-                  <TrendIcon className={`mr-1 h-3 w-3 ${isPositive ? 'text-green-500' : 'text-red-500'}`} />
-                  <span className={isPositive ? 'text-green-500' : 'text-red-500'}>
-                    {isPositive ? '+' : ''}{metric.change.toFixed(1)}%
-                  </span>
-                  <span className="ml-1">vs last period</span>
-                </div>
               </CardContent>
             </Card>
           );
