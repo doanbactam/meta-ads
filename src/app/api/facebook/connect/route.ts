@@ -68,137 +68,61 @@ export async function POST(req: NextRequest) {
       }, { status: 404 });
     }
 
-    // Get all existing Facebook ad accounts for this user
-    const existingAccounts = await prisma.adAccount.findMany({
-      where: {
-        userId: user.id,
-        platform: 'facebook',
-      },
-    });
-
     // Extract authorized account IDs (normalize by removing 'act_' prefix)
     const authorizedAccountIds = fbAccounts.map(acc => acc.id.replace('act_', ''));
 
-    // Find accounts that are no longer authorized (should be removed)
-    const accountsToRemove = existingAccounts.filter(
-      acc => acc.facebookAdAccountId && !authorizedAccountIds.includes(acc.facebookAdAccountId)
-    );
-
-    // Remove unauthorized accounts
-    if (accountsToRemove.length > 0) {
-      await prisma.adAccount.deleteMany({
-        where: {
-          id: { in: accountsToRemove.map(acc => acc.id) },
-        },
-      });
-      console.log(`Removed ${accountsToRemove.length} unauthorized ad accounts`);
-    }
-
-    if (adAccountId) {
-      // Specific ad account requested
-      const cleanAccountId = adAccountId.replace('act_', '');
-      const fbAccount = fbAccounts.find((acc) => acc.id.replace('act_', '') === cleanAccountId);
-
-      if (!fbAccount) {
-        return NextResponse.json({
-          error: 'Ad account not found',
-          message: 'The specified ad account was not found in your Facebook account',
-          availableAccounts: fbAccounts.map(acc => ({ id: acc.id, name: acc.name })),
-        }, { status: 404 });
-      }
-
-      const existingAccount = await prisma.adAccount.findFirst({
+    // Use transaction to ensure data consistency
+    const result = await prisma.$transaction(async (tx) => {
+      // Get all existing Facebook ad accounts for this user
+      const existingAccounts = await tx.adAccount.findMany({
         where: {
           userId: user.id,
-          facebookAdAccountId: cleanAccountId,
+          platform: 'FACEBOOK',
         },
       });
 
-      if (existingAccount) {
-        // Overwrite access token for reconnection
-        const updated = await prisma.adAccount.update({
-          where: { id: existingAccount.id },
-          data: {
+      // Find accounts that are no longer authorized (should be removed)
+      const accountsToRemove = existingAccounts.filter(
+        acc => acc.facebookAdAccountId && !authorizedAccountIds.includes(acc.facebookAdAccountId)
+      );
+
+      // Remove unauthorized accounts
+      let removedCount = 0;
+      if (accountsToRemove.length > 0) {
+        const deleteResult = await tx.adAccount.deleteMany({
+          where: {
+            id: { in: accountsToRemove.map(acc => acc.id) },
+          },
+        });
+        removedCount = deleteResult.count;
+        console.log(`[Facebook Connect] Removed ${removedCount} unauthorized ad accounts`);
+      }
+
+      // Upsert all authorized accounts (much faster than loop)
+      const upsertPromises = fbAccounts.map((fbAccount) => {
+        const cleanAccountId = fbAccount.id.replace('act_', '');
+        
+        return tx.adAccount.upsert({
+          where: {
+            unique_user_facebook_account: {
+              userId: user.id,
+              facebookAdAccountId: cleanAccountId,
+            },
+          },
+          update: {
             facebookAccessToken: accessToken,
             facebookTokenExpiry: expiryDate,
             facebookUserId: validation.userId,
             name: fbAccount.name,
             currency: fbAccount.currency || 'USD',
             timeZone: fbAccount.timezone || 'UTC',
-            status: 'active',
+            status: 'ACTIVE',
           },
-        });
-
-        console.log(`[Facebook Connect] Reconnected account ${existingAccount.id}, updatedAt: ${updated.updatedAt}`);
-
-        return NextResponse.json({
-          success: true,
-          adAccountId: existingAccount.id,
-          facebookAdAccountId: cleanAccountId,
-          tokenExpiry: expiryDate,
-          message: 'Facebook account reconnected successfully',
-        });
-      }
-
-      // Create new account
-      const newAccount = await prisma.adAccount.create({
-        data: {
-          userId: user.id,
-          name: fbAccount.name,
-          platform: 'facebook',
-          status: 'active',
-          currency: fbAccount.currency || 'USD',
-          timeZone: fbAccount.timezone || 'UTC',
-          facebookAccessToken: accessToken,
-          facebookTokenExpiry: expiryDate,
-          facebookAdAccountId: cleanAccountId,
-          facebookUserId: validation.userId,
-        },
-      });
-
-      return NextResponse.json({
-        success: true,
-        adAccountId: newAccount.id,
-        message: 'Facebook account connected successfully',
-      });
-    }
-
-    // No specific account requested, update or create all authorized accounts
-    const updatedAccounts = [];
-
-    for (const fbAccount of fbAccounts) {
-      const cleanAccountId = fbAccount.id.replace('act_', '');
-
-      const existingAccount = await prisma.adAccount.findFirst({
-        where: {
-          userId: user.id,
-          facebookAdAccountId: cleanAccountId,
-        },
-      });
-
-      if (existingAccount) {
-        // Overwrite access token for reconnection
-        const updated = await prisma.adAccount.update({
-          where: { id: existingAccount.id },
-          data: {
-            facebookAccessToken: accessToken,
-            facebookTokenExpiry: expiryDate,
-            facebookUserId: validation.userId,
-            name: fbAccount.name,
-            currency: fbAccount.currency || 'USD',
-            timeZone: fbAccount.timezone || 'UTC',
-            status: 'active',
-          },
-        });
-        updatedAccounts.push(updated);
-      } else {
-        // Create new account
-        const newAccount = await prisma.adAccount.create({
-          data: {
+          create: {
             userId: user.id,
             name: fbAccount.name,
-            platform: 'facebook',
-            status: 'active',
+            platform: 'FACEBOOK',
+            status: 'ACTIVE',
             currency: fbAccount.currency || 'USD',
             timeZone: fbAccount.timezone || 'UTC',
             facebookAccessToken: accessToken,
@@ -207,20 +131,23 @@ export async function POST(req: NextRequest) {
             facebookUserId: validation.userId,
           },
         });
-        updatedAccounts.push(newAccount);
-      }
-    }
+      });
 
-    console.log(`[Facebook Connect] Synchronized ${updatedAccounts.length} accounts`);
+      const updatedAccounts = await Promise.all(upsertPromises);
+
+      return { updatedAccounts, removedCount };
+    });
+
+    console.log(`[Facebook Connect] Synchronized ${result.updatedAccounts.length} accounts`);
 
     return NextResponse.json({
       success: true,
-      adAccountId: updatedAccounts[0]?.id,
-      facebookAdAccountId: updatedAccounts[0]?.facebookAdAccountId || undefined,
+      adAccountId: result.updatedAccounts[0]?.id,
+      facebookAdAccountId: result.updatedAccounts[0]?.facebookAdAccountId || undefined,
       tokenExpiry: expiryDate,
       accounts: fbAccounts,
-      removedAccounts: accountsToRemove.length,
-      message: `Facebook ${updatedAccounts.length > 1 ? 'accounts' : 'account'} synchronized successfully`,
+      removedAccounts: result.removedCount,
+      message: `Facebook ${result.updatedAccounts.length > 1 ? 'accounts' : 'account'} synchronized successfully`,
     });
   } catch (error) {
     console.error('Error connecting Facebook account:', error);
