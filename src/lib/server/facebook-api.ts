@@ -334,16 +334,47 @@ export class FacebookMarketingAPI {
 
       const response = await fetch(
         `https://graph.facebook.com/v23.0/${campaignId}/insights?fields=${OPTIMIZED_FIELDS.insights}${dateParams}&access_token=${this.accessToken}`,
-        { signal: controller.signal }
+        {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+          },
+          signal: controller.signal,
+        }
       );
 
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error('Failed to fetch campaign insights');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error?.message || 'Failed to fetch campaign insights';
+        const errorCode = errorData.error?.code;
+
+        // Check if it's a token expiry error
+        if (
+          errorMessage.includes('Session has expired') ||
+          errorMessage.includes('access token') ||
+          errorMessage.includes('token is invalid') ||
+          errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN ||
+          response.status === 401
+        ) {
+          throw new Error('FACEBOOK_TOKEN_EXPIRED');
+        }
+
+        console.warn(`Campaign insights error for ${campaignId}:`, errorMessage);
+        return null;
       }
 
       const data = await response.json();
+
+      if (data.error) {
+        const errorCode = data.error.code;
+        if (errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN) {
+          throw new Error('FACEBOOK_TOKEN_EXPIRED');
+        }
+        console.warn(`Campaign insights error for ${campaignId}:`, data.error.message);
+        return null;
+      }
 
       if (!data.data || data.data.length === 0) {
         return null;
@@ -362,6 +393,10 @@ export class FacebookMarketingAPI {
         cpm: insights.cpm,
       };
     } catch (error) {
+      // Re-throw token expiry errors
+      if (error instanceof Error && error.message === 'FACEBOOK_TOKEN_EXPIRED') {
+        throw error;
+      }
       console.error('Error fetching campaign insights:', error);
       return null;
     }
@@ -375,20 +410,78 @@ export class FacebookMarketingAPI {
       // Use optimized field selection
       const response = await fetch(
         `https://graph.facebook.com/v23.0/${campaignId}/adsets?fields=${OPTIMIZED_FIELDS.adSet}&access_token=${this.accessToken}`,
-        { signal: controller.signal }
+        {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+          },
+          signal: controller.signal,
+        }
       );
 
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error('Failed to fetch ad sets');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage =
+          errorData.error?.message || `HTTP ${response.status}: Failed to fetch ad sets`;
+        const errorCode = errorData.error?.code;
+
+        // Check if it's a token expiry error using standardized error codes
+        if (
+          errorMessage.includes('Session has expired') ||
+          errorMessage.includes('access token') ||
+          errorMessage.includes('token is invalid') ||
+          errorMessage.includes('Error validating access token') ||
+          errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN ||
+          response.status === 401
+        ) {
+          throw new Error('FACEBOOK_TOKEN_EXPIRED');
+        }
+
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
-      return data.data || [];
+
+      if (data.error) {
+        const errorMessage = data.error.message || 'Failed to fetch ad sets';
+        const errorCode = data.error.code;
+
+        // Check if it's a token expiry error using standardized error codes
+        if (
+          errorMessage.includes('Session has expired') ||
+          errorMessage.includes('access token') ||
+          errorMessage.includes('token is invalid') ||
+          errorMessage.includes('Error validating access token') ||
+          errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN
+        ) {
+          throw new Error('FACEBOOK_TOKEN_EXPIRED');
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      if (!data.data || !Array.isArray(data.data)) {
+        return [];
+      }
+
+      return data.data;
     } catch (error) {
       console.error('Error fetching ad sets:', error);
-      throw error;
+      const isNetworkError =
+        error instanceof Error &&
+        (error.name === 'AbortError' ||
+          error.message.includes('timeout') ||
+          error.message.includes('fetch failed'));
+
+      throw new Error(
+        isNetworkError
+          ? 'Unable to connect to Facebook. Please check your internet connection.'
+          : error instanceof Error
+            ? error.message
+            : 'Unknown error fetching ad sets'
+      );
     }
   }
 
@@ -412,16 +505,47 @@ export class FacebookMarketingAPI {
 
       const response = await fetch(
         `https://graph.facebook.com/v23.0/${adSetId}/insights?fields=${OPTIMIZED_FIELDS.insights}${dateParams}&access_token=${this.accessToken}`,
-        { signal: controller.signal }
+        {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+          },
+          signal: controller.signal,
+        }
       );
 
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error('Failed to fetch ad set insights');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error?.message || 'Failed to fetch ad set insights';
+        const errorCode = errorData.error?.code;
+
+        // Check if it's a token expiry error
+        if (
+          errorMessage.includes('Session has expired') ||
+          errorMessage.includes('access token') ||
+          errorMessage.includes('token is invalid') ||
+          errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN ||
+          response.status === 401
+        ) {
+          throw new Error('FACEBOOK_TOKEN_EXPIRED');
+        }
+
+        console.warn(`Ad set insights error for ${adSetId}:`, errorMessage);
+        return null;
       }
 
       const data = await response.json();
+
+      if (data.error) {
+        const errorCode = data.error.code;
+        if (errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN) {
+          throw new Error('FACEBOOK_TOKEN_EXPIRED');
+        }
+        console.warn(`Ad set insights error for ${adSetId}:`, data.error.message);
+        return null;
+      }
 
       if (!data.data || data.data.length === 0) {
         return null;
@@ -440,6 +564,10 @@ export class FacebookMarketingAPI {
         cpm: insights.cpm,
       };
     } catch (error) {
+      // Re-throw token expiry errors
+      if (error instanceof Error && error.message === 'FACEBOOK_TOKEN_EXPIRED') {
+        throw error;
+      }
       console.error('Error fetching ad set insights:', error);
       return null;
     }
@@ -453,20 +581,78 @@ export class FacebookMarketingAPI {
       // Use optimized field selection
       const response = await fetch(
         `https://graph.facebook.com/v23.0/${adSetId}/ads?fields=${OPTIMIZED_FIELDS.ad}&access_token=${this.accessToken}`,
-        { signal: controller.signal }
+        {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+          },
+          signal: controller.signal,
+        }
       );
 
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error('Failed to fetch ads');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage =
+          errorData.error?.message || `HTTP ${response.status}: Failed to fetch ads`;
+        const errorCode = errorData.error?.code;
+
+        // Check if it's a token expiry error using standardized error codes
+        if (
+          errorMessage.includes('Session has expired') ||
+          errorMessage.includes('access token') ||
+          errorMessage.includes('token is invalid') ||
+          errorMessage.includes('Error validating access token') ||
+          errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN ||
+          response.status === 401
+        ) {
+          throw new Error('FACEBOOK_TOKEN_EXPIRED');
+        }
+
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
-      return data.data || [];
+
+      if (data.error) {
+        const errorMessage = data.error.message || 'Failed to fetch ads';
+        const errorCode = data.error.code;
+
+        // Check if it's a token expiry error using standardized error codes
+        if (
+          errorMessage.includes('Session has expired') ||
+          errorMessage.includes('access token') ||
+          errorMessage.includes('token is invalid') ||
+          errorMessage.includes('Error validating access token') ||
+          errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN
+        ) {
+          throw new Error('FACEBOOK_TOKEN_EXPIRED');
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      if (!data.data || !Array.isArray(data.data)) {
+        return [];
+      }
+
+      return data.data;
     } catch (error) {
       console.error('Error fetching ads:', error);
-      throw error;
+      const isNetworkError =
+        error instanceof Error &&
+        (error.name === 'AbortError' ||
+          error.message.includes('timeout') ||
+          error.message.includes('fetch failed'));
+
+      throw new Error(
+        isNetworkError
+          ? 'Unable to connect to Facebook. Please check your internet connection.'
+          : error instanceof Error
+            ? error.message
+            : 'Unknown error fetching ads'
+      );
     }
   }
 
@@ -490,16 +676,47 @@ export class FacebookMarketingAPI {
 
       const response = await fetch(
         `https://graph.facebook.com/v23.0/${adId}/insights?fields=${OPTIMIZED_FIELDS.insights}${dateParams}&access_token=${this.accessToken}`,
-        { signal: controller.signal }
+        {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+          },
+          signal: controller.signal,
+        }
       );
 
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error('Failed to fetch ad insights');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error?.message || 'Failed to fetch ad insights';
+        const errorCode = errorData.error?.code;
+
+        // Check if it's a token expiry error
+        if (
+          errorMessage.includes('Session has expired') ||
+          errorMessage.includes('access token') ||
+          errorMessage.includes('token is invalid') ||
+          errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN ||
+          response.status === 401
+        ) {
+          throw new Error('FACEBOOK_TOKEN_EXPIRED');
+        }
+
+        console.warn(`Ad insights error for ${adId}:`, errorMessage);
+        return null;
       }
 
       const data = await response.json();
+
+      if (data.error) {
+        const errorCode = data.error.code;
+        if (errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN) {
+          throw new Error('FACEBOOK_TOKEN_EXPIRED');
+        }
+        console.warn(`Ad insights error for ${adId}:`, data.error.message);
+        return null;
+      }
 
       if (!data.data || data.data.length === 0) {
         return null;
@@ -518,6 +735,10 @@ export class FacebookMarketingAPI {
         cpm: insights.cpm,
       };
     } catch (error) {
+      // Re-throw token expiry errors
+      if (error instanceof Error && error.message === 'FACEBOOK_TOKEN_EXPIRED') {
+        throw error;
+      }
       console.error('Error fetching ad insights:', error);
       return null;
     }
