@@ -72,6 +72,9 @@ model AdAccount {
   facebookAdAccountId   String?          @map("facebook_ad_account_id")
   facebookUserId        String?          @map("facebook_user_id")
   facebookPageId        String?          @map("facebook_page_id")
+  lastSyncedAt          DateTime?        @map("last_synced_at")
+  syncStatus            String?          @default("idle") @map("sync_status") // idle, syncing, error
+  syncError             String?          @map("sync_error") @db.Text
   createdAt             DateTime         @default(now()) @map("created_at")
   updatedAt             DateTime         @updatedAt @map("updated_at")
 
@@ -81,77 +84,90 @@ model AdAccount {
   @@unique([userId, facebookAdAccountId], name: "unique_user_facebook_account")
   @@index([userId])
   @@index([facebookAdAccountId])
+  @@index([lastSyncedAt])
   @@map("ad_accounts")
 }
 
 model Campaign {
-  id                   String   @id @default(cuid())
-  adAccountId          String   @map("ad_account_id")
+  id                   String    @id @default(cuid())
+  adAccountId          String    @map("ad_account_id")
+  facebookCampaignId   String?   @unique @map("facebook_campaign_id")
   name                 String
-  status               String   // Eligible, Paused, Disapproved, Pending, Ended, Removed
+  status               String    // Eligible, Paused, Disapproved, Pending, Ended, Removed
   budget               Float
-  spent                Float    @default(0)
-  impressions          Int      @default(0)
-  clicks               Int      @default(0)
-  ctr                  Float    @default(0)
-  conversions          Int      @default(0)
-  costPerConversion    Float    @default(0) @map("cost_per_conversion")
-  dateStart            String   @map("date_start")
-  dateEnd              String   @map("date_end")
+  spent                Float     @default(0)
+  impressions          Int       @default(0)
+  clicks               Int       @default(0)
+  ctr                  Float     @default(0)
+  conversions          Int       @default(0)
+  costPerConversion    Float     @default(0) @map("cost_per_conversion")
+  dateStart            String    @map("date_start")
+  dateEnd              String    @map("date_end")
   schedule             String
-  createdAt            DateTime @default(now()) @map("created_at")
-  updatedAt            DateTime @updatedAt @map("updated_at")
+  lastSyncedAt         DateTime? @map("last_synced_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
 
   adAccount            AdAccount  @relation(fields: [adAccountId], references: [id], onDelete: Cascade)
   adGroups             AdGroup[]
 
   @@index([adAccountId])
+  @@index([facebookCampaignId])
+  @@index([lastSyncedAt])
   @@map("campaigns")
 }
 
 model AdGroup {
-  id          String   @id @default(cuid())
-  campaignId  String   @map("campaign_id")
-  name        String
-  status      String   // Active, Paused, Pending, Ended
-  budget      Float
-  spent       Float    @default(0)
-  impressions Int      @default(0)
-  clicks      Int      @default(0)
-  ctr         Float    @default(0)
-  cpc         Float    @default(0)
-  conversions Int      @default(0)
-  dateStart   String   @map("date_start")
-  dateEnd     String   @map("date_end")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id                 String    @id @default(cuid())
+  campaignId         String    @map("campaign_id")
+  facebookAdSetId    String?   @unique @map("facebook_adset_id")
+  name               String
+  status             String    // Active, Paused, Pending, Ended
+  budget             Float
+  spent              Float     @default(0)
+  impressions        Int       @default(0)
+  clicks             Int       @default(0)
+  ctr                Float     @default(0)
+  cpc                Float     @default(0)
+  conversions        Int       @default(0)
+  dateStart          String    @map("date_start")
+  dateEnd            String    @map("date_end")
+  lastSyncedAt       DateTime? @map("last_synced_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
 
   campaign    Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   creatives   Creative[]
 
   @@index([campaignId])
+  @@index([facebookAdSetId])
+  @@index([lastSyncedAt])
   @@map("ad_groups")
 }
 
 model Creative {
-  id          String   @id @default(cuid())
-  adGroupId   String   @map("ad_group_id")
-  name        String
-  format      String   // Image, Video, Carousel, Story
-  status      String   // Active, Paused, Review, Rejected
-  impressions Int      @default(0)
-  clicks      Int      @default(0)
-  ctr         Float    @default(0)
-  engagement  Float    @default(0)
-  spend       Float    @default(0)
-  roas        Float    @default(0)
-  dateStart   String   @map("date_start")
-  dateEnd     String   @map("date_end")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id             String    @id @default(cuid())
+  adGroupId      String    @map("ad_group_id")
+  facebookAdId   String?   @unique @map("facebook_ad_id")
+  name           String
+  format         String    // Image, Video, Carousel, Story
+  status         String    // Active, Paused, Review, Rejected
+  impressions    Int       @default(0)
+  clicks         Int       @default(0)
+  ctr            Float     @default(0)
+  engagement     Float     @default(0)
+  spend          Float     @default(0)
+  roas           Float     @default(0)
+  dateStart      String    @map("date_start")
+  dateEnd        String    @map("date_end")
+  lastSyncedAt   DateTime? @map("last_synced_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
   adGroup     AdGroup  @relation(fields: [adGroupId], references: [id], onDelete: Cascade)
 
   @@index([adGroupId])
+  @@index([facebookAdId])
+  @@index([lastSyncedAt])
   @@map("creatives")
 }

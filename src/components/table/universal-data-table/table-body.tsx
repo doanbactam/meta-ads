@@ -107,7 +107,7 @@ export function TableBody<T extends { id: string }>({
   };
 
   return (
-    <tbody>
+    <>
       {items.map((item) => (
         <tr key={item.id} className="border-b border-border hover:bg-muted/30 transition-colors">
           {showBulkActions && (
@@ -127,6 +127,6 @@ export function TableBody<T extends { id: string }>({
             ))}
         </tr>
       ))}
-    </tbody>
+    </>
   );
 }
