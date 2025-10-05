@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutDashboard, Megaphone, Sun, Moon, Terminal, Target, Image } from 'lucide-react';
+import { LayoutDashboard, Megaphone, Sun, Moon, Terminal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
@@ -29,9 +29,7 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'dashboard', href: '/dashboard', matchPath: '/dashboard' },
-    { icon: Megaphone, label: 'campaigns', href: '/campaigns?tab=campaigns', matchPath: '/campaigns' },
-    { icon: Target, label: 'ad sets', href: '/campaigns?tab=ad-sets', matchPath: '/campaigns' },
-    { icon: Image, label: 'ads', href: '/campaigns?tab=ads', matchPath: '/campaigns' },
+    { icon: Megaphone, label: 'campaigns', href: '/campaigns', matchPath: '/campaigns' },
   ];
 
   const handleNavigation = (href: string) => {

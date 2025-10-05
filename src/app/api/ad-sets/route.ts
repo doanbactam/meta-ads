@@ -14,6 +14,8 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const adAccountId = searchParams.get('adAccountId');
+    const fromDate = searchParams.get('from');
+    const toDate = searchParams.get('to');
 
     if (!adAccountId) {
       return NextResponse.json({ adSets: [] });
@@ -55,6 +57,12 @@ export async function GET(request: NextRequest) {
       // First get all campaigns for this ad account
       const facebookCampaigns = await api.getCampaigns(adAccount.facebookAdAccountId);
       
+      // Prepare date options for insights
+      const dateOptions = fromDate && toDate ? {
+        dateFrom: new Date(fromDate).toISOString().split('T')[0],
+        dateTo: new Date(toDate).toISOString().split('T')[0],
+      } : undefined;
+
       // Then get ad sets for each campaign
       const allAdSets = [];
       
@@ -64,7 +72,7 @@ export async function GET(request: NextRequest) {
           
           // Add campaign info to each ad set and get insights
           for (const adSet of campaignAdSets) {
-            const insights = await api.getAdSetInsights(adSet.id).catch(() => null);
+            const insights = await api.getAdSetInsights(adSet.id, dateOptions).catch(() => null);
             
             allAdSets.push({
               id: adSet.id,

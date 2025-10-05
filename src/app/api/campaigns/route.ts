@@ -14,6 +14,8 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const adAccountId = searchParams.get('adAccountId');
+    const fromDate = searchParams.get('from');
+    const toDate = searchParams.get('to');
 
     if (!adAccountId) {
       return NextResponse.json({ campaigns: [] });
@@ -54,10 +56,15 @@ export async function GET(request: NextRequest) {
       
       const facebookCampaigns = await api.getCampaigns(adAccount.facebookAdAccountId);
       
-      // Get insights for each campaign
+      // Get insights for each campaign with date range support
+      const dateOptions = fromDate && toDate ? {
+        dateFrom: new Date(fromDate).toISOString().split('T')[0],
+        dateTo: new Date(toDate).toISOString().split('T')[0],
+      } : undefined;
+
       const campaignsWithInsights = await Promise.all(
         facebookCampaigns.map(async (campaign) => {
-          const insights = await api.getCampaignInsights(campaign.id);
+          const insights = await api.getCampaignInsights(campaign.id, dateOptions);
           
           return {
             id: campaign.id,
