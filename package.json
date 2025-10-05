@@ -59,6 +59,7 @@
     "tsx": "^4.20.6"
   },
   "prisma": {
+    "schema": "src/prisma/schema.prisma",
     "seed": "tsx src/prisma/seed.ts"
   }
 }
