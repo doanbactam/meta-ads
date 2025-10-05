@@ -1,17 +1,8 @@
 'use client';
 
-import {
-  addDays,
-  endOfDay,
-  endOfMonth,
-  format,
-  startOfDay,
-  startOfMonth,
-  subDays,
-  subMonths,
-} from 'date-fns';
+import { endOfDay, endOfMonth, format, startOfDay, startOfMonth, subDays, subMonths } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
-import * as React from 'react';
+import { useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -30,57 +21,32 @@ type DatePreset = {
   value: () => { from: Date; to: Date };
 };
 
+const createPreset = (label: string, getValue: () => { from: Date; to: Date }): DatePreset => ({
+  label,
+  value: getValue,
+});
+
+const now = () => new Date();
 const datePresets: DatePreset[] = [
-  {
-    label: 'Today',
-    value: () => ({
-      from: startOfDay(new Date()),
-      to: endOfDay(new Date()),
-    }),
-  },
-  {
-    label: 'Yesterday',
-    value: () => ({
-      from: startOfDay(subDays(new Date(), 1)),
-      to: endOfDay(subDays(new Date(), 1)),
-    }),
-  },
-  {
-    label: 'Last 7 days',
-    value: () => ({
-      from: startOfDay(subDays(new Date(), 6)),
-      to: endOfDay(new Date()),
-    }),
-  },
-  {
-    label: 'Last 14 days',
-    value: () => ({
-      from: startOfDay(subDays(new Date(), 13)),
-      to: endOfDay(new Date()),
-    }),
-  },
-  {
-    label: 'Last 30 days',
-    value: () => ({
-      from: startOfDay(subDays(new Date(), 29)),
-      to: endOfDay(new Date()),
-    }),
-  },
-  {
-    label: 'This month',
-    value: () => ({
-      from: startOfMonth(new Date()),
-      to: endOfDay(new Date()),
-    }),
-  },
-  {
-    label: 'Last month',
-    value: () => ({
-      from: startOfMonth(subMonths(new Date(), 1)),
-      to: endOfMonth(subMonths(new Date(), 1)),
-    }),
-  },
+  createPreset('Today', () => ({ from: startOfDay(now()), to: endOfDay(now()) })),
+  createPreset('Yesterday', () => {
+    const yesterday = subDays(now(), 1);
+    return { from: startOfDay(yesterday), to: endOfDay(yesterday) };
+  }),
+  createPreset('Last 7 days', () => ({ from: startOfDay(subDays(now(), 6)), to: endOfDay(now()) })),
+  createPreset('Last 14 days', () => ({ from: startOfDay(subDays(now(), 13)), to: endOfDay(now()) })),
+  createPreset('Last 30 days', () => ({ from: startOfDay(subDays(now(), 29)), to: endOfDay(now()) })),
+  createPreset('This month', () => ({ from: startOfMonth(now()), to: endOfDay(now()) })),
+  createPreset('Last month', () => {
+    const lastMonth = subMonths(now(), 1);
+    return { from: startOfMonth(lastMonth), to: endOfMonth(lastMonth) };
+  }),
 ];
+
+const matchesPreset = (from: Date, to: Date, preset: DatePreset): boolean => {
+  const range = preset.value();
+  return from.getTime() === range.from.getTime() && to.getTime() === range.to.getTime();
+};
 
 export function FacebookDateRangePicker({
   value,
@@ -88,79 +54,33 @@ export function FacebookDateRangePicker({
   className,
   disabled = false,
 }: FacebookDateRangePickerProps) {
-  const [date, setDate] = React.useState<DateRange | undefined>({
-    from: value.from,
-    to: value.to,
-  });
-  const [isOpen, setIsOpen] = React.useState(false);
-
-  React.useEffect(() => {
-    setDate({
-      from: value.from,
-      to: value.to,
-    });
-  }, [value.from, value.to]);
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleSelect = (range: DateRange | undefined) => {
-    setDate(range);
     if (range?.from && range?.to) {
-      onChange({
-        from: range.from,
-        to: range.to,
-      });
+      onChange({ from: range.from, to: range.to });
       setIsOpen(false);
     } else if (range?.from) {
-      onChange({
-        from: range.from,
-        to: range.from,
-      });
+      onChange({ from: range.from, to: range.from });
     }
   };
 
   const handlePresetSelect = (preset: DatePreset) => {
-    const range = preset.value();
-    setDate(range);
-    onChange(range);
+    onChange(preset.value());
     setIsOpen(false);
   };
 
   const formatDateRange = () => {
-    if (!date?.from) return 'Select date range';
-    if (!date.to) return format(date.from, 'MMM d, yyyy');
+    if (!value.from) return 'Select date range';
+    if (!value.to) return format(value.from, 'MMM d, yyyy');
 
-    const today = startOfDay(new Date());
-    const yesterday = startOfDay(subDays(new Date(), 1));
+    const matchedPreset = datePresets.find((preset) => matchesPreset(value.from!, value.to!, preset));
+    if (matchedPreset) return matchedPreset.label;
 
-    if (
-      date.from.getTime() === today.getTime() &&
-      date.to.getTime() === endOfDay(new Date()).getTime()
-    ) {
-      return 'Today';
-    }
-
-    if (
-      date.from.getTime() === yesterday.getTime() &&
-      date.to.getTime() === endOfDay(yesterday).getTime()
-    ) {
-      return 'Yesterday';
-    }
-
-    if (
-      date.from.getTime() === startOfDay(subDays(new Date(), 6)).getTime() &&
-      date.to.getTime() === endOfDay(new Date()).getTime()
-    ) {
-      return 'Last 7 days';
-    }
-
-    if (
-      date.from.getTime() === startOfDay(subDays(new Date(), 29)).getTime() &&
-      date.to.getTime() === endOfDay(new Date()).getTime()
-    ) {
-      return 'Last 30 days';
-    }
-
-    return `${format(date.from, 'MMM d')} - ${format(date.to, 'MMM d, yyyy')}`;
+    return `${format(value.from, 'MMM d')} - ${format(value.to, 'MMM d, yyyy')}`;
   };
+
+  const date = { from: value.from, to: value.to };
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -169,7 +89,7 @@ export function FacebookDateRangePicker({
           variant="outline"
           className={cn(
             'justify-start text-left font-normal text-xs h-8 w-[180px]',
-            !date?.from && 'text-muted-foreground',
+            !value.from && 'text-muted-foreground',
             className
           )}
           disabled={disabled}
@@ -180,7 +100,6 @@ export function FacebookDateRangePicker({
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="end" sideOffset={4}>
         <div className="flex">
-          {/* Preset sidebar */}
           <div className="border-r border-border p-1.5 space-y-0.5 min-w-[120px]">
             {datePresets.map((preset) => (
               <Button
@@ -194,11 +113,9 @@ export function FacebookDateRangePicker({
               </Button>
             ))}
           </div>
-
-          {/* Calendar */}
           <Calendar
             mode="range"
-            defaultMonth={date?.from}
+            defaultMonth={value.from}
             selected={date}
             onSelect={handleSelect}
             numberOfMonths={2}
