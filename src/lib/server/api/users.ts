@@ -1,4 +1,3 @@
-import type { SubscriptionPackage, UserRole } from '@prisma/client';
 import { prisma } from '@/lib/server/prisma';
 
 export interface User {
@@ -7,9 +6,6 @@ export interface User {
   email: string;
   name: string | null;
   imageUrl: string | null;
-  role: UserRole;
-  subscriptionPackage: SubscriptionPackage;
-  subscriptionExpiry: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -27,9 +23,6 @@ export async function getUserByClerkId(clerkId: string): Promise<User | null> {
     email: user.email,
     name: user.name,
     imageUrl: user.imageUrl,
-    role: user.role,
-    subscriptionPackage: user.subscriptionPackage,
-    subscriptionExpiry: user.subscriptionExpiry?.toISOString() || null,
     created_at: user.createdAt.toISOString(),
     updated_at: user.updatedAt.toISOString(),
   };
@@ -40,8 +33,6 @@ export async function createUser(data: {
   email: string;
   name?: string;
   imageUrl?: string;
-  role?: UserRole;
-  subscriptionPackage?: SubscriptionPackage;
 }): Promise<User> {
   const user = await prisma.user.create({
     data: {
@@ -49,8 +40,6 @@ export async function createUser(data: {
       email: data.email,
       name: data.name || null,
       imageUrl: data.imageUrl || null,
-      role: data.role || 'USER',
-      subscriptionPackage: data.subscriptionPackage || 'FREE',
     },
   });
 
@@ -60,9 +49,6 @@ export async function createUser(data: {
     email: user.email,
     name: user.name,
     imageUrl: user.imageUrl,
-    role: user.role,
-    subscriptionPackage: user.subscriptionPackage,
-    subscriptionExpiry: user.subscriptionExpiry?.toISOString() || null,
     created_at: user.createdAt.toISOString(),
     updated_at: user.updatedAt.toISOString(),
   };
@@ -74,9 +60,6 @@ export async function updateUser(
     email?: string;
     name?: string;
     imageUrl?: string;
-    role?: UserRole;
-    subscriptionPackage?: SubscriptionPackage;
-    subscriptionExpiry?: Date;
   }
 ): Promise<User> {
   const user = await prisma.user.update({
@@ -85,11 +68,6 @@ export async function updateUser(
       ...(updates.email && { email: updates.email }),
       ...(updates.name !== undefined && { name: updates.name }),
       ...(updates.imageUrl !== undefined && { imageUrl: updates.imageUrl }),
-      ...(updates.role && { role: updates.role }),
-      ...(updates.subscriptionPackage && { subscriptionPackage: updates.subscriptionPackage }),
-      ...(updates.subscriptionExpiry !== undefined && {
-        subscriptionExpiry: updates.subscriptionExpiry,
-      }),
     },
   });
 
@@ -99,9 +77,6 @@ export async function updateUser(
     email: user.email,
     name: user.name,
     imageUrl: user.imageUrl,
-    role: user.role,
-    subscriptionPackage: user.subscriptionPackage,
-    subscriptionExpiry: user.subscriptionExpiry?.toISOString() || null,
     created_at: user.createdAt.toISOString(),
     updated_at: user.updatedAt.toISOString(),
   };
