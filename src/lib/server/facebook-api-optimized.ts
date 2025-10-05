@@ -235,7 +235,6 @@ export class FacebookMarketingAPIOptimized {
         const timeoutId = setTimeout(() => controller.abort(), timeout);
 
         const headers: HeadersInit = {
-        const headers: HeadersInit = {
           Accept: 'application/json',
           Authorization: `Bearer ${this.accessToken}`,
         };
