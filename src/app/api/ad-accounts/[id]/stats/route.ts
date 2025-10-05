@@ -32,7 +32,15 @@ export async function GET(
           { status: 401 }
         );
       }
-      
+
+      // Return 404 for ad account not found
+      if (tokenResult.status === 404) {
+        return NextResponse.json(
+          { error: tokenResult.error },
+          { status: 404 }
+        );
+      }
+
       // Return empty stats for other errors (not connected, etc.)
       return NextResponse.json({
         totalSpent: 0,
