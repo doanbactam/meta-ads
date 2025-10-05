@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/server/prisma';
+import { Platform, AdAccountStatus } from '@prisma/client';
 
 export interface AdAccount {
   id: string;
@@ -55,8 +56,8 @@ export async function createAdAccount(
     data: {
       userId: data.userId,
       name: data.name,
-      platform: data.platform as 'FACEBOOK' | 'INSTAGRAM' | 'LINKEDIN' | 'MESSENGER',
-      status: data.status as 'ACTIVE' | 'PAUSED' | 'DISABLED',
+      platform: data.platform as Platform,
+      status: data.status as AdAccountStatus,
       currency: data.currency || 'USD',
       timeZone: data.timeZone || 'UTC',
     },
@@ -79,8 +80,8 @@ export async function updateAdAccount(id: string, updates: Partial<AdAccount>): 
     where: { id },
     data: {
       ...(updates.name && { name: updates.name }),
-      ...(updates.platform && { platform: updates.platform as 'FACEBOOK' | 'INSTAGRAM' | 'LINKEDIN' | 'MESSENGER' }),
-      ...(updates.status && { status: updates.status as 'ACTIVE' | 'PAUSED' | 'DISABLED' }),
+      ...(updates.platform && { platform: updates.platform as Platform }),
+      ...(updates.status && { status: updates.status as AdAccountStatus }),
       ...(updates.currency && { currency: updates.currency }),
       ...(updates.timeZone && { timeZone: updates.timeZone }),
     },

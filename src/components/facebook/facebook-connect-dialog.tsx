@@ -20,14 +20,12 @@ interface FacebookConnectDialogProps {
 }
 
 export function FacebookConnectDialog({ open, onOpenChange, onConnect }: FacebookConnectDialogProps) {
-  const [accessToken, setAccessToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const cleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (!open) {
-      setAccessToken('');
       setError('');
       setLoading(false);
       // Cleanup any pending OAuth listeners
@@ -107,8 +105,6 @@ export function FacebookConnectDialog({ open, onOpenChange, onConnect }: Faceboo
         clearInterval(checkClosed);
         window.removeEventListener('message', handleMessage);
 
-        const token = event.data.accessToken;
-        setAccessToken(token);
         setLoading(true);
 
         try {
@@ -118,7 +114,7 @@ export function FacebookConnectDialog({ open, onOpenChange, onConnect }: Faceboo
         }
 
         // Auto-connect with all accounts after OAuth success
-        await handleConnect(token);
+        await handleConnect(event.data.accessToken);
       } else if (event.data.type === 'facebook-auth-error') {
         clearInterval(checkClosed);
         window.removeEventListener('message', handleMessage);

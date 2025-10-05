@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/server/prisma';
 
+const EMPTY_DAILY_STATS = {
+  spend: 0,
+  impressions: 0,
+  clicks: 0,
+  conversions: 0,
+} as const;
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -64,12 +71,7 @@ export async function GET(
 
     campaigns.forEach(campaign => {
       const dateKey = campaign.createdAt.toISOString().split('T')[0];
-      const existing = dailyStatsMap.get(dateKey) || {
-        spend: 0,
-        impressions: 0,
-        clicks: 0,
-        conversions: 0,
-      };
+      const existing = dailyStatsMap.get(dateKey) || { ...EMPTY_DAILY_STATS };
 
       dailyStatsMap.set(dateKey, {
         spend: existing.spend + (campaign.spent || 0),

@@ -1,6 +1,15 @@
 import { prisma } from '@/lib/server/prisma';
 import { Campaign } from '@/types';
 
+const EMPTY_CAMPAIGN_STATS = {
+  spent: 0,
+  impressions: 0,
+  clicks: 0,
+  ctr: 0,
+  conversions: 0,
+  costPerConversion: 0,
+} as const;
+
 export async function getCampaigns(adAccountId?: string): Promise<Campaign[]> {
   // This function is now deprecated as we fetch directly from Facebook API
   // Keeping it for backward compatibility but returning empty array
@@ -131,12 +140,7 @@ export async function duplicateCampaign(id: string): Promise<Campaign> {
       name: `${original.name} (Copy)`,
       status: original.status,
       budget: original.budget,
-      spent: 0,
-      impressions: 0,
-      clicks: 0,
-      ctr: 0,
-      conversions: 0,
-      costPerConversion: 0,
+      ...EMPTY_CAMPAIGN_STATS,
       dateStart: original.dateStart,
       dateEnd: original.dateEnd,
       schedule: original.schedule,
