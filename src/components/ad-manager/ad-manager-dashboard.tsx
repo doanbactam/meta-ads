@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { Sidebar } from '@/components/sidebar';
-import { Header } from '@/components/header';
-import { UniversalDataTable } from '@/components/universal-data-table';
+import { Sidebar } from '@/components/layout/sidebar';
+import { Header } from '@/components/layout/header';
+import { UniversalDataTable } from '@/components/table/universal-data-table';
 import { campaignTableConfig, adGroupsTableConfig, adsTableConfig } from '@/lib/client/table-configs';
 import { Campaign, AdGroup, Ad } from '@/types';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { FacebookConnectDialog } from '@/components/facebook-connect-dialog';
+import { FacebookConnectDialog } from '@/components/facebook/facebook-connect-dialog';
 import { useFacebookConnection } from '@/hooks/use-facebook-connection';
 import { useFacebookStore } from '@/lib/client/stores/facebook-store';
 

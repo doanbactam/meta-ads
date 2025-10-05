@@ -1,7 +1,7 @@
 'use client';
 
-import { AppLayout } from '@/components/app-layout';
-import { DashboardOverview } from '@/components/dashboard-overview';
+import { AppLayout } from '@/components/layout/app-layout';
+import { DashboardOverview } from '@/components/dashboard/dashboard-overview';
 
 export default function DashboardPage() {
   return (

@@ -1,7 +1,7 @@
 'use client';
 
-import { AppLayout } from '@/components/app-layout';
-import { UniversalDataTable } from '@/components/universal-data-table';
+import { AppLayout } from '@/components/layout/app-layout';
+import { UniversalDataTable } from '@/components/table/universal-data-table';
 import { campaignTableConfig, adGroupsTableConfig, adsTableConfig } from '@/lib/client/table-configs';
 import { Campaign, AdGroup, Ad } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

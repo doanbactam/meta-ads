@@ -1,7 +1,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { JetBrains_Mono } from 'next/font/google';
-import { ThemeProvider } from '@/components/theme-provider';
+import { ThemeProvider } from '@/components/common/theme-provider';
 import { ClerkProvider } from '@clerk/nextjs';
 import { dark } from '@clerk/themes';
 import { QueryProvider } from '@/lib/client/providers/query-provider';

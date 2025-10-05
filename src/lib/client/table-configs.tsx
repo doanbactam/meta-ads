@@ -1,4 +1,4 @@
-import { TableConfig } from '@/components/universal-data-table';
+import { TableConfig } from '@/components/table/universal-data-table';
 import { Campaign, AdGroup, Ad } from '@/types';
 import { Eye } from 'lucide-react';
 import { toast } from 'sonner';
