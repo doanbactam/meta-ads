@@ -2,7 +2,7 @@
 
 import { endOfDay, endOfMonth, format, startOfDay, startOfMonth, subDays, subMonths } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -54,9 +54,15 @@ export function FacebookDateRangePicker({
   className,
   disabled = false,
 }: FacebookDateRangePickerProps) {
+  const [date, setDate] = useState<DateRange>({ from: value.from, to: value.to });
   const [isOpen, setIsOpen] = useState(false);
 
+  useEffect(() => {
+    setDate({ from: value.from, to: value.to });
+  }, [value.from, value.to]);
+
   const handleSelect = (range: DateRange | undefined) => {
+    setDate(range);
     if (range?.from && range?.to) {
       onChange({ from: range.from, to: range.to });
       setIsOpen(false);
@@ -66,21 +72,21 @@ export function FacebookDateRangePicker({
   };
 
   const handlePresetSelect = (preset: DatePreset) => {
-    onChange(preset.value());
+    const range = preset.value();
+    setDate(range);
+    onChange(range);
     setIsOpen(false);
   };
 
   const formatDateRange = () => {
-    if (!value.from) return 'Select date range';
-    if (!value.to) return format(value.from, 'MMM d, yyyy');
+    if (!date?.from) return 'Select date range';
+    if (!date.to) return format(date.from, 'MMM d, yyyy');
 
-    const matchedPreset = datePresets.find((preset) => matchesPreset(value.from!, value.to!, preset));
+    const matchedPreset = datePresets.find((preset) => matchesPreset(date.from!, date.to!, preset));
     if (matchedPreset) return matchedPreset.label;
 
-    return `${format(value.from, 'MMM d')} - ${format(value.to, 'MMM d, yyyy')}`;
+    return `${format(date.from, 'MMM d')} - ${format(date.to, 'MMM d, yyyy')}`;
   };
-
-  const date = { from: value.from, to: value.to };
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -89,7 +95,7 @@ export function FacebookDateRangePicker({
           variant="outline"
           className={cn(
             'justify-start text-left font-normal text-xs h-8 w-[180px]',
-            !value.from && 'text-muted-foreground',
+            !date?.from && 'text-muted-foreground',
             className
           )}
           disabled={disabled}
@@ -115,7 +121,7 @@ export function FacebookDateRangePicker({
           </div>
           <Calendar
             mode="range"
-            defaultMonth={value.from}
+            defaultMonth={date?.from}
             selected={date}
             onSelect={handleSelect}
             numberOfMonths={2}

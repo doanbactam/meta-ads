@@ -1,6 +1,6 @@
 'use client';
 
-import { Columns3 } from 'lucide-react';
+import { Check, Columns3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -59,7 +59,7 @@ export function ColumnsSelector({
             {columns.map((column) => {
               const isChecked = visibleColumns.includes(column.id);
               return (
-                <div key={column.id} className="flex items-center space-x-2">
+                <div key={column.id} className="flex items-center gap-2">
                   <Checkbox
                     id={column.id}
                     checked={isChecked}
@@ -68,6 +68,7 @@ export function ColumnsSelector({
                   <Label htmlFor={column.id} className="text-sm font-normal cursor-pointer flex-1">
                     {column.label}
                   </Label>
+                  {isChecked && <Check className="h-4 w-4 text-primary shrink-0" />}
                 </div>
               );
             })}
