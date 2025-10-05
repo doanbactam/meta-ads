@@ -70,16 +70,25 @@ export function UniversalDataTable<T extends { id: string }>({
         throw new Error('FACEBOOK_TOKEN_EXPIRED');
       }
 
+      // Handle direct array response
       if (Array.isArray(data)) {
         return data;
       }
 
+      // Handle object response - try to find the data array
+      // First, try the exact queryKey (e.g., 'campaigns', 'adSets', 'ads')
+      if (data[config.queryKey] && Array.isArray(data[config.queryKey])) {
+        return data[config.queryKey];
+      }
+
+      // Try common variations
       const possibleKeys = [
-        config.queryKey,
-        config.queryKey.toLowerCase(),
         'campaigns',
         'adSets',
         'ads',
+        'data',
+        'items',
+        'results',
       ];
 
       for (const key of possibleKeys) {
@@ -88,12 +97,20 @@ export function UniversalDataTable<T extends { id: string }>({
         }
       }
 
+      // If no array found, log the response structure for debugging
+      console.warn('Could not find data array in response:', Object.keys(data));
       return [];
     },
     enabled: !!adAccountId,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: (failureCount, error) => {
+      // Don't retry on token expiry errors
+      if (error.message === 'FACEBOOK_TOKEN_EXPIRED') {
+        return false;
+      }
+      return failureCount < 1;
+    },
   });
 
   // Filter items based on search
