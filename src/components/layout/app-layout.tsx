@@ -9,14 +9,20 @@ import { useFacebookConnection } from '@/hooks/use-facebook-connection';
 import { useFacebookStore } from '@/lib/client/stores/facebook-store';
 
 interface AppLayoutProps {
-  children: ReactNode | ((props: { selectedAdAccount: string }) => ReactNode);
+  children: ReactNode;
   showAdAccountSelector?: boolean;
+  selectedAdAccount?: string;
+  onAdAccountChange?: (adAccountId: string) => void;
 }
 
-export function AppLayout({ children, showAdAccountSelector = true }: AppLayoutProps) {
+export function AppLayout({ 
+  children, 
+  showAdAccountSelector = true,
+  selectedAdAccount = '',
+  onAdAccountChange
+}: AppLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [selectedAdAccount, setSelectedAdAccount] = useState<string>('');
   const { connected, loading, connectFacebook } = useFacebookConnection(selectedAdAccount);
   const { showConnectionDialog, setShowConnectionDialog } = useFacebookStore();
 
@@ -28,10 +34,10 @@ export function AppLayout({ children, showAdAccountSelector = true }: AppLayoutP
         <Header
           onToggleSidebar={() => setMobileMenuOpen(true)}
           selectedAdAccount={showAdAccountSelector ? selectedAdAccount : undefined}
-          onAdAccountChange={showAdAccountSelector ? setSelectedAdAccount : undefined}
+          onAdAccountChange={showAdAccountSelector ? onAdAccountChange : undefined}
         />
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          {typeof children === 'function' ? children({ selectedAdAccount }) : children}
+          {children}
         </main>
       </div>
 

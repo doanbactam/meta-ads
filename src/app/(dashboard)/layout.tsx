@@ -1,11 +1,24 @@
-import { AppLayout } from '@/components/layout/app-layout';
+'use client';
 
-export const dynamic = 'force-dynamic';
+import { useState } from 'react';
+import { AppLayout } from '@/components/layout/app-layout';
+import { AdAccountProvider } from '@/lib/client/contexts/ad-account-context';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <AppLayout>{children}</AppLayout>;
+  const [selectedAdAccount, setSelectedAdAccount] = useState<string>('');
+
+  return (
+    <AppLayout 
+      selectedAdAccount={selectedAdAccount}
+      onAdAccountChange={setSelectedAdAccount}
+    >
+      <AdAccountProvider selectedAdAccount={selectedAdAccount}>
+        {children}
+      </AdAccountProvider>
+    </AppLayout>
+  );
 }
