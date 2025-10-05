@@ -24,6 +24,15 @@ export const FACEBOOK_ERROR_CODES = {
   PERMISSION_DENIED: 200,
 } as const;
 
+// Custom error type with Facebook-specific properties
+export interface FacebookError extends Error {
+  code?: number;
+  type?: string;
+  errorSubcode?: number;
+  fbtrace_id?: string;
+  statusCode?: number;
+}
+
 export interface FacebookTokenValidation {
   isValid: boolean;
   appId?: string;
@@ -757,8 +766,8 @@ export class FacebookMarketingAPIOptimized {
     return '&date_preset=last_30d';
   }
 
-  private shouldRetry(errorCode: number, attempt: number, maxRetries: number): boolean {
-    if (attempt >= maxRetries) {
+  private shouldRetry(errorCode: number | undefined, attempt: number, maxRetries: number): boolean {
+    if (attempt >= maxRetries || !errorCode) {
       return false;
     }
 
@@ -788,10 +797,10 @@ export class FacebookMarketingAPIOptimized {
     );
   }
 
-  private createFacebookError(errorData: any, statusCode: number): Error {
-    const error: any = new Error(
+  private createFacebookError(errorData: any, statusCode: number): FacebookError {
+    const error = new Error(
       errorData.error?.message || `HTTP ${statusCode}: Request failed`
-    );
+    ) as FacebookError;
     error.code = errorData.error?.code;
     error.type = errorData.error?.type;
     error.errorSubcode = errorData.error?.error_subcode;
