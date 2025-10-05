@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useFacebookConnection } from '@/hooks/use-facebook-connection';
-import { FacebookConnectDialog } from '@/components/facebook/facebook-connect-dialog';
+import { useFacebookStore } from '@/lib/client/stores/facebook-store';
 import { TablePagination } from '@/components/table/table-pagination';
 import { useUserSettings } from '@/lib/client/contexts/user-settings-context';
 import { TableToolbar } from './table-toolbar';
@@ -11,6 +11,7 @@ import { TableHeader } from './table-header';
 import { TableBody } from './table-body';
 import { TableEmptyState } from './table-empty-state';
 import { UniversalDataTableProps } from './types';
+import { toast } from 'sonner';
 
 export function UniversalDataTable<T extends { id: string }>({ 
   adAccountId, 
@@ -29,13 +30,13 @@ export function UniversalDataTable<T extends { id: string }>({
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [showConnectDialog, setShowConnectDialog] = useState(false);
 
   const { settings } = useUserSettings();
-  const { connected, loading: connectionLoading, connectFacebook } = useFacebookConnection(adAccountId);
+  const { connected, loading: connectionLoading } = useFacebookConnection(adAccountId);
+  const { setShowConnectionDialog } = useFacebookStore();
 
   // Data fetching
-  const { data: items = [], isLoading: loading, error, refetch } = useQuery({
+  const { data: items = [], isLoading: loading, error, refetch, isFetching } = useQuery({
     queryKey: [config.queryKey, adAccountId, dateRange],
     queryFn: async (): Promise<T[]> => {
       if (!adAccountId) return [];
@@ -127,6 +128,21 @@ export function UniversalDataTable<T extends { id: string }>({
     setSelectedRows([]);
   };
 
+  const handleRefresh = async () => {
+    toast.promise(
+      refetch({ throwOnError: true }),
+      {
+        loading: 'Refreshing data...',
+        success: 'Data refreshed successfully',
+        error: 'Failed to refresh data',
+      }
+    );
+  };
+
+  const handleConnect = () => {
+    setShowConnectionDialog(true);
+  };
+
   const toggleRow = (id: string) => {
     setSelectedRows(prev =>
       prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]
@@ -159,7 +175,8 @@ export function UniversalDataTable<T extends { id: string }>({
         visibleColumns={visibleColumns}
         onColumnsChange={setVisibleColumns}
         selectedRows={selectedRows}
-        onRefresh={() => refetch()}
+        onRefresh={handleRefresh}
+        isRefreshing={isFetching}
         features={features}
       />
 
@@ -182,9 +199,8 @@ export function UniversalDataTable<T extends { id: string }>({
                 showBulkActions={features.bulkActions}
                 connected={connected}
                 adAccountId={adAccountId}
-                onRefresh={() => refetch()}
-                onReconnect={() => setShowConnectDialog(true)}
-                onConnect={() => setShowConnectDialog(true)}
+                onRefresh={handleRefresh}
+                onConnect={handleConnect}
               />
             ) : error ? (
               <TableEmptyState
@@ -195,9 +211,8 @@ export function UniversalDataTable<T extends { id: string }>({
                 showBulkActions={features.bulkActions}
                 connected={connected}
                 adAccountId={adAccountId}
-                onRefresh={() => refetch()}
-                onReconnect={() => setShowConnectDialog(true)}
-                onConnect={() => setShowConnectDialog(true)}
+                onRefresh={handleRefresh}
+                onConnect={handleConnect}
               />
             ) : totalItems === 0 ? (
               <TableEmptyState
@@ -207,9 +222,8 @@ export function UniversalDataTable<T extends { id: string }>({
                 showBulkActions={features.bulkActions}
                 connected={connected}
                 adAccountId={adAccountId}
-                onRefresh={() => refetch()}
-                onReconnect={() => setShowConnectDialog(true)}
-                onConnect={() => setShowConnectDialog(true)}
+                onRefresh={handleRefresh}
+                onConnect={handleConnect}
               />
             ) : (
               <TableBody
@@ -237,12 +251,6 @@ export function UniversalDataTable<T extends { id: string }>({
         />
       )}
 
-      {/* Facebook Connect Dialog */}
-      <FacebookConnectDialog
-        open={showConnectDialog}
-        onOpenChange={setShowConnectDialog}
-        onConnect={connectFacebook}
-      />
     </div>
   );
 }

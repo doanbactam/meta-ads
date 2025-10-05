@@ -164,7 +164,7 @@ export function FacebookDateRangePicker({
         <Button
           variant="outline"
           className={cn(
-            'justify-start text-left font-normal text-xs h-8 w-[200px]',
+            'justify-start text-left font-normal text-xs h-8 w-[180px]',
             !date?.from && 'text-muted-foreground',
             className
           )}
@@ -174,16 +174,16 @@ export function FacebookDateRangePicker({
           {formatDateRange()}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto p-0" align="end" sideOffset={4}>
         <div className="flex">
           {/* Preset sidebar */}
-          <div className="border-r border-border p-2 space-y-0.5 min-w-[140px]">
+          <div className="border-r border-border p-1.5 space-y-0.5 min-w-[120px]">
             {datePresets.map((preset) => (
               <Button
                 key={preset.label}
                 variant="ghost"
                 size="sm"
-                className="w-full justify-start h-8 text-xs font-normal"
+                className="w-full justify-start h-7 text-xs font-normal px-2"
                 onClick={() => handlePresetSelect(preset)}
               >
                 {preset.label}
@@ -198,12 +198,12 @@ export function FacebookDateRangePicker({
             selected={date}
             onSelect={handleSelect}
             numberOfMonths={2}
-            className="p-3"
+            className="p-2"
             classNames={{
-              months: 'flex flex-col sm:flex-row gap-4',
-              month: 'flex flex-col gap-4 min-w-[250px]',
+              months: 'flex flex-col sm:flex-row gap-3',
+              month: 'flex flex-col gap-3 min-w-[240px]',
               caption: 'flex justify-center pt-1 relative items-center',
-              caption_label: 'text-sm font-medium',
+              caption_label: 'text-xs font-medium',
               nav: 'flex items-center gap-1',
               nav_button: 'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 border border-input hover:bg-accent hover:text-accent-foreground rounded-md',
               nav_button_previous: 'absolute left-1',
@@ -211,9 +211,9 @@ export function FacebookDateRangePicker({
               table: 'w-full border-collapse space-y-1',
               head_row: 'flex',
               head_cell: 'text-muted-foreground rounded-md w-8 font-normal text-xs text-center',
-              row: 'flex w-full mt-2',
-              cell: 'relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected].day-range-end)]:rounded-r-md first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md',
-              day: 'h-8 w-8 p-0 font-normal aria-selected:opacity-100 hover:bg-accent hover:text-accent-foreground rounded-md',
+              row: 'flex w-full mt-1.5',
+              cell: 'relative p-0 text-center text-xs focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected].day-range-end)]:rounded-r-md first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md',
+              day: 'h-7 w-8 p-0 font-normal aria-selected:opacity-100 hover:bg-accent hover:text-accent-foreground rounded-md',
               day_selected: 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground',
               day_today: 'bg-accent text-accent-foreground',
               day_outside: 'day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30',

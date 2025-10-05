@@ -1,0 +1,14 @@
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/.auth/
+/screenshots/
+test-results.json
+
+# Dependencies
+/node_modules/
+
+# Environment
+.env.local
+.env.test.local

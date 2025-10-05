@@ -67,8 +67,8 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
     }
   }, [selectedAdAccount, adAccounts, onAdAccountChange]);
 
-  const handleRefresh = () => {
-    refetch();
+  const handleRefresh = async () => {
+    await refetch();
   };
 
   return (
@@ -142,7 +142,7 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
               className="h-8 w-8 p-0"
               onClick={handleRefresh}
               disabled={isLoading}
-              title="Refresh ad accounts"
+              title={isLoading ? "Refreshing accounts..." : "Refresh ad accounts"}
             >
               <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
