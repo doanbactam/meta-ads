@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { type AdAccount } from '@/lib/server/api/ad-accounts';
 import { UserButton, useUser, SignedIn, SignedOut } from '@clerk/nextjs';
 import { useQuery } from '@tanstack/react-query';
@@ -27,6 +27,8 @@ interface HeaderProps {
 
 export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }: HeaderProps) {
   const { user, isSignedIn } = useUser();
+  const isInitializedRef = useRef(false);
+  const lastAccountsLengthRef = useRef(0);
 
   const { 
     data: adAccountsData, 
@@ -51,21 +53,40 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
   const adAccounts = adAccountsData || [];
 
   // Auto-select first account if none selected
+  // Use ref to prevent infinite loops
   useEffect(() => {
-    if (adAccounts.length > 0 && !selectedAdAccount && onAdAccountChange) {
+    // Only run once when accounts are first loaded
+    if (
+      adAccounts.length > 0 && 
+      !selectedAdAccount && 
+      onAdAccountChange &&
+      !isInitializedRef.current
+    ) {
+      isInitializedRef.current = true;
       onAdAccountChange(adAccounts[0].id);
     }
-  }, [adAccounts, selectedAdAccount, onAdAccountChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adAccounts.length, selectedAdAccount]);
 
   // If selected account no longer exists, select first available
+  // Only trigger when accounts list actually changes
   useEffect(() => {
-    if (selectedAdAccount && adAccounts.length > 0 && onAdAccountChange) {
+    const accountsChanged = lastAccountsLengthRef.current !== adAccounts.length;
+    lastAccountsLengthRef.current = adAccounts.length;
+
+    if (
+      selectedAdAccount && 
+      adAccounts.length > 0 && 
+      onAdAccountChange &&
+      accountsChanged
+    ) {
       const accountExists = adAccounts.find((a: AdAccount) => a.id === selectedAdAccount);
       if (!accountExists) {
         onAdAccountChange(adAccounts[0].id);
       }
     }
-  }, [selectedAdAccount, adAccounts, onAdAccountChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAdAccount, adAccounts.length]);
 
   const handleRefresh = async () => {
     await refetch();
