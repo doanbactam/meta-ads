@@ -1,7 +1,7 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { backgroundSync } from '@/lib/client/background-sync';
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {
@@ -28,15 +28,11 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
   // Initialize background sync
   useEffect(() => {
     backgroundSync.init(queryClient);
-    
+
     return () => {
       backgroundSync.stop();
     };
   }, [queryClient]);
 
-  return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
-  );
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }

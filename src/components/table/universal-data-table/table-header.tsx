@@ -1,7 +1,7 @@
 'use client';
 
 import { Checkbox } from '@/components/ui/checkbox';
-import { TableColumn } from './types';
+import type { TableColumn } from './types';
 
 interface TableHeaderProps<T> {
   columns: TableColumn<T>[];
@@ -23,17 +23,14 @@ export function TableHeader<T>({
       <tr>
         {showBulkActions && (
           <th className="w-10 p-2">
-            <Checkbox
-              checked={allSelected}
-              onCheckedChange={onToggleAll}
-            />
+            <Checkbox checked={allSelected} onCheckedChange={onToggleAll} />
           </th>
         )}
         {columns
-          .filter(col => visibleColumns.includes(col.id))
-          .map(column => (
-            <th 
-              key={column.id} 
+          .filter((col) => visibleColumns.includes(col.id))
+          .map((column) => (
+            <th
+              key={column.id}
               className="text-left p-2 font-medium"
               style={{ width: column.width }}
             >

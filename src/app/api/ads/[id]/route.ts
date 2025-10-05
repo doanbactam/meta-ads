@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { deleteCreative } from '@/lib/server/api/creatives';
 
 export async function DELETE(
@@ -19,9 +19,6 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting ad:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete ad' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to delete ad' }, { status: 500 });
   }
 }

@@ -1,10 +1,15 @@
 'use client';
 
-import { Checkbox } from '@/components/ui/checkbox';
-import { StatusBadge } from '@/components/common/status-badge';
 import { FormatBadge } from '@/components/common/format-badge';
-import { formatCurrency, formatNumber, formatPercentage, formatDateRange } from '@/lib/shared/formatters';
-import { TableColumn } from './types';
+import { StatusBadge } from '@/components/common/status-badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  formatCurrency,
+  formatDateRange,
+  formatNumber,
+  formatPercentage,
+} from '@/lib/shared/formatters';
+import type { TableColumn } from './types';
 
 interface TableBodyProps<T extends { id: string }> {
   items: T[];
@@ -30,7 +35,7 @@ export function TableBody<T extends { id: string }>({
 }: TableBodyProps<T>) {
   const renderCellValue = (column: TableColumn<T>, item: T) => {
     let value: any;
-    
+
     if (column.accessor) {
       if (typeof column.accessor === 'function') {
         value = column.accessor(item);
@@ -65,7 +70,11 @@ export function TableBody<T extends { id: string }>({
       case 'roas':
         return formatPercentage(value);
       case 'dateRange':
-        return <span className="text-muted-foreground">{formatDateRange((item as any).date_start, (item as any).date_end)}</span>;
+        return (
+          <span className="text-muted-foreground">
+            {formatDateRange((item as any).date_start, (item as any).date_end)}
+          </span>
+        );
       default:
         return value || '--';
     }
@@ -74,10 +83,7 @@ export function TableBody<T extends { id: string }>({
   return (
     <tbody>
       {items.map((item) => (
-        <tr
-          key={item.id}
-          className="border-b border-border hover:bg-muted/30 transition-colors"
-        >
+        <tr key={item.id} className="border-b border-border hover:bg-muted/30 transition-colors">
           {showBulkActions && (
             <td className="p-2">
               <Checkbox
@@ -87,8 +93,8 @@ export function TableBody<T extends { id: string }>({
             </td>
           )}
           {columns
-            .filter(col => visibleColumns.includes(col.id))
-            .map(column => (
+            .filter((col) => visibleColumns.includes(col.id))
+            .map((column) => (
               <td key={column.id} className="p-2">
                 {renderCellValue(column, item)}
               </td>

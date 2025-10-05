@@ -1,13 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getAdAccountById } from '@/lib/server/api/ad-accounts';
 import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
 import { prisma } from '@/lib/server/prisma';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { userId: clerkId } = await auth();
 
@@ -17,7 +14,7 @@ export async function GET(
 
     const { id } = await params;
     const user = await getOrCreateUserFromClerk(clerkId);
-    
+
     // Verify user has access to this ad account
     const adAccount = await prisma.adAccount.findFirst({
       where: {
@@ -35,9 +32,6 @@ export async function GET(
     return NextResponse.json(account);
   } catch (error) {
     console.error('Error fetching ad account:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch ad account' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch ad account' }, { status: 500 });
   }
 }

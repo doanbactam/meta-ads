@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { CheckCircle, Loader2, XCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,10 +36,13 @@ export default function FacebookCallbackPage() {
 
           // Send error message to parent window
           try {
-            window.opener.postMessage({
-              type: 'facebook-auth-error',
-              error: errorMsg,
-            }, window.location.origin);
+            window.opener.postMessage(
+              {
+                type: 'facebook-auth-error',
+                error: errorMsg,
+              },
+              window.location.origin
+            );
           } catch (e) {
             console.error('Failed to send error message to parent:', e);
           }
@@ -55,10 +58,13 @@ export default function FacebookCallbackPage() {
           setMessage('No access token received. Please try again.');
 
           try {
-            window.opener.postMessage({
-              type: 'facebook-auth-error',
-              error: 'No access token received',
-            }, window.location.origin);
+            window.opener.postMessage(
+              {
+                type: 'facebook-auth-error',
+                error: 'No access token received',
+              },
+              window.location.origin
+            );
           } catch (e) {
             console.error('Failed to send error message to parent:', e);
           }
@@ -75,10 +81,13 @@ export default function FacebookCallbackPage() {
           setMessage('Invalid access token format received.');
 
           try {
-            window.opener.postMessage({
-              type: 'facebook-auth-error',
-              error: 'Invalid access token format',
-            }, window.location.origin);
+            window.opener.postMessage(
+              {
+                type: 'facebook-auth-error',
+                error: 'Invalid access token format',
+              },
+              window.location.origin
+            );
           } catch (e) {
             console.error('Failed to send error message to parent:', e);
           }
@@ -95,10 +104,13 @@ export default function FacebookCallbackPage() {
 
         // Send the access token to the parent window
         try {
-          window.opener.postMessage({
-            type: 'facebook-auth-success',
-            accessToken,
-          }, window.location.origin);
+          window.opener.postMessage(
+            {
+              type: 'facebook-auth-success',
+              accessToken,
+            },
+            window.location.origin
+          );
         } catch (e) {
           console.error('Failed to send token to parent:', e);
           setStatus('error');
@@ -114,7 +126,6 @@ export default function FacebookCallbackPage() {
             console.error('Failed to close window:', e);
           }
         }, 1500);
-
       } catch (err) {
         console.error('Error processing callback:', err);
         setStatus('error');
@@ -122,10 +133,13 @@ export default function FacebookCallbackPage() {
 
         if (window.opener) {
           try {
-            window.opener.postMessage({
-              type: 'facebook-auth-error',
-              error: err instanceof Error ? err.message : 'Processing error',
-            }, window.location.origin);
+            window.opener.postMessage(
+              {
+                type: 'facebook-auth-error',
+                error: err instanceof Error ? err.message : 'Processing error',
+              },
+              window.location.origin
+            );
           } catch (e) {
             console.error('Failed to send error message to parent:', e);
           }

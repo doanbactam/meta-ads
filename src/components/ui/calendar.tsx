@@ -1,20 +1,21 @@
 'use client';
 
-import * as React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import type * as React from 'react';
 import { DayPicker } from 'react-day-picker';
-
-import { cn } from '@/lib/shared/utils';
 import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/shared/utils';
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
-function Calendar({
-  className,
-  classNames,
-  showOutsideDays = true,
-  ...props
-}: CalendarProps) {
+const ChevronComponent = ({ orientation }: { orientation?: 'left' | 'right' }) => {
+  if (orientation === 'left') {
+    return <ChevronLeft className="h-4 w-4" />;
+  }
+  return <ChevronRight className="h-4 w-4" />;
+};
+
+function Calendar({ className, classNames, showOutsideDays = true, ...props }: CalendarProps) {
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -33,8 +34,7 @@ function Calendar({
         nav_button_next: 'absolute right-1',
         table: 'w-full border-collapse space-y-1',
         head_row: 'flex',
-        head_cell:
-          'text-muted-foreground rounded-md w-9 font-normal text-xs',
+        head_cell: 'text-muted-foreground rounded-md w-9 font-normal text-xs',
         row: 'flex w-full mt-2',
         cell: cn(
           'relative p-0 text-center text-sm focus-within:relative focus-within:z-20',
@@ -56,18 +56,12 @@ function Calendar({
         day_outside:
           'day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30',
         day_disabled: 'text-muted-foreground opacity-50',
-        day_range_middle:
-          'aria-selected:bg-accent aria-selected:text-accent-foreground',
+        day_range_middle: 'aria-selected:bg-accent aria-selected:text-accent-foreground',
         day_hidden: 'invisible',
         ...classNames,
       }}
       components={{
-        Chevron: ({ orientation, ...props }) => {
-          if (orientation === 'left') {
-            return <ChevronLeft className="h-4 w-4" />;
-          }
-          return <ChevronRight className="h-4 w-4" />;
-        },
+        Chevron: ChevronComponent,
       }}
       {...props}
     />

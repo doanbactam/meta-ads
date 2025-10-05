@@ -1,8 +1,8 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { createContext, useContext, useEffect, useState } from 'react';
 
 interface UserSettings {
   preferredCurrency: string;
@@ -23,7 +23,11 @@ export function UserSettingsProvider({ children }: { children: React.ReactNode }
   const { user, isSignedIn } = useUser();
   const queryClient = useQueryClient();
 
-  const { data: settings, isLoading, error } = useQuery({
+  const {
+    data: settings,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['user-settings'],
     queryFn: async (): Promise<UserSettings> => {
       const response = await fetch('/api/user/settings');

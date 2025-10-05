@@ -1,16 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { Sidebar } from '@/components/layout/sidebar';
+import { useEffect, useState } from 'react';
 import { Header } from '@/components/layout/header';
+import { Sidebar } from '@/components/layout/sidebar';
 import { UniversalDataTable } from '@/components/table/universal-data-table';
-import { campaignTableConfig, adGroupsTableConfig, adsTableConfig } from '@/lib/client/table-configs';
-import { Campaign, AdGroup, Ad } from '@/types';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useFacebookConnection } from '@/hooks/use-facebook-connection';
 import { useFacebookStore } from '@/lib/client/stores/facebook-store';
-
+import {
+  adGroupsTableConfig,
+  adsTableConfig,
+  campaignTableConfig,
+} from '@/lib/client/table-configs';
+import type { Ad, AdGroup, Campaign } from '@/types';
 
 export function AdManagerDashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -30,7 +33,10 @@ export function AdManagerDashboard() {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
+      <Sidebar
+        collapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+      />
       <div className="flex flex-1 flex-col min-w-0">
         <Header
           onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -66,15 +72,11 @@ export function AdManagerDashboard() {
             </TabsContent>
 
             <TabsContent value="ads" className="space-y-4">
-              <UniversalDataTable<Ad>
-                adAccountId={selectedAdAccount}
-                config={adsTableConfig}
-              />
+              <UniversalDataTable<Ad> adAccountId={selectedAdAccount} config={adsTableConfig} />
             </TabsContent>
           </Tabs>
         </main>
       </div>
-
     </div>
   );
 }

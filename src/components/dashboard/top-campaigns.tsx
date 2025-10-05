@@ -1,10 +1,10 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { TrendingDown, TrendingUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/shared/formatters';
-import { TrendingUp, TrendingDown } from 'lucide-react';
 
 interface TopCampaignsProps {
   adAccountId?: string;
@@ -54,7 +54,10 @@ export function TopCampaigns({ adAccountId, dateRange }: TopCampaignsProps) {
         <CardContent>
           <div className="space-y-3">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center justify-between p-3 bg-muted/50 rounded animate-pulse">
+              <div
+                key={i}
+                className="flex items-center justify-between p-3 bg-muted/50 rounded animate-pulse"
+              >
                 <div className="space-y-1">
                   <div className="h-4 bg-muted rounded w-32" />
                   <div className="h-3 bg-muted rounded w-20" />
@@ -75,9 +78,7 @@ export function TopCampaigns({ adAccountId, dateRange }: TopCampaignsProps) {
           <CardTitle className="text-sm font-medium">top campaigns</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground text-sm">
-            no campaigns found
-          </div>
+          <div className="text-center py-8 text-muted-foreground text-sm">no campaigns found</div>
         </CardContent>
       </Card>
     );
@@ -104,17 +105,21 @@ export function TopCampaigns({ adAccountId, dateRange }: TopCampaignsProps) {
       <CardContent>
         <div className="space-y-3">
           {topCampaigns.map((campaign, index) => (
-            <div key={campaign.id} className="flex items-center justify-between p-3 border border-border rounded-sm hover:bg-muted/30 transition-colors">
+            <div
+              key={campaign.id}
+              className="flex items-center justify-between p-3 border border-border rounded-sm hover:bg-muted/30 transition-colors"
+            >
               <div className="flex items-center gap-3">
                 <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-medium">
                   {index + 1}
                 </div>
                 <div className="space-y-1">
-                  <div className="font-medium text-sm truncate max-w-48">
-                    {campaign.name}
-                  </div>
+                  <div className="font-medium text-sm truncate max-w-48">{campaign.name}</div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className={`text-xs px-2 py-0.5 ${getStatusColor(campaign.status)}`}>
+                    <Badge
+                      variant="secondary"
+                      className={`text-xs px-2 py-0.5 ${getStatusColor(campaign.status)}`}
+                    >
                       {campaign.status.toLowerCase()}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
@@ -124,9 +129,7 @@ export function TopCampaigns({ adAccountId, dateRange }: TopCampaignsProps) {
                 </div>
               </div>
               <div className="text-right space-y-1">
-                <div className="font-medium text-sm">
-                  {formatCurrency(campaign.spend)}
-                </div>
+                <div className="font-medium text-sm">{formatCurrency(campaign.spend)}</div>
                 <div className="flex items-center gap-1 text-xs">
                   {campaign.roas > 1 ? (
                     <TrendingUp className="h-3 w-3 text-green-500" />

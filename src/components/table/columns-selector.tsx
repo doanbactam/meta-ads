@@ -1,15 +1,11 @@
 'use client';
 
+import { Check, Columns3 } from 'lucide-react';
 import { useState } from 'react';
-import { Columns3, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 
 interface Column {
@@ -23,7 +19,11 @@ interface ColumnsSelectorProps {
   onColumnsChange: (columns: string[]) => void;
 }
 
-export function ColumnsSelector({ columns, visibleColumns, onColumnsChange }: ColumnsSelectorProps) {
+export function ColumnsSelector({
+  columns,
+  visibleColumns,
+  onColumnsChange,
+}: ColumnsSelectorProps) {
   const [open, setOpen] = useState(false);
 
   const toggleColumn = (columnId: string) => {
@@ -55,20 +55,10 @@ export function ColumnsSelector({ columns, visibleColumns, onColumnsChange }: Co
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-semibold">customize columns</h4>
             <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 text-xs"
-                onClick={selectAll}
-              >
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={selectAll}>
                 select all
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 text-xs"
-                onClick={clearAll}
-              >
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={clearAll}>
                 clear
               </Button>
             </div>
@@ -82,15 +72,10 @@ export function ColumnsSelector({ columns, visibleColumns, onColumnsChange }: Co
                   checked={visibleColumns.includes(column.id)}
                   onCheckedChange={() => toggleColumn(column.id)}
                 />
-                <Label
-                  htmlFor={column.id}
-                  className="text-sm font-normal cursor-pointer flex-1"
-                >
+                <Label htmlFor={column.id} className="text-sm font-normal cursor-pointer flex-1">
                   {column.label}
                 </Label>
-                {visibleColumns.includes(column.id) && (
-                  <Check className="w-4 h-4 text-primary" />
-                )}
+                {visibleColumns.includes(column.id) && <Check className="w-4 h-4 text-primary" />}
               </div>
             ))}
           </div>

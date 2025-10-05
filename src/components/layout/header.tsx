@@ -1,12 +1,16 @@
 'use client';
 
-import { Menu, RefreshCw, AlertCircle, Facebook } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/nextjs';
+import { useQuery } from '@tanstack/react-query';
+import { AlertCircle, Facebook, Menu, RefreshCw } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { SettingsDialog } from '@/components/common/settings-dialog';
+import { AdAccountInfo } from '@/components/dashboard/ad-account-info';
+import { AdAccountStats } from '@/components/dashboard/ad-account-stats';
+import { AdAccountStatus } from '@/components/dashboard/ad-account-status';
 import { FacebookConnectDialog } from '@/components/facebook/facebook-connect-dialog';
-import { useFacebookStore } from '@/lib/client/stores/facebook-store';
-import { useFacebookConnection } from '@/hooks/use-facebook-connection';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -14,14 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useEffect, useRef } from 'react';
-import { type AdAccount } from '@/lib/server/api/ad-accounts';
-import { UserButton, useUser, SignedIn, SignedOut } from '@clerk/nextjs';
-import { useQuery } from '@tanstack/react-query';
-import { AdAccountStatus } from '@/components/dashboard/ad-account-status';
-import { AdAccountInfo } from '@/components/dashboard/ad-account-info';
-import { AdAccountStats } from '@/components/dashboard/ad-account-stats';
-import { SettingsDialog } from '@/components/common/settings-dialog';
+import { Separator } from '@/components/ui/separator';
+import { useFacebookConnection } from '@/hooks/use-facebook-connection';
+import { useFacebookStore } from '@/lib/client/stores/facebook-store';
+import type { AdAccount } from '@/lib/server/api/ad-accounts';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -34,14 +34,18 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
   const isInitializedRef = useRef(false);
   const lastAccountsLengthRef = useRef(0);
   const { showConnectionDialog, setShowConnectionDialog } = useFacebookStore();
-  const { connected, loading: fbLoading, connectFacebook } = useFacebookConnection(selectedAdAccount);
+  const {
+    connected,
+    loading: fbLoading,
+    connectFacebook,
+  } = useFacebookConnection(selectedAdAccount);
 
-  const { 
-    data: adAccountsData, 
-    isLoading, 
-    error, 
+  const {
+    data: adAccountsData,
+    isLoading,
+    error,
     refetch,
-    isError 
+    isError,
   } = useQuery({
     queryKey: ['ad-accounts'],
     queryFn: async () => {
@@ -66,8 +70,8 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
   useEffect(() => {
     // Only run once when accounts are first loaded
     if (
-      adAccounts.length > 0 && 
-      !selectedAdAccount && 
+      adAccounts.length > 0 &&
+      !selectedAdAccount &&
       onAdAccountChange &&
       !isInitializedRef.current
     ) {
@@ -83,12 +87,7 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
     const accountsChanged = lastAccountsLengthRef.current !== adAccounts.length;
     lastAccountsLengthRef.current = adAccounts.length;
 
-    if (
-      selectedAdAccount && 
-      adAccounts.length > 0 && 
-      onAdAccountChange &&
-      accountsChanged
-    ) {
+    if (selectedAdAccount && adAccounts.length > 0 && onAdAccountChange && accountsChanged) {
       const accountExists = adAccounts.find((a: AdAccount) => a.id === selectedAdAccount);
       if (!accountExists) {
         onAdAccountChange(adAccounts[0].id);
@@ -120,27 +119,25 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
           </Button>
 
           <div className="flex items-center gap-1.5">
-            <Select 
-              value={selectedAdAccount} 
-              onValueChange={onAdAccountChange} 
+            <Select
+              value={selectedAdAccount}
+              onValueChange={onAdAccountChange}
               disabled={isLoading || !isSignedIn}
             >
-              <SelectTrigger 
-                size="sm" 
-                className={`w-52 text-xs border-border ${
-                  error ? 'border-destructive' : ''
-                }`}
+              <SelectTrigger
+                size="sm"
+                className={`w-52 text-xs border-border ${error ? 'border-destructive' : ''}`}
               >
-                <SelectValue 
+                <SelectValue
                   placeholder={
-                    isLoading 
-                      ? "loading accounts..." 
-                      : error 
-                      ? "error loading accounts"
-                      : adAccounts.length === 0 
-                      ? "no ad accounts found"
-                      : "select ad account"
-                  } 
+                    isLoading
+                      ? 'loading accounts...'
+                      : error
+                        ? 'error loading accounts'
+                        : adAccounts.length === 0
+                          ? 'no ad accounts found'
+                          : 'select ad account'
+                  }
                 />
               </SelectTrigger>
               <SelectContent>
@@ -154,9 +151,7 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
                   <SelectItem key={account.id} value={account.id}>
                     <div className="flex items-center justify-between w-full">
                       <span className="font-medium">{account.name}</span>
-                      <span className="text-xs text-muted-foreground ml-2">
-                        {account.platform}
-                      </span>
+                      <span className="text-xs text-muted-foreground ml-2">{account.platform}</span>
                     </div>
                   </SelectItem>
                 ))}
@@ -176,7 +171,7 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
               className="h-8 w-8 p-0"
               onClick={handleRefresh}
               disabled={isLoading}
-              title={isLoading ? "Refreshing accounts..." : "Refresh ad accounts"}
+              title={isLoading ? 'Refreshing accounts...' : 'Refresh ad accounts'}
             >
               <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
@@ -184,7 +179,7 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
             <Separator orientation="vertical" className="h-6" />
 
             <Button
-              variant={adAccounts.length === 0 && !isLoading ? "default" : "outline"}
+              variant={adAccounts.length === 0 && !isLoading ? 'default' : 'outline'}
               size="sm"
               className="h-8 gap-1.5 px-3 text-xs"
               onClick={handleConnectFacebook}

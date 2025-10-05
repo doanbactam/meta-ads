@@ -18,7 +18,7 @@ export function SmartNavigation({ adAccountId, children, targetPage }: SmartNavi
   }, [adAccountId, targetPage]);
 
   return (
-    <div onMouseEnter={handleMouseEnter}>
+    <div onMouseEnter={handleMouseEnter} role="presentation">
       {children}
     </div>
   );

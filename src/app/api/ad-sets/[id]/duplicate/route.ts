@@ -1,11 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { duplicateAdGroup } from '@/lib/server/api/ad-groups';
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { userId: clerkId } = await auth();
 
@@ -19,9 +16,6 @@ export async function POST(
     return NextResponse.json({ adSet });
   } catch (error) {
     console.error('Error duplicating ad set:', error);
-    return NextResponse.json(
-      { error: 'Failed to duplicate ad set' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to duplicate ad set' }, { status: 500 });
   }
 }

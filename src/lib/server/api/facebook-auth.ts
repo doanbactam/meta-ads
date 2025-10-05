@@ -1,6 +1,6 @@
-import { prisma } from '@/lib/server/prisma';
+import type { AdAccount } from '@prisma/client';
 import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
-import { AdAccount } from '@prisma/client';
+import { prisma } from '@/lib/server/prisma';
 
 /**
  * Validates and returns a Facebook access token for an ad account.
@@ -46,8 +46,8 @@ export async function getValidFacebookToken(
 
   // Check if token was recently updated (within last 2 minutes)
   // If so, trust the stored token without re-validating with Facebook
-  const recentlyUpdated = adAccount.updatedAt && 
-    new Date().getTime() - adAccount.updatedAt.getTime() < 2 * 60 * 1000;
+  const recentlyUpdated =
+    adAccount.updatedAt && new Date().getTime() - adAccount.updatedAt.getTime() < 2 * 60 * 1000;
 
   if (recentlyUpdated && adAccount.status === 'ACTIVE') {
     return { token: adAccount.facebookAccessToken, adAccount };
@@ -67,7 +67,10 @@ export async function getValidFacebookToken(
       },
     });
 
-    return { error: validation.error || 'Facebook token is invalid. Please reconnect.', status: 401 };
+    return {
+      error: validation.error || 'Facebook token is invalid. Please reconnect.',
+      status: 401,
+    };
   }
 
   return { token: adAccount.facebookAccessToken, adAccount };
@@ -80,9 +83,7 @@ export function isFacebookTokenExpiredError(error: any): boolean {
   if (!error) return false;
 
   // Handle case where error is a string
-  const errorMessage = typeof error === 'string'
-    ? error
-    : (error.message || error.error || '');
+  const errorMessage = typeof error === 'string' ? error : error.message || error.error || '';
   const errorCode = error.code;
 
   return (
@@ -98,10 +99,7 @@ export function isFacebookTokenExpiredError(error: any): boolean {
 /**
  * Handles Facebook API errors and marks account as inactive if token expired
  */
-export async function handleFacebookTokenError(
-  adAccountId: string,
-  error: any
-): Promise<void> {
+export async function handleFacebookTokenError(adAccountId: string, error: any): Promise<void> {
   if (isFacebookTokenExpiredError(error)) {
     await prisma.adAccount.update({
       where: { id: adAccountId },

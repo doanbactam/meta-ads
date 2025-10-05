@@ -28,7 +28,7 @@ export function useCampaignsData(adAccountId?: string) {
     queryKey: ['campaigns', adAccountId],
     queryFn: async () => {
       if (!adAccountId) return [];
-      
+
       // Thử lấy từ localStorage trước
       const cacheKey = `campaigns_${adAccountId}`;
       const cached = dataPersistence.get(cacheKey);
@@ -47,19 +47,19 @@ export function useCampaignsData(adAccountId?: string) {
             console.warn('Background fetch failed:', error);
           }
         }, 100);
-        
+
         return cached;
       }
-      
+
       // Fetch mới nếu không có cache
       const response = await fetch(`/api/campaigns?adAccountId=${adAccountId}`);
       if (!response.ok) throw new Error('Failed to fetch campaigns');
       const data = await response.json();
       const campaigns = data.campaigns || [];
-      
+
       // Lưu vào localStorage
       dataPersistence.set(cacheKey, campaigns, 10);
-      
+
       return campaigns;
     },
     enabled: !!adAccountId,
@@ -68,28 +68,34 @@ export function useCampaignsData(adAccountId?: string) {
   });
 
   // Prefetch related data
-  const prefetchAdSets = useCallback(async (campaignId: string) => {
-    await queryClient.prefetchQuery({
-      queryKey: ['ad-sets', campaignId],
-      queryFn: async () => {
-        const response = await fetch(`/api/ad-sets?campaignId=${campaignId}`);
-        if (!response.ok) throw new Error('Failed to fetch ad sets');
-        return response.json();
-      },
-      staleTime: 5 * 60 * 1000,
-    });
-  }, [queryClient]);
+  const prefetchAdSets = useCallback(
+    async (campaignId: string) => {
+      await queryClient.prefetchQuery({
+        queryKey: ['ad-sets', campaignId],
+        queryFn: async () => {
+          const response = await fetch(`/api/ad-sets?campaignId=${campaignId}`);
+          if (!response.ok) throw new Error('Failed to fetch ad sets');
+          return response.json();
+        },
+        staleTime: 5 * 60 * 1000,
+      });
+    },
+    [queryClient]
+  );
 
   return { ...query, prefetchAdSets };
 }
 
 // Shared hook cho overview stats với background refetch
-export function useOverviewStats(adAccountId?: string, dateRange?: { from: Date | undefined; to: Date | undefined }) {
+export function useOverviewStats(
+  adAccountId?: string,
+  dateRange?: { from: Date | undefined; to: Date | undefined }
+) {
   return useQuery({
     queryKey: ['overview-stats', adAccountId, dateRange],
     queryFn: async () => {
       if (!adAccountId) return null;
-      
+
       const params = new URLSearchParams();
       if (dateRange?.from) params.append('from', dateRange.from.toISOString());
       if (dateRange?.to) params.append('to', dateRange.to.toISOString());
@@ -110,15 +116,21 @@ export function useOverviewStats(adAccountId?: string, dateRange?: { from: Date 
 export function useDataRefresh() {
   const queryClient = useQueryClient();
 
-  const refreshAdAccount = useCallback((adAccountId: string) => {
-    queryClient.invalidateQueries({ queryKey: ['ad-account', adAccountId] });
-    queryClient.invalidateQueries({ queryKey: ['campaigns', adAccountId] });
-    queryClient.invalidateQueries({ queryKey: ['overview-stats', adAccountId] });
-  }, [queryClient]);
+  const refreshAdAccount = useCallback(
+    (adAccountId: string) => {
+      queryClient.invalidateQueries({ queryKey: ['ad-account', adAccountId] });
+      queryClient.invalidateQueries({ queryKey: ['campaigns', adAccountId] });
+      queryClient.invalidateQueries({ queryKey: ['overview-stats', adAccountId] });
+    },
+    [queryClient]
+  );
 
-  const refreshCampaigns = useCallback((adAccountId: string) => {
-    queryClient.invalidateQueries({ queryKey: ['campaigns', adAccountId] });
-  }, [queryClient]);
+  const refreshCampaigns = useCallback(
+    (adAccountId: string) => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns', adAccountId] });
+    },
+    [queryClient]
+  );
 
   const refreshAll = useCallback(() => {
     queryClient.invalidateQueries();

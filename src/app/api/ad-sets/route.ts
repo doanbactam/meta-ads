@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getValidFacebookToken, handleFacebookTokenError } from '@/lib/server/api/facebook-auth';
+import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
 import { mapFacebookStatus } from '@/lib/shared/formatters';
 
 export async function GET(request: NextRequest) {
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     }
 
     const user = await getOrCreateUserFromClerk(clerkId);
-    
+
     // Validate Facebook token
     const tokenResult = await getValidFacebookToken(adAccountId, user.id);
     if ('error' in tokenResult) {
@@ -31,12 +31,15 @@ export async function GET(request: NextRequest) {
           {
             adSets: [],
             error: tokenResult.error,
-            code: 'TOKEN_EXPIRED'
+            code: 'TOKEN_EXPIRED',
           },
           { status: 401 }
         );
       }
-      return NextResponse.json({ adSets: [], error: tokenResult.error }, { status: tokenResult.status });
+      return NextResponse.json(
+        { adSets: [], error: tokenResult.error },
+        { status: tokenResult.status }
+      );
     }
 
     const { token, adAccount } = tokenResult;
@@ -53,27 +56,30 @@ export async function GET(request: NextRequest) {
     try {
       const { FacebookMarketingAPI } = await import('@/lib/server/facebook-api');
       const api = new FacebookMarketingAPI(token);
-      
+
       // First get all campaigns for this ad account
       const facebookCampaigns = await api.getCampaigns(adAccount.facebookAdAccountId);
-      
+
       // Prepare date options for insights
-      const dateOptions = fromDate && toDate ? {
-        dateFrom: new Date(fromDate).toISOString().split('T')[0],
-        dateTo: new Date(toDate).toISOString().split('T')[0],
-      } : undefined;
+      const dateOptions =
+        fromDate && toDate
+          ? {
+              dateFrom: new Date(fromDate).toISOString().split('T')[0],
+              dateTo: new Date(toDate).toISOString().split('T')[0],
+            }
+          : undefined;
 
       // Then get ad sets for each campaign
       const allAdSets = [];
-      
+
       for (const campaign of facebookCampaigns) {
         try {
           const campaignAdSets = await api.getAdSets(campaign.id);
-          
+
           // Add campaign info to each ad set and get insights
           for (const adSet of campaignAdSets) {
             const insights = await api.getAdSetInsights(adSet.id, dateOptions).catch(() => null);
-            
+
             allAdSets.push({
               id: adSet.id,
               name: adSet.name,
@@ -111,7 +117,7 @@ export async function GET(request: NextRequest) {
           {
             adSets: [],
             error: 'Facebook access token has expired. Please reconnect your Facebook account.',
-            code: 'TOKEN_EXPIRED'
+            code: 'TOKEN_EXPIRED',
           },
           { status: 401 }
         );
@@ -119,14 +125,11 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({
         adSets: [],
-        error: 'Failed to fetch ad sets from Facebook. Please check your connection.'
+        error: 'Failed to fetch ad sets from Facebook. Please check your connection.',
       });
     }
   } catch (error) {
     console.error('Error fetching ad sets:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch ad sets' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch ad sets' }, { status: 500 });
   }
 }

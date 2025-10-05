@@ -11,7 +11,7 @@ interface StatusBadgeProps {
 export function StatusBadge({ status, className }: StatusBadgeProps) {
   const getStatusVariant = (status: string) => {
     const normalizedStatus = status.toLowerCase();
-    
+
     switch (normalizedStatus) {
       case 'eligible':
       case 'active':
@@ -36,7 +36,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
 
   const getStatusIcon = (status: string) => {
     const normalizedStatus = status.toLowerCase();
-    
+
     switch (normalizedStatus) {
       case 'eligible':
       case 'active':
@@ -63,12 +63,9 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
   const icon = getStatusIcon(status);
 
   return (
-    <Badge 
-      variant={variant} 
-      className={cn(
-        'text-xs font-medium gap-1 min-w-[80px] justify-center',
-        className
-      )}
+    <Badge
+      variant={variant}
+      className={cn('text-xs font-medium gap-1 min-w-[80px] justify-center', className)}
     >
       <span className="text-[10px]">{icon}</span>
       {status.toLowerCase()}

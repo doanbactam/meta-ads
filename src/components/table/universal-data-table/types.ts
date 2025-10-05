@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 // Generic column definition
 export interface TableColumn<T = any> {
@@ -15,12 +15,12 @@ export interface TableConfig<T = any> {
   // Data fetching
   queryKey: string;
   apiEndpoint: string;
-  
+
   // Display
   title: string;
   columns: TableColumn<T>[];
   defaultColumns: string[];
-  
+
   // Actions
   actions?: {
     create?: {
@@ -46,7 +46,7 @@ export interface TableConfig<T = any> {
       variant?: 'default' | 'outline' | 'ghost';
     }>;
   };
-  
+
   // Features
   features?: {
     search?: boolean;
@@ -55,7 +55,7 @@ export interface TableConfig<T = any> {
     pagination?: boolean;
     bulkActions?: boolean;
   };
-  
+
   // Customization
   emptyState?: {
     title: string;

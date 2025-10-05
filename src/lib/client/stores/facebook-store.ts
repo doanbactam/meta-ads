@@ -8,7 +8,12 @@ interface FacebookConnectionState {
   tokenExpiry?: Date;
   showConnectionDialog: boolean;
   lastSyncTimestamp?: number;
-  setConnected: (connected: boolean, adAccountId?: string, facebookAdAccountId?: string, tokenExpiry?: Date) => void;
+  setConnected: (
+    connected: boolean,
+    adAccountId?: string,
+    facebookAdAccountId?: string,
+    tokenExpiry?: Date
+  ) => void;
   setShowConnectionDialog: (show: boolean) => void;
   updateSyncTimestamp: () => void;
   isTokenExpired: () => boolean;
@@ -27,7 +32,7 @@ export const useFacebookStore = create<FacebookConnectionState>()(
           adAccountId,
           facebookAdAccountId,
           tokenExpiry,
-          lastSyncTimestamp: Date.now()
+          lastSyncTimestamp: Date.now(),
         }),
       setShowConnectionDialog: (show) => set({ showConnectionDialog: show }),
       updateSyncTimestamp: () => set({ lastSyncTimestamp: Date.now() }),
@@ -36,13 +41,14 @@ export const useFacebookStore = create<FacebookConnectionState>()(
         if (!state.tokenExpiry) return false;
         return new Date(state.tokenExpiry) < new Date();
       },
-      reset: () => set({
-        isConnected: false,
-        adAccountId: undefined,
-        facebookAdAccountId: undefined,
-        tokenExpiry: undefined,
-        lastSyncTimestamp: undefined
-      }),
+      reset: () =>
+        set({
+          isConnected: false,
+          adAccountId: undefined,
+          facebookAdAccountId: undefined,
+          tokenExpiry: undefined,
+          lastSyncTimestamp: undefined,
+        }),
     }),
     {
       name: 'facebook-connection-storage',

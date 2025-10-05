@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { prisma } from '@/lib/server/prisma';
-import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
+import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
+import { prisma } from '@/lib/server/prisma';
 
 async function getAdAccountWithValidation(userId: string, adAccountId: string) {
   const user = await getOrCreateUserFromClerk(userId);

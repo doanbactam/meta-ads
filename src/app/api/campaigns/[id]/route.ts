@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { deleteCampaign } from '@/lib/server/api/campaigns';
 
 export async function DELETE(
@@ -19,9 +19,6 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting campaign:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete campaign' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to delete campaign' }, { status: 500 });
   }
 }

@@ -1,5 +1,5 @@
+import type { AdAccountStatus, Platform } from '@prisma/client';
 import { prisma } from '@/lib/server/prisma';
-import { Platform, AdAccountStatus } from '@prisma/client';
 
 export interface AdAccount {
   id: string;

@@ -1,16 +1,11 @@
 'use client';
 
-import { LayoutDashboard, Megaphone, Sun, Moon, Terminal } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { LayoutDashboard, Megaphone, Moon, Sun, Terminal } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 interface MobileSidebarProps {
   open: boolean;

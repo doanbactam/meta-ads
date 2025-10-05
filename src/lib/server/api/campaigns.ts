@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/server/prisma';
-import { Campaign } from '@/types';
+import type { Campaign } from '@/types';
 
 const EMPTY_CAMPAIGN_STATS = {
   spent: 0,
@@ -95,7 +95,9 @@ export async function updateCampaign(id: string, updates: Partial<Campaign>): Pr
       ...(updates.clicks !== undefined && { clicks: updates.clicks }),
       ...(updates.ctr !== undefined && { ctr: updates.ctr }),
       ...(updates.conversions !== undefined && { conversions: updates.conversions }),
-      ...(updates.cost_per_conversion !== undefined && { costPerConversion: updates.cost_per_conversion }),
+      ...(updates.cost_per_conversion !== undefined && {
+        costPerConversion: updates.cost_per_conversion,
+      }),
       ...(updates.date_start && { dateStart: updates.date_start }),
       ...(updates.date_end && { dateEnd: updates.date_end }),
       ...(updates.schedule && { schedule: updates.schedule }),

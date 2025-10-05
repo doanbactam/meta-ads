@@ -1,8 +1,8 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { Building, Clock, Globe } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Globe, Clock, Building } from 'lucide-react';
 
 interface AdAccountInfoProps {
   adAccountId?: string;
@@ -58,7 +58,7 @@ export function AdAccountInfo({ adAccountId, className = '' }: AdAccountInfoProp
         <span className="font-medium">{adAccount.currency}</span>
         <span className="text-muted-foreground">currency</span>
       </div>
-      
+
       <div className="flex items-center gap-1">
         <Clock className="h-3 w-3 text-chart-3" />
         <span className="font-medium">{adAccount.timeZone}</span>

@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/server/prisma';
-import { Creative } from '@/types';
+import type { Creative } from '@/types';
 
 const EMPTY_CREATIVE_STATS = {
   impressions: 0,
@@ -61,7 +61,9 @@ export async function getCreativeById(id: string): Promise<Creative | null> {
   };
 }
 
-export async function createCreative(data: Omit<Creative, 'id' | 'created_at' | 'updated_at'>): Promise<Creative> {
+export async function createCreative(
+  data: Omit<Creative, 'id' | 'created_at' | 'updated_at'>
+): Promise<Creative> {
   const creative = await prisma.creative.create({
     data: {
       adGroupId: data.ad_group_id,

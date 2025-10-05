@@ -11,7 +11,7 @@ interface FormatBadgeProps {
 export function FormatBadge({ format, className }: FormatBadgeProps) {
   const getFormatVariant = (format: string) => {
     const normalizedFormat = format.toLowerCase();
-    
+
     switch (normalizedFormat) {
       case 'image':
         return 'default'; // Primary color
@@ -30,7 +30,7 @@ export function FormatBadge({ format, className }: FormatBadgeProps) {
 
   const getFormatIcon = (format: string) => {
     const normalizedFormat = format.toLowerCase();
-    
+
     switch (normalizedFormat) {
       case 'image':
         return '🖼️'; // Image icon
@@ -51,12 +51,9 @@ export function FormatBadge({ format, className }: FormatBadgeProps) {
   const icon = getFormatIcon(format);
 
   return (
-    <Badge 
-      variant={variant} 
-      className={cn(
-        'text-xs font-medium gap-1 min-w-[90px] justify-center',
-        className
-      )}
+    <Badge
+      variant={variant}
+      className={cn('text-xs font-medium gap-1 min-w-[90px] justify-center', className)}
     >
       <span className="text-[10px]">{icon}</span>
       {format.toLowerCase()}

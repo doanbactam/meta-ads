@@ -1,7 +1,7 @@
 'use client';
 
+import { Clock, DollarSign, Globe, Settings } from 'lucide-react';
 import { useState } from 'react';
-import { Settings, Globe, DollarSign, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -18,9 +19,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
 import { useUserSettings } from '@/lib/client/contexts/user-settings-context';
-import { SUPPORTED_CURRENCIES, SUPPORTED_LOCALES, getCurrencyByCode, getLocaleByCode } from '@/lib/shared/currency';
+import {
+  getCurrencyByCode,
+  getLocaleByCode,
+  SUPPORTED_CURRENCIES,
+  SUPPORTED_LOCALES,
+} from '@/lib/shared/currency';
 
 const TIMEZONES = [
   { code: 'UTC', name: 'UTC (Coordinated Universal Time)', offset: '+00:00' },
@@ -51,7 +56,7 @@ export function SettingsDialog({ trigger }: SettingsDialogProps) {
 
   const currentCurrency = getCurrencyByCode(localSettings.preferredCurrency);
   const currentLocale = getLocaleByCode(localSettings.preferredLocale);
-  const currentTimezone = TIMEZONES.find(tz => tz.code === localSettings.preferredTimezone);
+  const currentTimezone = TIMEZONES.find((tz) => tz.code === localSettings.preferredTimezone);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -82,7 +87,9 @@ export function SettingsDialog({ trigger }: SettingsDialogProps) {
             </Label>
             <Select
               value={localSettings.preferredCurrency}
-              onValueChange={(value) => setLocalSettings(prev => ({ ...prev, preferredCurrency: value }))}
+              onValueChange={(value) =>
+                setLocalSettings((prev) => ({ ...prev, preferredCurrency: value }))
+              }
             >
               <SelectTrigger>
                 <SelectValue>
@@ -119,7 +126,9 @@ export function SettingsDialog({ trigger }: SettingsDialogProps) {
             </Label>
             <Select
               value={localSettings.preferredLocale}
-              onValueChange={(value) => setLocalSettings(prev => ({ ...prev, preferredLocale: value }))}
+              onValueChange={(value) =>
+                setLocalSettings((prev) => ({ ...prev, preferredLocale: value }))
+              }
             >
               <SelectTrigger>
                 <SelectValue>
@@ -154,7 +163,9 @@ export function SettingsDialog({ trigger }: SettingsDialogProps) {
             </Label>
             <Select
               value={localSettings.preferredTimezone}
-              onValueChange={(value) => setLocalSettings(prev => ({ ...prev, preferredTimezone: value }))}
+              onValueChange={(value) =>
+                setLocalSettings((prev) => ({ ...prev, preferredTimezone: value }))
+              }
             >
               <SelectTrigger>
                 <SelectValue>

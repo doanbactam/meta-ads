@@ -1,29 +1,29 @@
 'use client';
 
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useFacebookConnection } from '@/hooks/use-facebook-connection';
-import { useFacebookStore } from '@/lib/client/stores/facebook-store';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { TablePagination } from '@/components/table/table-pagination';
+import { useFacebookConnection } from '@/hooks/use-facebook-connection';
 import { useUserSettings } from '@/lib/client/contexts/user-settings-context';
-import { TableToolbar } from './table-toolbar';
-import { TableHeader } from './table-header';
+import { useFacebookStore } from '@/lib/client/stores/facebook-store';
 import { TableBody } from './table-body';
 import { TableEmptyState } from './table-empty-state';
-import { UniversalDataTableProps } from './types';
-import { toast } from 'sonner';
+import { TableHeader } from './table-header';
+import { TableToolbar } from './table-toolbar';
+import type { UniversalDataTableProps } from './types';
 
-export function UniversalDataTable<T extends { id: string }>({ 
-  adAccountId, 
+export function UniversalDataTable<T extends { id: string }>({
+  adAccountId,
   config,
-  className 
+  className,
 }: UniversalDataTableProps<T>) {
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [visibleColumns, setVisibleColumns] = useState<string[]>(config.defaultColumns);
   const [searchQuery, setSearchQuery] = useState('');
-  const [dateRange, setDateRange] = useState<{ 
-    from: Date | undefined; 
-    to: Date | undefined 
+  const [dateRange, setDateRange] = useState<{
+    from: Date | undefined;
+    to: Date | undefined;
   }>({
     from: undefined,
     to: undefined,
@@ -36,16 +36,22 @@ export function UniversalDataTable<T extends { id: string }>({
   const { setShowConnectionDialog } = useFacebookStore();
 
   // Data fetching
-  const { data: items = [], isLoading: loading, error, refetch, isFetching } = useQuery({
+  const {
+    data: items = [],
+    isLoading: loading,
+    error,
+    refetch,
+    isFetching,
+  } = useQuery({
     queryKey: [config.queryKey, adAccountId, dateRange],
     queryFn: async (): Promise<T[]> => {
       if (!adAccountId) return [];
-      
+
       const params = new URLSearchParams();
       params.append('adAccountId', adAccountId);
       if (dateRange.from) params.append('from', dateRange.from.toISOString());
       if (dateRange.to) params.append('to', dateRange.to.toISOString());
-      
+
       const response = await fetch(`${config.apiEndpoint}?${params}`);
 
       if (!response.ok) {
@@ -67,21 +73,21 @@ export function UniversalDataTable<T extends { id: string }>({
       if (Array.isArray(data)) {
         return data;
       }
-      
+
       const possibleKeys = [
         config.queryKey,
         config.queryKey.toLowerCase(),
         'campaigns',
-        'adSets', 
-        'ads'
+        'adSets',
+        'ads',
       ];
-      
+
       for (const key of possibleKeys) {
         if (data[key] && Array.isArray(data[key])) {
           return data[key];
         }
       }
-      
+
       return [];
     },
     enabled: !!adAccountId,
@@ -91,20 +97,20 @@ export function UniversalDataTable<T extends { id: string }>({
   });
 
   // Filter items based on search
-  const filteredItems = items.filter(item => {
+  const filteredItems = items.filter((item) => {
     if (!searchQuery) return true;
-    
+
     const searchableFields = config.columns
-      .filter(col => col.accessor)
-      .map(col => {
+      .filter((col) => col.accessor)
+      .map((col) => {
         if (typeof col.accessor === 'function') {
           return col.accessor(item);
         }
         return item[col.accessor as keyof T];
       })
       .filter(Boolean);
-    
-    return searchableFields.some(field => 
+
+    return searchableFields.some((field) =>
       String(field).toLowerCase().includes(searchQuery.toLowerCase())
     );
   });
@@ -129,14 +135,11 @@ export function UniversalDataTable<T extends { id: string }>({
   };
 
   const handleRefresh = async () => {
-    toast.promise(
-      refetch({ throwOnError: true }),
-      {
-        loading: 'Refreshing data...',
-        success: 'Data refreshed successfully',
-        error: 'Failed to refresh data',
-      }
-    );
+    toast.promise(refetch({ throwOnError: true }), {
+      loading: 'Refreshing data...',
+      success: 'Data refreshed successfully',
+      error: 'Failed to refresh data',
+    });
   };
 
   const handleConnect = () => {
@@ -144,14 +147,14 @@ export function UniversalDataTable<T extends { id: string }>({
   };
 
   const toggleRow = (id: string) => {
-    setSelectedRows(prev =>
-      prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]
+    setSelectedRows((prev) =>
+      prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id]
     );
   };
 
   const toggleAll = () => {
-    setSelectedRows(prev =>
-      prev.length === paginatedItems.length ? [] : paginatedItems.map(item => item.id)
+    setSelectedRows((prev) =>
+      prev.length === paginatedItems.length ? [] : paginatedItems.map((item) => item.id)
     );
   };
 
@@ -250,7 +253,6 @@ export function UniversalDataTable<T extends { id: string }>({
           onPageSizeChange={handlePageSizeChange}
         />
       )}
-
     </div>
   );
 }

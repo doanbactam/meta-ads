@@ -18,9 +18,9 @@ export const SUPPORTED_LOCALES = [
 ];
 
 export function getCurrencyByCode(code: string): Currency | undefined {
-  return SUPPORTED_CURRENCIES.find(currency => currency.code === code);
+  return SUPPORTED_CURRENCIES.find((currency) => currency.code === code);
 }
 
 export function getLocaleByCode(code: string) {
-  return SUPPORTED_LOCALES.find(locale => locale.code === code);
+  return SUPPORTED_LOCALES.find((locale) => locale.code === code);
 }

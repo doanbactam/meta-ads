@@ -2,7 +2,7 @@
 
 import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { TableConfig } from './types';
+import type { TableConfig } from './types';
 
 interface TableEmptyStateProps<T> {
   type: 'loading' | 'error' | 'empty';
@@ -45,24 +45,19 @@ export function TableEmptyState<T>({
         <td colSpan={colSpan} className="p-8 text-center">
           <div className="space-y-3">
             <div className="text-destructive">
-              {error?.message === 'FACEBOOK_TOKEN_EXPIRED' 
-                ? 'Facebook access token has expired' 
-                : `Error loading ${config.title.toLowerCase()}: ${error?.message}`
-              }
+              {error?.message === 'FACEBOOK_TOKEN_EXPIRED'
+                ? 'Facebook access token has expired'
+                : `Error loading ${config.title.toLowerCase()}: ${error?.message}`}
             </div>
             <div className="flex items-center justify-center gap-2">
-              <Button 
-                size="sm" 
-                className="h-8 gap-1.5 px-3 text-xs"
-                onClick={onRefresh}
-              >
+              <Button size="sm" className="h-8 gap-1.5 px-3 text-xs" onClick={onRefresh}>
                 <RefreshCw className="h-3.5 w-3.5" />
                 Retry
               </Button>
               {error?.message === 'FACEBOOK_TOKEN_EXPIRED' && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="h-8 gap-1.5 px-3 text-xs"
                   onClick={onConnect}
                 >
@@ -85,23 +80,17 @@ export function TableEmptyState<T>({
             {config.emptyState?.title || `No ${config.title.toLowerCase()} found`}
           </div>
           {config.emptyState?.description && (
-            <div className="text-xs text-muted-foreground">
-              {config.emptyState.description}
-            </div>
+            <div className="text-xs text-muted-foreground">{config.emptyState.description}</div>
           )}
           <div className="flex items-center justify-center gap-2">
-            <Button 
-              size="sm" 
-              className="h-8 gap-1.5 px-3 text-xs"
-              onClick={onRefresh}
-            >
+            <Button size="sm" className="h-8 gap-1.5 px-3 text-xs" onClick={onRefresh}>
               <RefreshCw className="h-3.5 w-3.5" />
               Refresh
             </Button>
             {adAccountId && !connected && (
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="h-8 gap-1.5 px-3 text-xs"
                 onClick={onConnect}
               >
@@ -109,8 +98,8 @@ export function TableEmptyState<T>({
               </Button>
             )}
             {config.emptyState?.action && (
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 className="h-8 gap-1.5 px-3 text-xs"
                 onClick={config.emptyState.action.onClick}
               >
