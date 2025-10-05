@@ -9,15 +9,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Loader2, Facebook, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -27,29 +19,16 @@ interface FacebookConnectDialogProps {
   onConnect: (accessToken: string, adAccountId?: string) => Promise<{ success: boolean; error?: string; data?: any }>;
 }
 
-interface AdAccount {
-  id: string;
-  name: string;
-  account_status: number;
-  currency: string;
-}
-
 export function FacebookConnectDialog({ open, onOpenChange, onConnect }: FacebookConnectDialogProps) {
   const [accessToken, setAccessToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [accounts, setAccounts] = useState<AdAccount[]>([]);
-  const [selectedAccount, setSelectedAccount] = useState('');
-  const [step, setStep] = useState<'login' | 'account'>('login');
   const cleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (!open) {
       setAccessToken('');
       setError('');
-      setAccounts([]);
-      setSelectedAccount('');
-      setStep('login');
       setLoading(false);
       // Cleanup any pending OAuth listeners
       if (cleanupRef.current) {
@@ -59,18 +38,13 @@ export function FacebookConnectDialog({ open, onOpenChange, onConnect }: Faceboo
     }
   }, [open]);
 
-  const handleConnect = async () => {
-    if (!selectedAccount && accounts.length > 1) {
-      setError('Please select an ad account');
-      return;
-    }
-
+  const handleConnect = async (token: string) => {
     setLoading(true);
     setError('');
 
     try {
-      const accountId = selectedAccount || (accounts.length > 0 ? accounts[0].id.replace('act_', '') : undefined);
-      const result = await onConnect(accessToken, accountId);
+      // Don't pass adAccountId - let API sync all accounts
+      const result = await onConnect(token);
 
       if (result.success) {
         toast.success('Facebook account connected successfully', {
@@ -143,54 +117,8 @@ export function FacebookConnectDialog({ open, onOpenChange, onConnect }: Faceboo
           // Popup already closed
         }
 
-        // Auto-validate token
-        try {
-          const response = await fetch('/api/facebook/validate-token', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ accessToken: token }),
-          });
-
-          const data = await response.json();
-
-          if (!response.ok) {
-            const errorMsg = data.message || data.error || 'Failed to validate token';
-            setError(errorMsg);
-            setLoading(false);
-            return;
-          }
-
-          if (data.isValid) {
-            const fbApi = await fetch(
-              `https://graph.facebook.com/v23.0/me/adaccounts?fields=id,name,account_status,currency&access_token=${token}`
-            );
-            const accountsData = await fbApi.json();
-
-            if (accountsData.error) {
-              setError(accountsData.error.message || 'Failed to fetch ad accounts');
-              setLoading(false);
-              return;
-            }
-
-            if (accountsData.data && accountsData.data.length > 0) {
-              setAccounts(accountsData.data);
-              setSelectedAccount(accountsData.data[0].id.replace('act_', ''));
-              setStep('account');
-            } else {
-              setError('No ad accounts found for this token. Please ensure you have ad accounts in Facebook Business Manager.');
-            }
-          } else {
-            setError(data.error || 'Invalid access token. Please check your token and try again.');
-          }
-        } catch (err) {
-          console.error('Token validation error:', err);
-          const errorMsg = err instanceof Error ? err.message : 'Failed to validate token';
-          setError(errorMsg);
-        } finally {
-          setLoading(false);
-        }
+        // Auto-connect with all accounts after OAuth success
+        await handleConnect(token);
       } else if (event.data.type === 'facebook-auth-error') {
         clearInterval(checkClosed);
         window.removeEventListener('message', handleMessage);
@@ -226,9 +154,7 @@ export function FacebookConnectDialog({ open, onOpenChange, onConnect }: Faceboo
             connect facebook account
           </DialogTitle>
           <DialogDescription>
-            {step === 'login'
-              ? 'connect your facebook account to access ad campaigns and performance data.'
-              : 'select the ad account you want to manage.'}
+            authorize access to sync all your facebook ad accounts automatically.
           </DialogDescription>
         </DialogHeader>
 
@@ -239,77 +165,28 @@ export function FacebookConnectDialog({ open, onOpenChange, onConnect }: Faceboo
           </Alert>
         )}
 
-        {step === 'login' ? (
-          <div className="space-y-4">
-            <Button
-              onClick={handleFacebookLogin}
-              disabled={loading}
-              className="w-full"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  connecting...
-                </>
-              ) : (
-                <>
-                  <Facebook className="mr-2 h-4 w-4" />
-                  login with facebook
-                </>
-              )}
-            </Button>
-            <p className="text-xs text-center text-muted-foreground">
-              you will be redirected to facebook to authorize access to your ad accounts
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="ad-account">select ad account</Label>
-              <Select
-                value={selectedAccount}
-                onValueChange={setSelectedAccount}
-                disabled={loading}
-              >
-                <SelectTrigger id="ad-account">
-                  <SelectValue placeholder="select an account" />
-                </SelectTrigger>
-                <SelectContent>
-                  {accounts.map((account) => (
-                    <SelectItem key={account.id} value={account.id.replace('act_', '')}>
-                      {account.name} ({account.id})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setStep('login')}
-                disabled={loading}
-                className="flex-1"
-              >
-                back
-              </Button>
-              <Button
-                onClick={handleConnect}
-                disabled={loading || (!selectedAccount && accounts.length > 1)}
-                className="flex-1"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    connecting...
-                  </>
-                ) : (
-                  'connect'
-                )}
-              </Button>
-            </div>
-          </div>
-        )}
+        <div className="space-y-4">
+          <Button
+            onClick={handleFacebookLogin}
+            disabled={loading}
+            className="w-full"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                connecting...
+              </>
+            ) : (
+              <>
+                <Facebook className="mr-2 h-4 w-4" />
+                login with facebook
+              </>
+            )}
+          </Button>
+          <p className="text-xs text-center text-muted-foreground">
+            all authorized ad accounts will be synchronized automatically
+          </p>
+        </div>
       </DialogContent>
     </Dialog>
   );

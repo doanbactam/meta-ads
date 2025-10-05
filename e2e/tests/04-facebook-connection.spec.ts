@@ -49,7 +49,7 @@ test.describe('Facebook Connection', () => {
     await expect(dialog).toBeVisible({ timeout: 5000 });
   });
 
-  test('should show login with facebook button in dialog', async ({ page }) => {
+  test('should show login with facebook button and auto-sync message', async ({ page }) => {
     // Mock not connected
     await helpers.mockApiResponse('/api/campaigns', {
       campaigns: []
@@ -65,6 +65,14 @@ test.describe('Facebook Connection', () => {
       // Should have "login with facebook" button
       const loginButton = await page.locator('button:has-text("login with facebook")');
       await expect(loginButton).toBeVisible();
+
+      // Should show auto-sync message
+      const syncMessage = await page.locator('text=all authorized ad accounts will be synchronized automatically');
+      await expect(syncMessage).toBeVisible();
+
+      // Should NOT have account selection dropdown
+      const selectAccount = await page.locator('text=select ad account');
+      expect(await selectAccount.count()).toBe(0);
     }
   });
 
@@ -102,8 +110,18 @@ test.describe('Facebook Connection', () => {
     }
   });
 
-  test('should show OAuth login flow when clicking facebook login', async ({ page }) => {
-    // Mock not connected
+  test('should auto-sync all accounts after successful OAuth', async ({ page }) => {
+    // Mock successful connect response with multiple accounts
+    await helpers.mockApiResponse('/api/facebook/connect', {
+      success: true,
+      accounts: [
+        { id: 'act_123', name: 'Account 1' },
+        { id: 'act_456', name: 'Account 2' },
+        { id: 'act_789', name: 'Account 3' }
+      ],
+      message: 'Facebook accounts synchronized successfully'
+    });
+
     await helpers.mockApiResponse('/api/campaigns', {
       campaigns: []
     });
@@ -115,10 +133,14 @@ test.describe('Facebook Connection', () => {
       await connectButton.click();
       await page.waitForTimeout(500);
 
-      // Should show login with facebook button
+      // Should show simplified dialog (no account selection)
       const loginButton = await page.locator('button:has-text("login with facebook")');
       await expect(loginButton).toBeVisible();
       await expect(loginButton).toBeEnabled();
+
+      // Should NOT have account selection dropdown
+      const selectAccount = await page.locator('text=select ad account');
+      expect(await selectAccount.count()).toBe(0);
     }
   });
 
