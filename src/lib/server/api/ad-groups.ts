@@ -1,6 +1,15 @@
 import { prisma } from '@/lib/server/prisma';
 import { AdGroup } from '@/types';
 
+const EMPTY_AD_GROUP_STATS = {
+  spent: 0,
+  impressions: 0,
+  clicks: 0,
+  ctr: 0,
+  cpc: 0,
+  conversions: 0,
+} as const;
+
 export async function getAdGroups(campaignId?: string): Promise<AdGroup[]> {
   const adGroups = await prisma.adGroup.findMany({
     where: campaignId ? { campaignId } : undefined,
@@ -145,12 +154,7 @@ export async function duplicateAdGroup(id: string): Promise<AdGroup> {
       name: `${original.name} (Copy)`,
       status: original.status,
       budget: original.budget,
-      spent: 0,
-      impressions: 0,
-      clicks: 0,
-      ctr: 0,
-      cpc: 0,
-      conversions: 0,
+      ...EMPTY_AD_GROUP_STATS,
       dateStart: original.dateStart,
       dateEnd: original.dateEnd,
     },

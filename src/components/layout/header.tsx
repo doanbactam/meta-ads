@@ -1,8 +1,12 @@
 'use client';
 
-import { Menu, RefreshCw, AlertCircle } from 'lucide-react';
+import { Menu, RefreshCw, AlertCircle, Facebook } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { FacebookConnectDialog } from '@/components/facebook/facebook-connect-dialog';
+import { useFacebookStore } from '@/lib/client/stores/facebook-store';
+import { useFacebookConnection } from '@/hooks/use-facebook-connection';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Select,
   SelectContent,
@@ -29,18 +33,22 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
   const { user, isSignedIn } = useUser();
   const isInitializedRef = useRef(false);
   const lastAccountsLengthRef = useRef(0);
+  const { showConnectionDialog, setShowConnectionDialog } = useFacebookStore();
+  const { connected, loading: fbLoading, connectFacebook } = useFacebookConnection(selectedAdAccount);
 
   const { 
     data: adAccountsData, 
     isLoading, 
     error, 
-    refetch 
+    refetch,
+    isError 
   } = useQuery({
     queryKey: ['ad-accounts'],
     queryFn: async () => {
       const response = await fetch('/api/ad-accounts');
       if (!response.ok) {
-        throw new Error(`Failed to fetch ad accounts: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to fetch ad accounts: ${response.status}`);
       }
       const data = await response.json();
       return data.accounts || [];
@@ -48,6 +56,7 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
     enabled: isSignedIn,
     staleTime: 2 * 60 * 1000, // 2 minutes
     refetchOnWindowFocus: false,
+    retry: 2,
   });
 
   const adAccounts = adAccountsData || [];
@@ -90,6 +99,10 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
 
   const handleRefresh = async () => {
     await refetch();
+  };
+
+  const handleConnectFacebook = () => {
+    setShowConnectionDialog(true);
   };
 
   return (
@@ -168,7 +181,18 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
               <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
 
+            <Separator orientation="vertical" className="h-6" />
 
+            <Button
+              variant={adAccounts.length === 0 && !isLoading ? "default" : "outline"}
+              size="sm"
+              className="h-8 gap-1.5 px-3 text-xs"
+              onClick={handleConnectFacebook}
+              disabled={fbLoading}
+            >
+              <Facebook className="h-3.5 w-3.5" />
+              {adAccounts.length === 0 ? 'connect facebook' : 'reconnect'}
+            </Button>
           </div>
 
           {selectedAdAccount && (
@@ -203,12 +227,41 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
         </div>
       </div>
 
+      {/* Error alert row */}
+      {isError && (
+        <div className="px-4 py-2 bg-destructive/10 border-t border-destructive/20">
+          <Alert variant="destructive" className="border-0 bg-transparent p-0">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="text-xs">
+              Failed to load ad accounts. {error?.message || 'Please try again.'}
+              {adAccounts.length === 0 && (
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0 ml-2 text-xs underline"
+                  onClick={handleConnectFacebook}
+                >
+                  Connect Facebook
+                </Button>
+              )}
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+
       {/* Stats row - only show on larger screens when account is selected */}
       {selectedAdAccount && (
         <div className="hidden xl:block px-4 py-2 bg-muted/20 border-t border-border">
           <AdAccountStats adAccountId={selectedAdAccount} />
         </div>
       )}
+
+      {/* Facebook Connect Dialog */}
+      <FacebookConnectDialog
+        open={showConnectionDialog}
+        onOpenChange={setShowConnectionDialog}
+        onConnect={connectFacebook}
+      />
     </header>
   );
 }

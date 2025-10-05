@@ -1,6 +1,15 @@
 import { prisma } from '@/lib/server/prisma';
 import { Creative } from '@/types';
 
+const EMPTY_CREATIVE_STATS = {
+  impressions: 0,
+  clicks: 0,
+  ctr: 0,
+  engagement: 0,
+  spend: 0,
+  roas: 0,
+} as const;
+
 export async function getCreatives(adGroupId?: string): Promise<Creative[]> {
   const creatives = await prisma.creative.findMany({
     where: adGroupId ? { adGroupId } : undefined,
@@ -145,12 +154,7 @@ export async function duplicateCreative(id: string): Promise<Creative> {
       name: `${original.name} (Copy)`,
       format: original.format,
       status: original.status,
-      impressions: 0,
-      clicks: 0,
-      ctr: 0,
-      engagement: 0,
-      spend: 0,
-      roas: 0,
+      ...EMPTY_CREATIVE_STATS,
       dateStart: original.dateStart,
       dateEnd: original.dateEnd,
     },

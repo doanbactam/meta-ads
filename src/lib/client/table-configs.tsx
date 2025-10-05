@@ -2,6 +2,7 @@ import { TableConfig } from '@/components/table/universal-data-table';
 import { Campaign, AdGroup, Ad } from '@/types';
 import { Eye } from 'lucide-react';
 import { toast } from 'sonner';
+import { useFacebookStore } from '@/lib/client/stores/facebook-store';
 
 // Campaign Table Configuration
 export const campaignTableConfig: TableConfig<Campaign> = {
@@ -142,11 +143,7 @@ export const campaignTableConfig: TableConfig<Campaign> = {
   
   emptyState: {
     title: 'No campaigns found in your Facebook ad account',
-    description: 'Connect Facebook to view your campaigns',
-    action: {
-      label: 'Connect Facebook',
-      onClick: () => console.log('Connect Facebook'),
-    },
+    description: 'Connect your Facebook account to sync and view your campaigns',
   },
 };
 
@@ -289,11 +286,7 @@ export const adGroupsTableConfig: TableConfig<AdGroup> = {
   
   emptyState: {
     title: 'No ad sets found',
-    description: 'Create your first ad set to start advertising',
-    action: {
-      label: 'Create Ad Set',
-      onClick: () => console.log('Create ad set'),
-    },
+    description: 'Ad sets will appear here once your campaigns have targeting groups',
   },
 };
 
@@ -447,10 +440,6 @@ export const adsTableConfig: TableConfig<Ad> = {
   
   emptyState: {
     title: 'No ads found',
-    description: 'Create your first ad to start your campaign',
-    action: {
-      label: 'Create Ad',
-      onClick: () => console.log('Create ad'),
-    },
+    description: 'Ads will appear here once you create creatives for your ad sets',
   },
 };
