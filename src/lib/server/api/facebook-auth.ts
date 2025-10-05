@@ -63,7 +63,10 @@ export async function getValidFacebookToken(
 export function isFacebookTokenExpiredError(error: any): boolean {
   if (!error) return false;
 
-  const errorMessage = error.message || error.error || '';
+  // Handle case where error is a string
+  const errorMessage = typeof error === 'string'
+    ? error
+    : (error.message || error.error || '');
   const errorCode = error.code;
 
   return (
