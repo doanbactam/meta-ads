@@ -102,7 +102,7 @@ export function UniversalDataTable<T extends { id: string }>({
       return [];
     },
     enabled: !!adAccountId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 60 * 1000, // 1 hour - Facebook data doesn't change frequently
     refetchOnWindowFocus: false,
     retry: (failureCount, error) => {
       // Don't retry on token expiry errors

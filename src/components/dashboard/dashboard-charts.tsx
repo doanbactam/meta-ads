@@ -35,6 +35,7 @@ export function DashboardCharts({ adAccountId, dateRange }: DashboardChartsProps
       return response.json();
     },
     enabled: !!adAccountId,
+    staleTime: 30 * 60 * 1000, // 30 minutes
   });
 
   if (isLoading) {

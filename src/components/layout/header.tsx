@@ -58,7 +58,7 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
       return data.accounts || [];
     },
     enabled: isSignedIn,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 15 * 60 * 1000, // 15 minutes - Ad accounts list rarely changes
     refetchOnWindowFocus: false,
     retry: 2,
   });
