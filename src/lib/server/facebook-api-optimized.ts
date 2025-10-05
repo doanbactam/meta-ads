@@ -235,7 +235,9 @@ export class FacebookMarketingAPIOptimized {
         const timeoutId = setTimeout(() => controller.abort(), timeout);
 
         const headers: HeadersInit = {
-          'Accept': 'application/json',
+        const headers: HeadersInit = {
+          Accept: 'application/json',
+          Authorization: `Bearer ${this.accessToken}`,
         };
 
         // Add ETag for caching
@@ -243,13 +245,15 @@ export class FacebookMarketingAPIOptimized {
           headers['If-None-Match'] = etag;
         }
 
-        const url = `${this.baseUrl}/${this.apiVersion}/${endpoint}`;
-        const response = await fetch(url, {
+        const url = new URL(`${this.baseUrl}/${this.apiVersion}/${endpoint}`);
+        if (!url.searchParams.has('access_token')) {
+          url.searchParams.set('access_token', this.accessToken);
+        }
+        const response = await fetch(url.toString(), {
           method: 'GET',
           headers,
           signal: controller.signal,
         });
-
         clearTimeout(timeoutId);
 
         // Handle 304 Not Modified (cache hit)
