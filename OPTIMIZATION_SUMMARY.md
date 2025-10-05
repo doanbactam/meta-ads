@@ -403,26 +403,35 @@ const {
 
 ---
 
-## 🚀 Migration Steps
+## 🚀 Setup Steps
 
-### 1. Fix Database Platform Enum
-```bash
-# Apply the SQL migration
-psql $DATABASE_URL -f prisma/migrations/fix_platform_enum.sql
-```
-
-### 2. Install Dependencies (if needed)
+### 1. Install Dependencies
 ```bash
 npm install
-# or
-bun install
+# This automatically runs 'prisma generate' via postinstall
 ```
 
-### 3. Restart Development Server
+### 2. Setup Database
+```bash
+# Option A: Complete setup (recommended)
+npm run db:setup
+
+# Option B: Individual steps
+npm run prisma:generate    # Generate Prisma client
+npm run prisma:push         # Push schema to database
+npm run prisma:fix-enum     # Fix enum values
+```
+
+### 3. Start Development Server
 ```bash
 npm run dev
-# or
-bun run dev
+# This automatically runs 'prisma:generate' before starting
+```
+
+### Alternative: Manual Migration
+```bash
+# If npm scripts don't work
+psql $DATABASE_URL -f prisma/migrations/fix_platform_enum.sql
 ```
 
 ---

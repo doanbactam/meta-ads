@@ -1,10 +1,17 @@
 # Quick Reference - Optimizations Applied
 
-## 🚨 CRITICAL: Database Migration Required
+## 🚨 CRITICAL: Database Setup Required
 
-Before using the application, run this SQL migration:
+Before using the application, setup the database:
 
 ```bash
+# Option 1: Complete setup (recommended for first time)
+npm run db:setup
+
+# Option 2: Fix enum only (if database already exists)
+npm run prisma:fix-enum
+
+# Option 3: Manual SQL (if npm scripts don't work)
 psql $DATABASE_URL -f prisma/migrations/fix_platform_enum.sql
 ```
 
