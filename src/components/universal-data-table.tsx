@@ -111,9 +111,10 @@ export function UniversalDataTable<T extends { id: string }>({
   const { settings } = useUserSettings();
   const { connected, loading: connectionLoading, connectFacebook } = useFacebookConnection(adAccountId);
 
-  // Data fetching
+  // Data fetching - Only refetch when adAccountId or dateRange changes
+  // Search is client-side only, so it shouldn't trigger refetch
   const { data: items = [], isLoading: loading, error, refetch } = useQuery({
-    queryKey: [config.queryKey, adAccountId, dateRange, searchQuery],
+    queryKey: [config.queryKey, adAccountId, dateRange],
     queryFn: async (): Promise<T[]> => {
       if (!adAccountId) return [];
       
@@ -121,7 +122,6 @@ export function UniversalDataTable<T extends { id: string }>({
       params.append('adAccountId', adAccountId);
       if (dateRange.from) params.append('from', dateRange.from.toISOString());
       if (dateRange.to) params.append('to', dateRange.to.toISOString());
-      if (searchQuery) params.append('search', searchQuery);
       
       const response = await fetch(`${config.apiEndpoint}?${params}`);
 
@@ -143,11 +143,34 @@ export function UniversalDataTable<T extends { id: string }>({
         throw new Error('FACEBOOK_TOKEN_EXPIRED');
       }
 
-      return Array.isArray(data) ? data : data[config.queryKey] || [];
+      // Extract data array from response
+      // API returns { campaigns: [...] }, { adSets: [...] }, or { ads: [...] }
+      if (Array.isArray(data)) {
+        return data;
+      }
+      
+      // Try to find the data array in the response object
+      // First try the exact queryKey, then try common variations
+      const possibleKeys = [
+        config.queryKey,
+        config.queryKey.toLowerCase(),
+        'campaigns',
+        'adSets', 
+        'ads'
+      ];
+      
+      for (const key of possibleKeys) {
+        if (data[key] && Array.isArray(data[key])) {
+          return data[key];
+        }
+      }
+      
+      return [];
     },
     enabled: !!adAccountId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
+    retry: 1, // Only retry once for failed requests
   });
 
   // Filter items based on search
