@@ -43,6 +43,7 @@ model User {
 
   adAccounts AdAccount[]
 
+  @@index([clerkId])
   @@map("users")
 }
 
