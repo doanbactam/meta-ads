@@ -41,6 +41,14 @@ export async function GET(request: NextRequest) {
 
     const { token, adAccount } = tokenResult;
 
+    // Check if Facebook ad account ID exists
+    if (!adAccount.facebookAdAccountId) {
+      return NextResponse.json(
+        { campaigns: [], error: 'Facebook ad account not configured' },
+        { status: 400 }
+      );
+    }
+
     // Fetch campaigns from Facebook API
     try {
       const { FacebookMarketingAPI } = await import('@/lib/server/facebook-api');
