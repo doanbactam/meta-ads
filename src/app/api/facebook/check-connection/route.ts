@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
       // Mark account as inactive
       await prisma.adAccount.update({
         where: { id: adAccount.id },
-        data: { status: 'paused' },
+        data: { status: 'PAUSED' },
       });
 
       return NextResponse.json({
@@ -91,7 +91,7 @@ export async function GET(req: NextRequest) {
     const recentlyUpdated = adAccount.updatedAt && 
       new Date().getTime() - adAccount.updatedAt.getTime() < 2 * 60 * 1000;
 
-    if (recentlyUpdated && adAccount.status === 'active') {
+    if (recentlyUpdated && adAccount.status === 'ACTIVE') {
       // Token was just updated, trust it without re-validating
       console.log(`[Check Connection] Skipping validation for recently updated account ${adAccount.id}`);
       return NextResponse.json({
@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
       // Mark account as inactive
       await prisma.adAccount.update({
         where: { id: adAccount.id },
-        data: { status: 'paused' },
+        data: { status: 'PAUSED' },
       });
 
       return NextResponse.json({

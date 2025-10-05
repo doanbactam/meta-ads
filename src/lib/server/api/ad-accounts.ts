@@ -55,8 +55,8 @@ export async function createAdAccount(
     data: {
       userId: data.userId,
       name: data.name,
-      platform: data.platform,
-      status: data.status,
+      platform: data.platform as 'FACEBOOK' | 'INSTAGRAM' | 'LINKEDIN' | 'MESSENGER',
+      status: data.status as 'ACTIVE' | 'PAUSED' | 'DISABLED',
       currency: data.currency || 'USD',
       timeZone: data.timeZone || 'UTC',
     },
@@ -79,8 +79,8 @@ export async function updateAdAccount(id: string, updates: Partial<AdAccount>): 
     where: { id },
     data: {
       ...(updates.name && { name: updates.name }),
-      ...(updates.platform && { platform: updates.platform }),
-      ...(updates.status && { status: updates.status }),
+      ...(updates.platform && { platform: updates.platform as 'FACEBOOK' | 'INSTAGRAM' | 'LINKEDIN' | 'MESSENGER' }),
+      ...(updates.status && { status: updates.status as 'ACTIVE' | 'PAUSED' | 'DISABLED' }),
       ...(updates.currency && { currency: updates.currency }),
       ...(updates.timeZone && { timeZone: updates.timeZone }),
     },

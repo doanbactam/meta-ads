@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
-import { prisma } from '@/lib/server/prisma';
+import { getValidFacebookToken, handleFacebookTokenError } from '@/lib/server/api/facebook-auth';
 
 export async function GET(
   request: NextRequest,
@@ -16,24 +16,48 @@ export async function GET(
 
     const { id } = await params;
     const user = await getOrCreateUserFromClerk(clerkId);
-    
-    // Verify user has access to this ad account
-    const adAccount = await prisma.adAccount.findFirst({
-      where: {
-        id,
-        userId: user.id,
-      },
-    });
 
-    if (!adAccount) {
-      return NextResponse.json({ error: 'Ad account not found' }, { status: 404 });
+    // Validate Facebook token and get ad account
+    const tokenResult = await getValidFacebookToken(id, user.id);
+
+    // Handle token validation errors
+    if ('error' in tokenResult) {
+      if (tokenResult.status === 401) {
+        return NextResponse.json(
+          {
+            error: tokenResult.error,
+            code: 'TOKEN_EXPIRED',
+            requiresReconnect: true
+          },
+          { status: 401 }
+        );
+      }
+
+      // Return 404 for ad account not found
+      if (tokenResult.status === 404) {
+        return NextResponse.json(
+          { error: tokenResult.error },
+          { status: 404 }
+        );
+      }
+
+      // Return empty stats for other errors (not connected, etc.)
+      return NextResponse.json({
+        totalSpent: 0,
+        totalImpressions: 0,
+        totalClicks: 0,
+        totalCampaigns: 0,
+        activeCampaigns: 0,
+      });
     }
 
-    // Get stats from Facebook API if connected
-    if (adAccount.facebookAccessToken && adAccount.facebookAdAccountId) {
+    const { token, adAccount } = tokenResult;
+
+    // Get stats from Facebook API
+    if (adAccount.facebookAdAccountId) {
       try {
         const { FacebookMarketingAPI } = await import('@/lib/server/facebook-api');
-        const api = new FacebookMarketingAPI(adAccount.facebookAccessToken);
+        const api = new FacebookMarketingAPI(token);
 
         const facebookCampaigns = await api.getCampaigns(adAccount.facebookAdAccountId);
 
@@ -69,31 +93,40 @@ export async function GET(
       } catch (facebookError) {
         console.error('Error fetching Facebook stats:', facebookError);
 
+        // Handle token expired error
+        await handleFacebookTokenError(adAccount.id, facebookError);
+
         // Check if it's a token expiry error
         if (facebookError instanceof Error && facebookError.message === 'FACEBOOK_TOKEN_EXPIRED') {
           return NextResponse.json(
             {
               error: 'Facebook access token has expired. Please reconnect your Facebook account.',
-              code: 'TOKEN_EXPIRED'
+              code: 'TOKEN_EXPIRED',
+              requiresReconnect: true
             },
             { status: 401 }
           );
         }
 
-        // Fall back to empty stats if Facebook API fails
+        // Fall back to empty stats if Facebook API fails for other reasons
+        return NextResponse.json({
+          totalSpent: 0,
+          totalImpressions: 0,
+          totalClicks: 0,
+          totalCampaigns: 0,
+          activeCampaigns: 0,
+        });
       }
     }
 
     // Return empty stats if no Facebook connection
-    const stats = {
+    return NextResponse.json({
       totalSpent: 0,
       totalImpressions: 0,
       totalClicks: 0,
       totalCampaigns: 0,
       activeCampaigns: 0,
-    };
-
-    return NextResponse.json(stats);
+    });
   } catch (error) {
     console.error('Error fetching ad account stats:', error);
     return NextResponse.json(

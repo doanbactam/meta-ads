@@ -116,13 +116,6 @@ export class TestHelpers {
   }
 
   /**
-   * Fill Facebook access token
-   */
-  async fillFacebookToken(token: string) {
-    await this.page.fill(selectors.accessTokenInput, token);
-  }
-
-  /**
    * Select rows in table
    */
   async selectTableRows(count: number) {

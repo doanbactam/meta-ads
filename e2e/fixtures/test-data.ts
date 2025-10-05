@@ -118,7 +118,7 @@ export const selectors = {
   // Facebook
   connectFacebookButton: 'button:has-text("Connect Facebook")',
   facebookDialog: '[role="dialog"]',
-  accessTokenInput: 'input[type="password"]',
+  loginWithFacebookButton: 'button:has-text("login with facebook")',
   
   // Date Picker
   dateRangePicker: '[data-testid="date-range-picker"]',

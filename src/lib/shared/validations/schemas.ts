@@ -4,8 +4,8 @@ import { z } from 'zod';
 export const adAccountSchema = z.object({
   id: z.string().cuid(),
   name: z.string().min(1, 'Name is required'),
-  platform: z.enum(['facebook', 'instagram', 'linkedin', 'messenger']),
-  status: z.enum(['active', 'paused', 'disabled']),
+  platform: z.enum(['FACEBOOK', 'INSTAGRAM', 'LINKEDIN', 'MESSENGER']),
+  status: z.enum(['ACTIVE', 'PAUSED', 'DISABLED']),
   currency: z.string().default('USD'),
   timeZone: z.string().default('UTC'),
   createdAt: z.date(),

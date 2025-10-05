@@ -46,26 +46,41 @@ model User {
   @@map("users")
 }
 
+enum AdAccountStatus {
+  ACTIVE
+  PAUSED
+  DISABLED
+}
+
+enum Platform {
+  FACEBOOK
+  INSTAGRAM
+  LINKEDIN
+  MESSENGER
+}
+
 model AdAccount {
-  id                    String    @id @default(cuid())
-  userId                String    @map("user_id")
+  id                    String           @id @default(cuid())
+  userId                String           @map("user_id")
   name                  String
-  platform              String    // facebook, instagram, linkedin, messenger
-  status                String    // active, paused, disabled
-  currency              String    @default("USD")
-  timeZone              String    @default("UTC") @map("time_zone")
-  facebookAccessToken   String?   @map("facebook_access_token") @db.Text
-  facebookTokenExpiry   DateTime? @map("facebook_token_expiry")
-  facebookAdAccountId   String?   @map("facebook_ad_account_id")
-  facebookUserId        String?   @map("facebook_user_id")
-  facebookPageId        String?   @map("facebook_page_id")
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
+  platform              Platform         @default(FACEBOOK)
+  status                AdAccountStatus  @default(ACTIVE)
+  currency              String           @default("USD")
+  timeZone              String           @default("UTC") @map("time_zone")
+  facebookAccessToken   String?          @map("facebook_access_token") @db.Text
+  facebookTokenExpiry   DateTime?        @map("facebook_token_expiry")
+  facebookAdAccountId   String?          @map("facebook_ad_account_id")
+  facebookUserId        String?          @map("facebook_user_id")
+  facebookPageId        String?          @map("facebook_page_id")
+  createdAt             DateTime         @default(now()) @map("created_at")
+  updatedAt             DateTime         @updatedAt @map("updated_at")
 
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   campaigns Campaign[]
 
+  @@unique([userId, facebookAdAccountId], name: "unique_user_facebook_account")
   @@index([userId])
+  @@index([facebookAdAccountId])
   @@map("ad_accounts")
 }
 

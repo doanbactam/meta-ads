@@ -32,7 +32,7 @@ export async function getValidFacebookToken(
     // Mark account as paused
     await prisma.adAccount.update({
       where: { id: adAccount.id },
-      data: { status: 'paused' },
+      data: { status: 'PAUSED' },
     });
 
     return { error: 'Facebook token expired. Please reconnect your account.', status: 401 };
@@ -49,7 +49,7 @@ export async function getValidFacebookToken(
   const recentlyUpdated = adAccount.updatedAt && 
     new Date().getTime() - adAccount.updatedAt.getTime() < 2 * 60 * 1000;
 
-  if (recentlyUpdated && adAccount.status === 'active') {
+  if (recentlyUpdated && adAccount.status === 'ACTIVE') {
     return { token: adAccount.facebookAccessToken, adAccount };
   }
 
@@ -62,7 +62,7 @@ export async function getValidFacebookToken(
     await prisma.adAccount.update({
       where: { id: adAccount.id },
       data: {
-        status: 'paused',
+        status: 'PAUSED',
         facebookTokenExpiry: new Date(),
       },
     });
@@ -106,7 +106,7 @@ export async function handleFacebookTokenError(
     await prisma.adAccount.update({
       where: { id: adAccountId },
       data: {
-        status: 'paused',
+        status: 'PAUSED',
         facebookTokenExpiry: new Date(),
       },
     });
