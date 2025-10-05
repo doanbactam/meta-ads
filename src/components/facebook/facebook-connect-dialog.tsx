@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2, Facebook, AlertCircle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface FacebookConnectDialogProps {
   open: boolean;
@@ -29,7 +29,6 @@ interface FacebookConnectDialogProps {
 }
 
 export function FacebookConnectDialog({ open, onOpenChange, onConnect }: FacebookConnectDialogProps) {
-  const { toast } = useToast();
   const [accessToken, setAccessToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -124,9 +123,8 @@ export function FacebookConnectDialog({ open, onOpenChange, onConnect }: Faceboo
       const result = await onConnect(accessToken, accountId);
 
       if (result.success) {
-        toast({
-          title: 'Success!',
-          description: 'Facebook account connected successfully. Refreshing data...',
+        toast.success('Facebook account connected successfully', {
+          description: 'Refreshing data...',
         });
         
         // Reload page to refresh all data

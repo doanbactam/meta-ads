@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
-import { prisma } from '@/lib/server/prisma';
+import { getValidFacebookToken, handleFacebookTokenError } from '@/lib/server/api/facebook-auth';
 import { mapFacebookStatus } from '@/lib/shared/formatters';
 
 export async function GET(request: NextRequest) {
@@ -22,37 +22,29 @@ export async function GET(request: NextRequest) {
     }
 
     const user = await getOrCreateUserFromClerk(clerkId);
-    const adAccount = await prisma.adAccount.findFirst({
-      where: {
-        id: adAccountId,
-        userId: user.id,
-      },
-    });
-
-    if (!adAccount) {
-      return NextResponse.json({ error: 'Ad account not found or access denied' }, { status: 403 });
+    
+    // Validate Facebook token
+    const tokenResult = await getValidFacebookToken(adAccountId, user.id);
+    if ('error' in tokenResult) {
+      if (tokenResult.status === 401) {
+        return NextResponse.json(
+          {
+            ads: [],
+            error: tokenResult.error,
+            code: 'TOKEN_EXPIRED'
+          },
+          { status: 401 }
+        );
+      }
+      return NextResponse.json({ ads: [], error: tokenResult.error }, { status: tokenResult.status });
     }
 
-    // Check if Facebook is connected
-    if (!adAccount.facebookAccessToken || !adAccount.facebookAdAccountId) {
-      return NextResponse.json({ 
-        ads: [],
-        message: 'Facebook not connected. Please connect your Facebook account to view ads.'
-      });
-    }
-
-    // Check if token is expired
-    if (adAccount.facebookTokenExpiry && adAccount.facebookTokenExpiry < new Date()) {
-      return NextResponse.json({ 
-        ads: [],
-        message: 'Facebook token expired. Please reconnect your Facebook account.'
-      });
-    }
+    const { token, adAccount } = tokenResult;
 
     // Fetch ads from Facebook API
     try {
       const { FacebookMarketingAPI } = await import('@/lib/server/facebook-api');
-      const api = new FacebookMarketingAPI(adAccount.facebookAccessToken);
+      const api = new FacebookMarketingAPI(token);
       
       // Prepare date options for insights
       const dateOptions = fromDate && toDate ? {
@@ -111,6 +103,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ads: allAds });
     } catch (facebookError) {
       console.error('Error fetching from Facebook API:', facebookError);
+
+      // Handle token expiry
+      await handleFacebookTokenError(adAccountId, facebookError);
 
       // Check if it's a token expiry error
       if (facebookError instanceof Error && facebookError.message === 'FACEBOOK_TOKEN_EXPIRED') {

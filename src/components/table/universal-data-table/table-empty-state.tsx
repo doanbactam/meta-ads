@@ -13,7 +13,6 @@ interface TableEmptyStateProps<T> {
   connected: boolean;
   adAccountId?: string;
   onRefresh: () => void;
-  onReconnect: () => void;
   onConnect: () => void;
 }
 
@@ -26,7 +25,6 @@ export function TableEmptyState<T>({
   connected,
   adAccountId,
   onRefresh,
-  onReconnect,
   onConnect,
 }: TableEmptyStateProps<T>) {
   const colSpan = visibleColumnsCount + (showBulkActions ? 1 : 0);
@@ -66,7 +64,7 @@ export function TableEmptyState<T>({
                   variant="outline" 
                   size="sm" 
                   className="h-8 gap-1.5 px-3 text-xs"
-                  onClick={onReconnect}
+                  onClick={onConnect}
                 >
                   Reconnect Facebook
                 </Button>

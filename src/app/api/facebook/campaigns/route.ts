@@ -1,33 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { prisma } from '@/lib/server/prisma';
 import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
 import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
-
-async function getAdAccountWithValidation(userId: string, adAccountId: string) {
-  const user = await getOrCreateUserFromClerk(userId);
-
-  const adAccount = await prisma.adAccount.findFirst({
-    where: {
-      id: adAccountId,
-      userId: user.id,
-    },
-  });
-
-  if (!adAccount) {
-    return { error: 'Ad account not found', status: 404 };
-  }
-
-  if (!adAccount.facebookAccessToken || !adAccount.facebookAdAccountId) {
-    return { error: 'Facebook not connected', status: 400 };
-  }
-
-  if (adAccount.facebookTokenExpiry && adAccount.facebookTokenExpiry < new Date()) {
-    return { error: 'Token expired', status: 401 };
-  }
-
-  return { adAccount };
-}
+import { getValidFacebookToken, handleFacebookTokenError } from '@/lib/server/api/facebook-auth';
 
 export async function GET(req: NextRequest) {
   try {
@@ -43,13 +18,15 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Ad account ID is required' }, { status: 400 });
     }
 
-    const result = await getAdAccountWithValidation(userId, adAccountId);
-    if ('error' in result) {
-      return NextResponse.json({ error: result.error }, { status: result.status });
+    const user = await getOrCreateUserFromClerk(userId);
+    const tokenResult = await getValidFacebookToken(adAccountId, user.id);
+    
+    if ('error' in tokenResult) {
+      return NextResponse.json({ error: tokenResult.error }, { status: tokenResult.status });
     }
 
-    const { adAccount } = result;
-    const api = new FacebookMarketingAPI(adAccount.facebookAccessToken!);
+    const { token, adAccount } = tokenResult;
+    const api = new FacebookMarketingAPI(token);
 
     try {
       const campaigns = await api.getCampaigns(adAccount.facebookAdAccountId!);
@@ -66,11 +43,9 @@ export async function GET(req: NextRequest) {
 
       return NextResponse.json({ campaigns: campaignsWithInsights });
     } catch (apiError: any) {
+      await handleFacebookTokenError(adAccount.id, apiError);
+      
       if (apiError.message === 'FACEBOOK_TOKEN_EXPIRED') {
-        await prisma.adAccount.update({
-          where: { id: adAccount.id },
-          data: { facebookTokenExpiry: new Date(0) },
-        });
         return NextResponse.json({ error: 'Token expired', tokenExpired: true }, { status: 401 });
       }
       throw apiError;
@@ -98,13 +73,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const result = await getAdAccountWithValidation(userId, adAccountId);
-    if ('error' in result) {
-      return NextResponse.json({ error: result.error }, { status: result.status });
+    const user = await getOrCreateUserFromClerk(userId);
+    const tokenResult = await getValidFacebookToken(adAccountId, user.id);
+    
+    if ('error' in tokenResult) {
+      return NextResponse.json({ error: tokenResult.error }, { status: tokenResult.status });
     }
 
-    const { adAccount } = result;
-    const api = new FacebookMarketingAPI(adAccount.facebookAccessToken!);
+    const { token, adAccount } = tokenResult;
 
     const formattedAccountId = adAccount.facebookAdAccountId!.startsWith('act_')
       ? adAccount.facebookAdAccountId
@@ -120,7 +96,7 @@ export async function POST(req: NextRequest) {
     if (lifetimeBudget) campaignData.lifetime_budget = lifetimeBudget;
 
     const response = await fetch(
-      `https://graph.facebook.com/v23.0/${formattedAccountId}/campaigns?access_token=${adAccount.facebookAccessToken!}`,
+      `https://graph.facebook.com/v23.0/${formattedAccountId}/campaigns?access_token=${token}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -159,15 +135,17 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
-    const result = await getAdAccountWithValidation(userId, adAccountId);
-    if ('error' in result) {
-      return NextResponse.json({ error: result.error }, { status: result.status });
+    const user = await getOrCreateUserFromClerk(userId);
+    const tokenResult = await getValidFacebookToken(adAccountId, user.id);
+    
+    if ('error' in tokenResult) {
+      return NextResponse.json({ error: tokenResult.error }, { status: tokenResult.status });
     }
 
-    const { adAccount } = result;
+    const { token } = tokenResult;
 
     const response = await fetch(
-      `https://graph.facebook.com/v23.0/${campaignId}?access_token=${adAccount.facebookAccessToken!}`,
+      `https://graph.facebook.com/v23.0/${campaignId}?access_token=${token}`,
       { method: 'DELETE' }
     );
 

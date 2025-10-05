@@ -17,6 +17,7 @@ interface TableToolbarProps<T> {
   onColumnsChange: (columns: string[]) => void;
   selectedRows: string[];
   onRefresh: () => void;
+  isRefreshing?: boolean;
   features: {
     search: boolean;
     dateRange: boolean;
@@ -35,6 +36,7 @@ export function TableToolbar<T>({
   onColumnsChange,
   selectedRows,
   onRefresh,
+  isRefreshing = false,
   features,
 }: TableToolbarProps<T>) {
   return (
@@ -142,9 +144,11 @@ export function TableToolbar<T>({
               size="sm" 
               className="h-8 gap-1.5 px-3 text-xs"
               onClick={onRefresh}
+              disabled={isRefreshing}
+              title={isRefreshing ? "Refreshing..." : "Refresh data"}
             >
-              <RefreshCw className="h-3.5 w-3.5" />
-              refresh
+              <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'refreshing...' : 'refresh'}
             </Button>
           </div>
         </div>
