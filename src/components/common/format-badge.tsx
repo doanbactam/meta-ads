@@ -9,7 +9,7 @@ interface FormatBadgeProps {
 }
 
 export function FormatBadge({ format, className }: FormatBadgeProps) {
-  const getFormatVariant = (format: string) => {
+  const getFormatVariant = (format: string): 'default' | 'secondary' | 'destructive' | 'outline' => {
     const normalizedFormat = format.toLowerCase();
 
     switch (normalizedFormat) {
