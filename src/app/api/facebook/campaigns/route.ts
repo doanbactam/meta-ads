@@ -31,15 +31,33 @@ export async function GET(req: NextRequest) {
     try {
       const campaigns = await api.getCampaigns(adAccount.facebookAdAccountId!);
 
-      const campaignsWithInsights = await Promise.all(
-        campaigns.map(async (campaign) => {
-          const insights = await api.getCampaignInsights(campaign.id);
-          return {
-            ...campaign,
-            insights,
-          };
-        })
-      );
+      // Optimize: Fetch insights in parallel using Promise.all with controlled concurrency
+      // Batch requests in groups of 10 to avoid overwhelming the API
+      const BATCH_SIZE = 10;
+      const campaignsWithInsights = [];
+      
+      for (let i = 0; i < campaigns.length; i += BATCH_SIZE) {
+        const batch = campaigns.slice(i, i + BATCH_SIZE);
+        const batchResults = await Promise.all(
+          batch.map(async (campaign) => {
+            try {
+              const insights = await api.getCampaignInsights(campaign.id);
+              return {
+                ...campaign,
+                insights,
+              };
+            } catch (error) {
+              // If insights fail, return campaign without insights
+              console.error(`Failed to fetch insights for campaign ${campaign.id}:`, error);
+              return {
+                ...campaign,
+                insights: null,
+              };
+            }
+          })
+        );
+        campaignsWithInsights.push(...batchResults);
+      }
 
       return NextResponse.json({ campaigns: campaignsWithInsights });
     } catch (apiError: any) {
