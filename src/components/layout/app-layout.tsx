@@ -4,9 +4,6 @@ import { useState, ReactNode } from 'react';
 import { Sidebar } from '@/components/layout/sidebar';
 import { MobileSidebar } from '@/components/layout/mobile-sidebar';
 import { Header } from '@/components/layout/header';
-import { FacebookConnectDialog } from '@/components/facebook/facebook-connect-dialog';
-import { useFacebookConnection } from '@/hooks/use-facebook-connection';
-import { useFacebookStore } from '@/lib/client/stores/facebook-store';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -23,8 +20,6 @@ export function AppLayout({
 }: AppLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { connected, loading, connectFacebook } = useFacebookConnection(selectedAdAccount);
-  const { showConnectionDialog, setShowConnectionDialog } = useFacebookStore();
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -40,19 +35,6 @@ export function AppLayout({
           {children}
         </main>
       </div>
-
-      {showAdAccountSelector && (
-        <FacebookConnectDialog
-          open={showConnectionDialog}
-          onOpenChange={(open) => {
-            if (!connected) {
-              return;
-            }
-            setShowConnectionDialog(open);
-          }}
-          onConnect={connectFacebook}
-        />
-      )}
     </div>
   );
 }

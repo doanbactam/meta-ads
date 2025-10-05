@@ -45,8 +45,9 @@ export function FacebookConnectDialog({ open, onOpenChange, onConnect }: Faceboo
       const result = await onConnect(token);
 
       if (result.success) {
-        toast.success('Facebook account connected successfully', {
-          description: 'Refreshing data...',
+        const accountCount = result.data?.accounts?.length || 0;
+        toast.success('Facebook connection successful', {
+          description: `Synchronized ${accountCount} ad account${accountCount !== 1 ? 's' : ''}. Refreshing...`,
         });
         
         // Reload page to refresh all data
@@ -56,11 +57,17 @@ export function FacebookConnectDialog({ open, onOpenChange, onConnect }: Faceboo
       } else {
         const errorMsg = result.error || 'Failed to connect to Facebook';
         setError(errorMsg);
+        toast.error('Connection failed', {
+          description: errorMsg,
+        });
         console.error('Connection failed:', errorMsg);
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'An unexpected error occurred';
       setError(errorMsg);
+      toast.error('Connection error', {
+        description: errorMsg,
+      });
       console.error('Connection error:', err);
     } finally {
       setLoading(false);
