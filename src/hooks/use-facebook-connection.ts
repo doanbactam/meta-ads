@@ -97,26 +97,33 @@ export function useFacebookConnection(adAccountId?: string) {
     queryKey: ['facebook-connection', adAccountId],
     queryFn: () => checkFacebookConnection(adAccountId),
     enabled: !!adAccountId,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    retry: 1,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 1 * 60 * 1000, // 1 minute
+    retry: 2,
   });
 
   const connectMutation = useMutation({
     mutationFn: ({ accessToken, fbAdAccountId }: { accessToken: string; fbAdAccountId?: string }) =>
       connectFacebookAccount(accessToken, fbAdAccountId),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setConnected(true, data.adAccountId, data.facebookAdAccountId, data.tokenExpiry);
       // Invalidate all related queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['facebook-connection'] });
-      queryClient.invalidateQueries({ queryKey: ['facebook-campaigns'] });
-      queryClient.invalidateQueries({ queryKey: ['facebook-adsets'] });
-      queryClient.invalidateQueries({ queryKey: ['facebook-ads'] });
-      queryClient.invalidateQueries({ queryKey: ['ad-accounts'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['facebook-connection'] }),
+        queryClient.invalidateQueries({ queryKey: ['facebook-campaigns'] }),
+        queryClient.invalidateQueries({ queryKey: ['facebook-adsets'] }),
+        queryClient.invalidateQueries({ queryKey: ['facebook-ads'] }),
+        queryClient.invalidateQueries({ queryKey: ['ad-accounts'] }),
+        queryClient.invalidateQueries({ queryKey: ['overview-stats'] }),
+        queryClient.invalidateQueries({ queryKey: ['campaigns'] }),
+        queryClient.invalidateQueries({ queryKey: ['ad-sets'] }),
+        queryClient.invalidateQueries({ queryKey: ['ads'] }),
+      ]);
     },
     onError: (error) => {
       console.error('Facebook connection error:', error);
+      setConnected(false);
     },
   });
 
