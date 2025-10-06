@@ -169,7 +169,7 @@ e2e/                              # End-to-end tests
 
 ### User
 - **Purpose**: User authentication and preferences
-- **Key Fields**: `clerkId`, `email`, `name`, `role`, `subscriptionPackage`
+- **Key Fields**: `clerkId`, `email`, `name`
 - **Settings**: `preferredCurrency`, `preferredLocale`, `preferredTimezone`
 - **Relations**: One-to-many with `AdAccount`
 
@@ -201,8 +201,6 @@ e2e/                              # End-to-end tests
 
 ### 1. Authentication & Authorization
 - Clerk integration for secure authentication
-- User roles: USER, ADMIN, SUPER_ADMIN
-- Subscription tiers: FREE, STARTER, PROFESSIONAL, ENTERPRISE
 - Protected routes via Next.js middleware
 
 ### 2. Facebook Integration
