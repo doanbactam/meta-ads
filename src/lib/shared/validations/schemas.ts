@@ -1,5 +1,91 @@
 import { z } from 'zod';
 
+// Helper schemas for safe number parsing
+const safeFloatSchema = z
+  .union([z.string(), z.number()])
+  .transform((val) => {
+    if (val === null || val === undefined || val === '') return 0;
+    const num = typeof val === 'string' ? parseFloat(val) : val;
+    return isNaN(num) || !isFinite(num) ? 0 : num;
+  })
+  .pipe(z.number().finite());
+
+const safeIntSchema = z
+  .union([z.string(), z.number()])
+  .transform((val) => {
+    if (val === null || val === undefined || val === '') return 0;
+    const num = typeof val === 'string' ? parseInt(val, 10) : Math.floor(val);
+    return isNaN(num) || !isFinite(num) ? 0 : num;
+  })
+  .pipe(z.number().int().finite());
+
+// Facebook API response validation schemas
+export const facebookCampaignDataSchema = z.object({
+  id: z.string().min(1, 'Campaign ID is required'),
+  name: z.string().min(1).catch('Unnamed Campaign'),
+  status: z.string().default('PAUSED'),
+  objective: z.string().optional().nullable(),
+  spendCap: z.string().optional().nullable(),
+  dailyBudget: z.string().optional().nullable(),
+  lifetimeBudget: z.string().optional().nullable(),
+});
+
+export const facebookCampaignInsightsSchema = z.object({
+  impressions: z.string().optional().nullable(),
+  clicks: z.string().optional().nullable(),
+  spend: z.string().optional().nullable(),
+  reach: z.string().optional().nullable(),
+  frequency: z.string().optional().nullable(),
+  ctr: z.string().optional().nullable(),
+  cpc: z.string().optional().nullable(),
+  cpm: z.string().optional().nullable(),
+  conversions: z.string().optional().nullable(),
+  costPerConversion: z.string().optional().nullable(),
+});
+
+export const facebookAdSetDataSchema = z.object({
+  id: z.string().min(1, 'Ad Set ID is required'),
+  name: z.string().min(1).catch('Unnamed Ad Set'),
+  status: z.string().default('PAUSED'),
+  effective_status: z.string().optional().nullable(),
+  daily_budget: z.string().optional().nullable(),
+  lifetime_budget: z.string().optional().nullable(),
+  bid_amount: z.string().optional().nullable(),
+  targeting: z.any().optional().nullable(),
+});
+
+export const facebookAdDataSchema = z.object({
+  id: z.string().min(1, 'Ad ID is required'),
+  name: z.string().min(1).catch('Unnamed Ad'),
+  status: z.string().default('PAUSED'),
+  effective_status: z.string().optional().nullable(),
+  creative: z.any().optional().nullable(),
+});
+
+export const facebookAdAccountDataSchema = z.object({
+  id: z.string().min(1, 'Ad Account ID is required'),
+  name: z.string().min(1).catch('Unnamed Account'),
+  accountStatus: z.number().int().default(1),
+  currency: z.string().min(1).default('USD'),
+  timezone: z.string().min(1).default('UTC'),
+  businessId: z.string().optional().nullable(),
+  accessType: z.string().optional().nullable(),
+});
+
+// Safe data transformation schemas
+export const sanitizedCampaignInsightsSchema = z.object({
+  impressions: safeIntSchema.default(0),
+  clicks: safeIntSchema.default(0),
+  spend: safeFloatSchema.default(0),
+  reach: safeIntSchema.default(0),
+  frequency: safeFloatSchema.default(0),
+  ctr: safeFloatSchema.default(0),
+  cpc: safeFloatSchema.default(0),
+  cpm: safeFloatSchema.default(0),
+  conversions: safeIntSchema.default(0),
+  costPerConversion: safeFloatSchema.default(0),
+});
+
 // Ad Account schemas
 export const adAccountSchema = z.object({
   id: z.string().cuid(),

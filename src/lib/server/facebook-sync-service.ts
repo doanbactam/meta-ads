@@ -1,6 +1,15 @@
 import { prisma } from '@/lib/server/prisma';
 import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
-import { mapFacebookStatus, parseDate } from '@/lib/shared/formatters';
+import { parseDate } from '@/lib/shared/formatters';
+import {
+  sanitizeFacebookCampaign,
+  sanitizeFacebookInsights,
+  sanitizeFacebookAdSet,
+  sanitizeFacebookAd,
+  sanitizeFacebookStatus,
+  getBudgetAmount,
+  sanitizeDate,
+} from '@/lib/shared/data-sanitizer';
 import type { CampaignStatus, AdSetStatus, CreativeStatus } from '@prisma/client';
 
 /**
@@ -132,55 +141,68 @@ export class FacebookSyncService {
     try {
       const facebookCampaigns = await this.api.getCampaigns(this.adAccountId);
 
-      for (const fbCampaign of facebookCampaigns) {
+      for (const fbCampaignRaw of facebookCampaigns) {
         try {
+          // Sanitize and validate campaign data
+          const fbCampaign = sanitizeFacebookCampaign(fbCampaignRaw);
+
           // Get insights for the campaign
-          const insights = await this.api
+          const insightsRaw = await this.api
             .getCampaignInsights(fbCampaign.id, {
               dateFrom: options.dateFrom,
               dateTo: options.dateTo,
             })
             .catch(() => null);
 
-          // Upsert campaign
-          // Note: Facebook API returns budget and spend in cents, so we divide by 100 to get dollars
-          const dateStart = parseDate(options.dateFrom);
-          const dateEnd = parseDate(options.dateTo);
-          
+          // Sanitize insights data with safe number parsing
+          const insights = insightsRaw ? sanitizeFacebookInsights(insightsRaw) : null;
+
+          // Get budget with safe parsing (already converted from cents to dollars)
+          const budget = getBudgetAmount(fbCampaign.dailyBudget, fbCampaign.lifetimeBudget);
+
+          // Parse dates safely
+          const dateStart = sanitizeDate(options.dateFrom);
+          const dateEnd = sanitizeDate(options.dateTo);
+
+          // Validate and map status
+          const status = sanitizeFacebookStatus(fbCampaign.status, 'campaign', 'PAUSED') as CampaignStatus;
+
           await prisma.campaign.upsert({
             where: { facebookCampaignId: fbCampaign.id },
             create: {
               adAccountId: this.adAccountDbId,
               facebookCampaignId: fbCampaign.id,
               name: fbCampaign.name,
-              status: mapFacebookStatus(fbCampaign.status, 'campaign') as CampaignStatus,
-              budget: parseFloat(fbCampaign.dailyBudget || fbCampaign.lifetimeBudget || '0') / 100,
-              spent: parseFloat(insights?.spend || '0') / 100,
-              impressions: parseInt(insights?.impressions || '0'),
-              clicks: parseInt(insights?.clicks || '0'),
-              ctr: parseFloat(insights?.ctr || '0'),
-              conversions: 0, // Facebook needs conversion tracking setup
-              costPerConversion: 0,
-              dateStart: dateStart as any,
-              dateEnd: dateEnd as any,
+              status,
+              budget,
+              spent: insights?.spend ?? 0,
+              impressions: insights?.impressions ?? 0,
+              clicks: insights?.clicks ?? 0,
+              ctr: insights?.ctr ?? 0,
+              conversions: insights?.conversions ?? 0,
+              costPerConversion: insights?.costPerConversion ?? 0,
+              dateStart,
+              dateEnd,
               schedule: 'continuous',
               lastSyncedAt: new Date(),
             },
             update: {
               name: fbCampaign.name,
-              status: mapFacebookStatus(fbCampaign.status, 'campaign') as CampaignStatus,
-              budget: parseFloat(fbCampaign.dailyBudget || fbCampaign.lifetimeBudget || '0') / 100,
-              spent: parseFloat(insights?.spend || '0') / 100,
-              impressions: parseInt(insights?.impressions || '0'),
-              clicks: parseInt(insights?.clicks || '0'),
-              ctr: parseFloat(insights?.ctr || '0'),
+              status,
+              budget,
+              spent: insights?.spend ?? 0,
+              impressions: insights?.impressions ?? 0,
+              clicks: insights?.clicks ?? 0,
+              ctr: insights?.ctr ?? 0,
+              conversions: insights?.conversions ?? 0,
+              costPerConversion: insights?.costPerConversion ?? 0,
               lastSyncedAt: new Date(),
             },
           });
 
           synced++;
         } catch (error) {
-          const msg = `Failed to sync campaign ${fbCampaign.id}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+          const msg = `Failed to sync campaign ${fbCampaignRaw?.id || 'unknown'}: ${error instanceof Error ? error.message : 'Unknown error'}`;
           errors.push(msg);
           console.warn(msg);
         }
@@ -214,53 +236,66 @@ export class FacebookSyncService {
         try {
           const facebookAdSets = await this.api.getAdSets(campaign.facebookCampaignId);
 
-          for (const fbAdSet of facebookAdSets) {
+          for (const fbAdSetRaw of facebookAdSets) {
             try {
-              const insights = await this.api
+              // Sanitize and validate ad set data
+              const fbAdSet = sanitizeFacebookAdSet(fbAdSetRaw);
+
+              const insightsRaw = await this.api
                 .getAdSetInsights(fbAdSet.id, {
                   dateFrom: options.dateFrom,
                   dateTo: options.dateTo,
                 })
                 .catch(() => null);
 
-              // Note: Facebook API returns budget and spend in cents, so we divide by 100 to get dollars
-              const dateStart = parseDate(options.dateFrom);
-              const dateEnd = parseDate(options.dateTo);
-              
+              // Sanitize insights data
+              const insights = insightsRaw ? sanitizeFacebookInsights(insightsRaw) : null;
+
+              // Get budget with safe parsing
+              const budget = getBudgetAmount(fbAdSet.daily_budget, fbAdSet.lifetime_budget);
+
+              // Parse dates safely
+              const dateStart = sanitizeDate(options.dateFrom);
+              const dateEnd = sanitizeDate(options.dateTo);
+
+              // Validate and map status
+              const status = sanitizeFacebookStatus(fbAdSet.status, 'adset', 'PAUSED') as AdSetStatus;
+
               await prisma.adGroup.upsert({
                 where: { facebookAdSetId: fbAdSet.id },
                 create: {
                   campaignId: campaign.id,
                   facebookAdSetId: fbAdSet.id,
                   name: fbAdSet.name,
-                  status: mapFacebookStatus(fbAdSet.status, 'adset') as AdSetStatus,
-                  budget: parseFloat(fbAdSet.daily_budget || fbAdSet.lifetime_budget || '0') / 100,
-                  spent: parseFloat(insights?.spend || '0') / 100,
-                  impressions: parseInt(insights?.impressions || '0'),
-                  clicks: parseInt(insights?.clicks || '0'),
-                  ctr: parseFloat(insights?.ctr || '0'),
-                  cpc: parseFloat(insights?.cpc || '0') / 100,
-                  conversions: 0,
+                  status,
+                  budget,
+                  spent: insights?.spend ?? 0,
+                  impressions: insights?.impressions ?? 0,
+                  clicks: insights?.clicks ?? 0,
+                  ctr: insights?.ctr ?? 0,
+                  cpc: insights?.cpc ?? 0,
+                  conversions: insights?.conversions ?? 0,
                   dateStart,
                   dateEnd,
                   lastSyncedAt: new Date(),
                 },
                 update: {
                   name: fbAdSet.name,
-                  status: mapFacebookStatus(fbAdSet.status, 'adset') as AdSetStatus,
-                  budget: parseFloat(fbAdSet.daily_budget || fbAdSet.lifetime_budget || '0') / 100,
-                  spent: parseFloat(insights?.spend || '0') / 100,
-                  impressions: parseInt(insights?.impressions || '0'),
-                  clicks: parseInt(insights?.clicks || '0'),
-                  ctr: parseFloat(insights?.ctr || '0'),
-                  cpc: parseFloat(insights?.cpc || '0') / 100,
+                  status,
+                  budget,
+                  spent: insights?.spend ?? 0,
+                  impressions: insights?.impressions ?? 0,
+                  clicks: insights?.clicks ?? 0,
+                  ctr: insights?.ctr ?? 0,
+                  cpc: insights?.cpc ?? 0,
+                  conversions: insights?.conversions ?? 0,
                   lastSyncedAt: new Date(),
                 },
               });
 
               synced++;
             } catch (error) {
-              const msg = `Failed to sync ad set ${fbAdSet.id}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+              const msg = `Failed to sync ad set ${fbAdSetRaw?.id || 'unknown'}: ${error instanceof Error ? error.message : 'Unknown error'}`;
               errors.push(msg);
               console.warn(msg);
             }
@@ -302,19 +337,28 @@ export class FacebookSyncService {
         try {
           const facebookAds = await this.api.getAds(adSet.facebookAdSetId);
 
-          for (const fbAd of facebookAds) {
+          for (const fbAdRaw of facebookAds) {
             try {
-              const insights = await this.api
+              // Sanitize and validate ad data
+              const fbAd = sanitizeFacebookAd(fbAdRaw);
+
+              const insightsRaw = await this.api
                 .getAdInsights(fbAd.id, {
                   dateFrom: options.dateFrom,
                   dateTo: options.dateTo,
                 })
                 .catch(() => null);
 
-              // Note: Facebook API returns spend in cents, so we divide by 100 to get dollars
-              const dateStart = parseDate(options.dateFrom);
-              const dateEnd = parseDate(options.dateTo);
-              
+              // Sanitize insights data
+              const insights = insightsRaw ? sanitizeFacebookInsights(insightsRaw) : null;
+
+              // Parse dates safely
+              const dateStart = sanitizeDate(options.dateFrom);
+              const dateEnd = sanitizeDate(options.dateTo);
+
+              // Validate and map status
+              const status = sanitizeFacebookStatus(fbAd.status, 'ad', 'PAUSED') as CreativeStatus;
+
               await prisma.creative.upsert({
                 where: { facebookAdId: fbAd.id },
                 create: {
@@ -322,12 +366,12 @@ export class FacebookSyncService {
                   facebookAdId: fbAd.id,
                   name: fbAd.name,
                   format: 'Facebook Ad',
-                  status: mapFacebookStatus(fbAd.status, 'ad') as CreativeStatus,
-                  impressions: parseInt(insights?.impressions || '0'),
-                  clicks: parseInt(insights?.clicks || '0'),
-                  ctr: parseFloat(insights?.ctr || '0'),
-                  engagement: parseInt(insights?.impressions || '0'),
-                  spend: parseFloat(insights?.spend || '0') / 100,
+                  status,
+                  impressions: insights?.impressions ?? 0,
+                  clicks: insights?.clicks ?? 0,
+                  ctr: insights?.ctr ?? 0,
+                  engagement: insights?.impressions ?? 0,
+                  spend: insights?.spend ?? 0,
                   roas: 0,
                   dateStart,
                   dateEnd,
@@ -335,19 +379,19 @@ export class FacebookSyncService {
                 },
                 update: {
                   name: fbAd.name,
-                  status: mapFacebookStatus(fbAd.status, 'ad') as CreativeStatus,
-                  impressions: parseInt(insights?.impressions || '0'),
-                  clicks: parseInt(insights?.clicks || '0'),
-                  ctr: parseFloat(insights?.ctr || '0'),
-                  engagement: parseInt(insights?.impressions || '0'),
-                  spend: parseFloat(insights?.spend || '0') / 100,
+                  status,
+                  impressions: insights?.impressions ?? 0,
+                  clicks: insights?.clicks ?? 0,
+                  ctr: insights?.ctr ?? 0,
+                  engagement: insights?.impressions ?? 0,
+                  spend: insights?.spend ?? 0,
                   lastSyncedAt: new Date(),
                 },
               });
 
               synced++;
             } catch (error) {
-              const msg = `Failed to sync ad ${fbAd.id}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+              const msg = `Failed to sync ad ${fbAdRaw?.id || 'unknown'}: ${error instanceof Error ? error.message : 'Unknown error'}`;
               errors.push(msg);
               console.warn(msg);
             }

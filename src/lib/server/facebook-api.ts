@@ -5,6 +5,12 @@ import {
   entityCache,
   accountCache,
 } from './rate-limiter';
+import {
+  sanitizeFacebookCampaign,
+  sanitizeFacebookAdSet,
+  sanitizeFacebookAd,
+  sanitizeFacebookAdAccount,
+} from '@/lib/shared/data-sanitizer';
 
 // Facebook API V23 Error Codes
 export const FACEBOOK_ERROR_CODES = {
@@ -409,15 +415,17 @@ export class FacebookMarketingAPI {
       const url = `https://graph.facebook.com/v23.0/${businessId}/owned_ad_accounts?fields=${OPTIMIZED_FIELDS.adAccount},business_id,access_type&limit=100`;
       const accounts = await this.fetchAllPages<any>(url);
 
-      return accounts.map((account: any) => ({
-        id: account.id,
-        name: account.name || 'Unnamed Account',
-        accountStatus: account.account_status || 1,
-        currency: account.currency || 'USD',
-        timezone: account.timezone_name || 'UTC',
-        businessId: account.business_id || businessId,
-        accessType: account.access_type || 'OWNER',
-      }));
+      return accounts.map((account: any) =>
+        sanitizeFacebookAdAccount({
+          id: account.id,
+          name: account.name,
+          accountStatus: account.account_status,
+          currency: account.currency,
+          timezone: account.timezone_name,
+          businessId: account.business_id || businessId,
+          accessType: account.access_type || 'OWNER',
+        })
+      );
     } catch (error) {
       console.error(`Error fetching owned accounts for business ${businessId}:`, error);
       throw error;
@@ -432,15 +440,17 @@ export class FacebookMarketingAPI {
       const url = `https://graph.facebook.com/v23.0/${businessId}/client_ad_accounts?fields=${OPTIMIZED_FIELDS.adAccount},business_id,access_type&limit=100`;
       const accounts = await this.fetchAllPages<any>(url);
 
-      return accounts.map((account: any) => ({
-        id: account.id,
-        name: account.name || 'Unnamed Account',
-        accountStatus: account.account_status || 1,
-        currency: account.currency || 'USD',
-        timezone: account.timezone_name || 'UTC',
-        businessId: account.business_id || businessId,
-        accessType: account.access_type || 'AGENCY',
-      }));
+      return accounts.map((account: any) =>
+        sanitizeFacebookAdAccount({
+          id: account.id,
+          name: account.name,
+          accountStatus: account.account_status,
+          currency: account.currency,
+          timezone: account.timezone_name,
+          businessId: account.business_id || businessId,
+          accessType: account.access_type || 'AGENCY',
+        })
+      );
     } catch (error) {
       // Client accounts endpoint may fail if business doesn't have agency access
       // This is expected and should not break the flow
@@ -499,13 +509,16 @@ export class FacebookMarketingAPI {
         return [];
       }
 
-      const result = data.data.map((account: any) => ({
-        id: account.id,
-        name: account.name || 'Unnamed Account',
-        accountStatus: account.account_status || 1,
-        currency: account.currency || 'USD',
-        timezone: account.timezone_name || 'UTC',
-      }));
+      const result = data.data.map((account: any) => {
+        // Sanitize and validate each account
+        return sanitizeFacebookAdAccount({
+          id: account.id,
+          name: account.name,
+          accountStatus: account.account_status,
+          currency: account.currency,
+          timezone: account.timezone_name,
+        });
+      });
 
       // Cache the result
       accountCache.set(cacheKey, result, CACHE_TTL.ACCOUNTS);
@@ -547,15 +560,17 @@ export class FacebookMarketingAPI {
       const url = `https://graph.facebook.com/v23.0/${formattedAccountId}/campaigns?fields=${OPTIMIZED_FIELDS.campaign}&limit=100`;
       const campaigns = await this.fetchAllPages<any>(url, 100, `campaigns:${formattedAccountId}`);
 
-      const result = campaigns.map((campaign: any) => ({
-        id: campaign.id,
-        name: campaign.name || 'Unnamed Campaign',
-        status: campaign.status || 'UNKNOWN',
-        objective: campaign.objective,
-        spendCap: campaign.spend_cap,
-        dailyBudget: campaign.daily_budget,
-        lifetimeBudget: campaign.lifetime_budget,
-      }));
+      const result = campaigns.map((campaign: any) =>
+        sanitizeFacebookCampaign({
+          id: campaign.id,
+          name: campaign.name,
+          status: campaign.status,
+          objective: campaign.objective,
+          spendCap: campaign.spend_cap,
+          dailyBudget: campaign.daily_budget,
+          lifetimeBudget: campaign.lifetime_budget,
+        })
+      );
 
       // Cache the result
       entityCache.set(cacheKey, result, CACHE_TTL.CAMPAIGNS);
@@ -707,11 +722,25 @@ export class FacebookMarketingAPI {
       // Use pagination helper to fetch all ad sets
       const url = `https://graph.facebook.com/v23.0/${campaignId}/adsets?fields=${OPTIMIZED_FIELDS.adSet}&limit=100`;
       const adSets = await this.fetchAllPages<any>(url, 100, `adsets:${campaignId}`);
-      
+
+      // Sanitize ad sets before caching
+      const sanitizedAdSets = adSets.map((adSet: any) =>
+        sanitizeFacebookAdSet({
+          id: adSet.id,
+          name: adSet.name,
+          status: adSet.status,
+          effective_status: adSet.effective_status,
+          daily_budget: adSet.daily_budget,
+          lifetime_budget: adSet.lifetime_budget,
+          bid_amount: adSet.bid_amount,
+          targeting: adSet.targeting,
+        })
+      );
+
       // Cache the result
-      entityCache.set(cacheKey, adSets, CACHE_TTL.ADSETS);
-      
-      return adSets;
+      entityCache.set(cacheKey, sanitizedAdSets, CACHE_TTL.ADSETS);
+
+      return sanitizedAdSets;
     } catch (error) {
       console.error('Error fetching ad sets:', error);
       
@@ -840,11 +869,22 @@ export class FacebookMarketingAPI {
       // Use pagination helper to fetch all ads
       const url = `https://graph.facebook.com/v23.0/${adSetId}/ads?fields=${OPTIMIZED_FIELDS.ad}&limit=100`;
       const ads = await this.fetchAllPages<any>(url, 100, `ads:${adSetId}`);
-      
+
+      // Sanitize ads before caching
+      const sanitizedAds = ads.map((ad: any) =>
+        sanitizeFacebookAd({
+          id: ad.id,
+          name: ad.name,
+          status: ad.status,
+          effective_status: ad.effective_status,
+          creative: ad.creative,
+        })
+      );
+
       // Cache the result
-      entityCache.set(cacheKey, ads, CACHE_TTL.ADS);
-      
-      return ads;
+      entityCache.set(cacheKey, sanitizedAds, CACHE_TTL.ADS);
+
+      return sanitizedAds;
     } catch (error) {
       console.error('Error fetching ads:', error);
       
