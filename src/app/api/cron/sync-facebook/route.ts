@@ -14,12 +14,12 @@ import { syncAllAdAccounts } from '@/lib/server/facebook-sync-service';
  * {
  *   "crons": [{
  *     "path": "/api/cron/sync-facebook",
- *     "schedule": "0 */6 * * *"
+ *     "schedule": "0 *\/6 * * *"
  *   }]
  * }
  *
  * Setup for external cron (e.g., cron-job.org):
- * Schedule: 0 */6 * * * (every 6 hours)
+ * Schedule: 0 *\/6 * * * (every 6 hours)
  * URL: https://yourdomain.com/api/cron/sync-facebook
  * Headers: Authorization: Bearer YOUR_CRON_SECRET
  */
