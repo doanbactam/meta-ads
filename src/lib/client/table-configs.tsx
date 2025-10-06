@@ -10,6 +10,20 @@ export const campaignTableConfig: TableConfig<Campaign> = {
   apiEndpoint: '/api/campaigns',
   title: 'Campaigns',
 
+  filters: {
+    status: {
+      label: 'Status',
+      options: [
+        { label: 'Active', value: 'ACTIVE' },
+        { label: 'Paused', value: 'PAUSED' },
+        { label: 'Archived', value: 'ARCHIVED' },
+        { label: 'Deleted', value: 'DELETED' },
+        { label: 'Pending', value: 'PENDING' },
+        { label: 'Ended', value: 'ENDED' },
+      ],
+    },
+  },
+
   columns: [
     {
       id: 'name',
@@ -247,6 +261,20 @@ export const adGroupsTableConfig: TableConfig<AdGroup> = {
   apiEndpoint: '/api/ad-sets',
   title: 'Ad Sets',
 
+  filters: {
+    status: {
+      label: 'Status',
+      options: [
+        { label: 'Active', value: 'ACTIVE' },
+        { label: 'Paused', value: 'PAUSED' },
+        { label: 'Archived', value: 'ARCHIVED' },
+        { label: 'Deleted', value: 'DELETED' },
+        { label: 'Pending', value: 'PENDING' },
+        { label: 'Ended', value: 'ENDED' },
+      ],
+    },
+  },
+
   columns: [
     {
       id: 'name',
@@ -405,6 +433,22 @@ export const adsTableConfig: TableConfig<Ad> = {
   queryKey: 'ads',
   apiEndpoint: '/api/ads',
   title: 'Ads',
+
+  filters: {
+    status: {
+      label: 'Status',
+      options: [
+        { label: 'Active', value: 'ACTIVE' },
+        { label: 'Paused', value: 'PAUSED' },
+        { label: 'Archived', value: 'ARCHIVED' },
+        { label: 'Deleted', value: 'DELETED' },
+        { label: 'Pending', value: 'PENDING' },
+        { label: 'Review', value: 'REVIEW' },
+        { label: 'Rejected', value: 'REJECTED' },
+        { label: 'Disapproved', value: 'DISAPPROVED' },
+      ],
+    },
+  },
 
   columns: [
     {

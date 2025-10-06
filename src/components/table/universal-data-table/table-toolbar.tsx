@@ -5,6 +5,13 @@ import { FacebookDateRangePicker } from '@/components/facebook/facebook-date-ran
 import { ColumnsSelector } from '@/components/table/columns-selector';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { TableColumn, type TableConfig } from './types';
 
 interface TableToolbarProps<T> {
@@ -13,6 +20,8 @@ interface TableToolbarProps<T> {
   onSearchChange: (query: string) => void;
   dateRange: { from: Date | undefined; to: Date | undefined };
   onDateRangeChange: (range: { from: Date | undefined; to: Date | undefined }) => void;
+  statusFilter: string;
+  onStatusFilterChange: (status: string) => void;
   visibleColumns: string[];
   onColumnsChange: (columns: string[]) => void;
   selectedRows: string[];
@@ -33,6 +42,8 @@ export function TableToolbar<T>({
   onSearchChange,
   dateRange,
   onDateRangeChange,
+  statusFilter,
+  onStatusFilterChange,
   visibleColumns,
   onColumnsChange,
   selectedRows,
@@ -43,20 +54,37 @@ export function TableToolbar<T>({
 }: TableToolbarProps<T>) {
   return (
     <div className="space-y-3">
-      {/* Search and Date Range */}
-      {(features.search || features.dateRange) && (
-        <div className="flex items-center justify-between">
-          {features.search && (
-            <div className="relative w-64">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                placeholder={`search ${config.title.toLowerCase()}...`}
-                className="h-8 pl-8 text-xs"
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-              />
-            </div>
-          )}
+      {/* Search, Status Filter and Date Range */}
+      {(features.search || config.filters?.status || features.dateRange) && (
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            {features.search && (
+              <div className="relative w-64">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  placeholder={`search ${config.title.toLowerCase()}...`}
+                  className="h-8 pl-8 text-xs"
+                  value={searchQuery}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                />
+              </div>
+            )}
+            {config.filters?.status && (
+              <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+                <SelectTrigger className="h-8 w-[150px] text-xs" size="sm">
+                  <SelectValue placeholder={config.filters.status.label} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  {config.filters.status.options.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
           {features.dateRange && (
             <div className="ml-auto">
               <FacebookDateRangePicker value={dateRange} onChange={onDateRangeChange} />
