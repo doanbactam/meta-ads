@@ -22,7 +22,9 @@ const SYNC_THRESHOLD = 10 * 60 * 1000; // 10 minutes
 async function getCampaignsFromDatabase(adAccountId: string) {
   const campaigns = await prisma.campaign.findMany({
     where: { adAccountId },
-    orderBy: { updatedAt: 'desc' },
+    orderBy: [
+      { createdAt: 'desc' }, // Facebook API default: newest first
+    ],
   });
 
   return campaigns.map((campaign) => ({

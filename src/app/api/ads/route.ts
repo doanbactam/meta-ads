@@ -36,7 +36,9 @@ async function getAdsFromDatabase(adAccountId: string) {
         },
       },
     },
-    orderBy: { updatedAt: 'desc' },
+    orderBy: [
+      { createdAt: 'desc' }, // Facebook API default: newest first
+    ],
   });
 
   return ads.map((ad) => ({

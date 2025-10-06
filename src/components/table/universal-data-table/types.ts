@@ -10,6 +10,12 @@ export interface TableColumn<T = any> {
   width?: string;
 }
 
+// Filter configuration
+export interface FilterOption {
+  label: string;
+  value: string;
+}
+
 // Generic table configuration
 export interface TableConfig<T = any> {
   // Data fetching
@@ -20,6 +26,14 @@ export interface TableConfig<T = any> {
   title: string;
   columns: TableColumn<T>[];
   defaultColumns: string[];
+
+  // Filters
+  filters?: {
+    status?: {
+      label: string;
+      options: FilterOption[];
+    };
+  };
 
   // Actions
   actions?: {

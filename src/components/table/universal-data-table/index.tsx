@@ -21,6 +21,7 @@ export function UniversalDataTable<T extends { id: string }>({
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [visibleColumns, setVisibleColumns] = useState<string[]>(config.defaultColumns);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dateRange, setDateRange] = useState<{
     from: Date | undefined;
     to: Date | undefined;
@@ -125,23 +126,36 @@ export function UniversalDataTable<T extends { id: string }>({
     },
   });
 
-  // Filter items based on search
+  // Filter items based on search and status
   const filteredItems = items.filter((item) => {
-    if (!searchQuery) return true;
+    // Search filter
+    if (searchQuery) {
+      const searchableFields = config.columns
+        .filter((col) => col.accessor)
+        .map((col) => {
+          if (typeof col.accessor === 'function') {
+            return col.accessor(item);
+          }
+          return item[col.accessor as keyof T];
+        })
+        .filter(Boolean);
 
-    const searchableFields = config.columns
-      .filter((col) => col.accessor)
-      .map((col) => {
-        if (typeof col.accessor === 'function') {
-          return col.accessor(item);
-        }
-        return item[col.accessor as keyof T];
-      })
-      .filter(Boolean);
+      const matchesSearch = searchableFields.some((field) =>
+        String(field).toLowerCase().includes(searchQuery.toLowerCase())
+      );
 
-    return searchableFields.some((field) =>
-      String(field).toLowerCase().includes(searchQuery.toLowerCase())
-    );
+      if (!matchesSearch) return false;
+    }
+
+    // Status filter
+    if (statusFilter && statusFilter !== 'all') {
+      const itemStatus = (item as any).status;
+      if (!itemStatus || itemStatus.toLowerCase() !== statusFilter.toLowerCase()) {
+        return false;
+      }
+    }
+
+    return true;
   });
 
   // Pagination
@@ -204,6 +218,8 @@ export function UniversalDataTable<T extends { id: string }>({
         onSearchChange={setSearchQuery}
         dateRange={dateRange}
         onDateRangeChange={setDateRange}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
         visibleColumns={visibleColumns}
         onColumnsChange={setVisibleColumns}
         selectedRows={selectedRows}
