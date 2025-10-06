@@ -14,6 +14,11 @@ interface RateLimitEntry {
 // In production, use Redis or similar for distributed rate limiting
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
+// Schedule periodic cleanup to prevent memory leaks
+setInterval(() => {
+  cleanupExpiredEntries();
+}, 5 * 60 * 1000); // Clean up every 5 minutes
+
 // Default rate limit configurations
 export const RATE_LIMIT_CONFIGS = {
   facebook_api: {
@@ -43,10 +48,17 @@ function getRateLimitKey(identifier: string, endpoint: string): string {
 function cleanupExpiredEntries(): void {
   const now = Date.now();
   const entries = Array.from(rateLimitStore.entries());
+  let cleanedCount = 0;
+  
   for (const [key, entry] of entries) {
     if (entry.resetTime < now) {
       rateLimitStore.delete(key);
+      cleanedCount++;
     }
+  }
+  
+  if (cleanedCount > 0 && process.env.NODE_ENV === 'development') {
+    console.log(`Cleaned up ${cleanedCount} expired rate limit entries`);
   }
 }
 
@@ -70,10 +82,7 @@ export function checkRateLimit(
   const key = getRateLimitKey(identifier, endpoint);
   const now = Date.now();
 
-  // Periodically cleanup expired entries (every 100 requests)
-  if (Math.random() < 0.01) {
-    cleanupExpiredEntries();
-  }
+  // Cleanup is now handled by scheduled interval
 
   let entry = rateLimitStore.get(key);
 

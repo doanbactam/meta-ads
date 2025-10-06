@@ -77,7 +77,9 @@ export class FacebookSyncService {
     try {
       // Check if sync is needed
       if (!(await this.needsSync(options.force))) {
-        console.log(`Ad account ${this.adAccountId} was recently synced, skipping...`);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Ad account ${this.adAccountId} was recently synced, skipping...`);
+        }
         return { ...result, success: true };
       }
 
@@ -113,9 +115,11 @@ export class FacebookSyncService {
       });
 
       result.success = true;
-      console.log(
-        `Sync completed for ${this.adAccountId}: ${result.campaigns} campaigns, ${result.adSets} ad sets, ${result.ads} ads`
-      );
+      if (process.env.NODE_ENV === 'development') {
+        console.log(
+          `Sync completed for ${this.adAccountId}: ${result.campaigns} campaigns, ${result.adSets} ad sets, ${result.ads} ads`
+        );
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown sync error';
       result.errors.push(errorMessage);
@@ -437,7 +441,9 @@ export async function syncAllAdAccounts(): Promise<{
       },
     });
 
-    console.log(`Found ${adAccounts.length} ad accounts to sync`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Found ${adAccounts.length} ad accounts to sync`);
+    }
 
     for (const adAccount of adAccounts) {
       if (!adAccount.facebookAccessToken || !adAccount.facebookAdAccountId) continue;

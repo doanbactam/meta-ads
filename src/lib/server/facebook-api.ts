@@ -228,8 +228,8 @@ export class FacebookMarketingAPI {
         nextUrl = data.paging?.next || null;
         pageCount++;
 
-        // Log pagination progress
-        if (nextUrl) {
+        // Log pagination progress (only in development)
+        if (nextUrl && process.env.NODE_ENV === 'development') {
           console.log(`Fetched page ${pageCount}, total items: ${allData.length}, fetching next page...`);
         }
 
@@ -258,7 +258,9 @@ export class FacebookMarketingAPI {
       }
     }
 
-    console.log(`Pagination complete: fetched ${allData.length} items across ${pageCount} pages`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Pagination complete: fetched ${allData.length} items across ${pageCount} pages`);
+    }
     return allData;
   }
 
@@ -352,12 +354,16 @@ export class FacebookMarketingAPI {
 
         // Only retry on network errors
         if (isNetworkError && attempt < maxRetries) {
-          console.log(`Token validation attempt ${attempt + 1} failed, retrying...`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`Token validation attempt ${attempt + 1} failed, retrying...`);
+          }
           await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1))); // Exponential backoff
           continue;
         }
 
-        console.error('Token validation error:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Token validation error:', error);
+        }
         return {
           isValid: false,
           error: isNetworkError

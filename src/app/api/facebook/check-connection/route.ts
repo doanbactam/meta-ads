@@ -103,9 +103,11 @@ export async function GET(req: NextRequest) {
 
     if (recentlyUpdated && adAccount.status === 'ACTIVE') {
       // Token was just updated, trust it without re-validating
-      console.log(
-        `[Check Connection] Skipping validation for recently updated account ${adAccount.id}`
-      );
+      if (process.env.NODE_ENV === 'development') {
+        console.log(
+          `[Check Connection] Skipping validation for recently updated account ${adAccount.id}`
+        );
+      }
       return NextResponse.json({
         connected: true,
         adAccountId: adAccount.id,
