@@ -1,7 +1,7 @@
 export interface Campaign {
   id: string;
   name: string;
-  status: 'Eligible' | 'Paused' | 'Disapproved' | 'Pending' | 'Ended' | 'Removed';
+  status: 'ACTIVE' | 'PAUSED' | 'DELETED' | 'ARCHIVED' | 'PENDING' | 'ENDED' | 'DISAPPROVED' | 'REMOVED';
   budget: number;
   spent: number;
   impressions: number;
@@ -20,7 +20,7 @@ export interface AdGroup {
   id: string;
   campaign_id: string;
   name: string;
-  status: 'Active' | 'Paused' | 'Pending' | 'Ended';
+  status: 'ACTIVE' | 'PAUSED' | 'DELETED' | 'ARCHIVED' | 'PENDING' | 'ENDED';
   budget: number;
   spent: number;
   impressions: number;
@@ -39,7 +39,7 @@ export interface Ad {
   ad_group_id: string;
   name: string;
   format: 'Image' | 'Video' | 'Carousel' | 'Story';
-  status: 'Active' | 'Paused' | 'Review' | 'Rejected';
+  status: 'ACTIVE' | 'PAUSED' | 'DELETED' | 'ARCHIVED' | 'PENDING' | 'REVIEW' | 'REJECTED' | 'DISAPPROVED';
   impressions: number;
   clicks: number;
   ctr: number;
@@ -58,4 +58,21 @@ export type Creative = Ad;
 export interface DateRange {
   from: Date | undefined;
   to: Date | undefined;
+}
+
+// AI Types
+export interface AIAnalysisResult {
+  summary: string;
+  findings: string[];
+  recommendations: string[];
+  expectedImpact: string;
+  rawInsights: string;
+  timestamp: string;
+  model: string;
+}
+
+export interface AIAnalysisResponse {
+  success: boolean;
+  analysis: AIAnalysisResult;
+  error?: string;
 }

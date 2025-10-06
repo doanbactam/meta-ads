@@ -33,7 +33,7 @@ export function formatPercentage(value: number | null | undefined): string {
   return `${value.toFixed(2)}%`;
 }
 
-export function formatDate(date: string | Date | null | undefined): string {
+export function formatDate(date: string | Date | null | undefined, locale: string = 'en-US'): string {
   if (!date) {
     return '--';
   }
@@ -42,9 +42,9 @@ export function formatDate(date: string | Date | null | undefined): string {
     if (isNaN(dateObj.getTime())) {
       return '--';
     }
-    return dateObj.toLocaleDateString('en-US', {
-      month: '2-digit',
+    return dateObj.toLocaleDateString(locale, {
       day: '2-digit',
+      month: 'short',
       year: 'numeric',
     });
   } catch {
@@ -54,29 +54,75 @@ export function formatDate(date: string | Date | null | undefined): string {
 
 export function formatDateRange(
   start: string | Date | null | undefined,
-  end: string | Date | null | undefined
+  end: string | Date | null | undefined,
+  locale: string = 'en-US'
 ): string {
   if (!start && !end) {
     return '--';
   }
   if (!start) {
-    return `-- - ${formatDate(end)}`;
+    return `-- - ${formatDate(end, locale)}`;
   }
   if (!end) {
-    return `${formatDate(start)} - --`;
+    return `${formatDate(start, locale)} - --`;
   }
-  return `${formatDate(start)} - ${formatDate(end)}`;
+  return `${formatDate(start, locale)} - ${formatDate(end, locale)}`;
 }
 
+/**
+ * Maps Facebook API status to our database enum values
+ * Facebook returns: ACTIVE, PAUSED, DELETED, ARCHIVED, etc.
+ * We normalize to: ACTIVE, PAUSED, DELETED, ARCHIVED, PENDING, ENDED, etc.
+ */
 export function mapFacebookStatus(
   status: string,
   entityType: 'campaign' | 'adset' | 'ad' = 'ad'
 ): string {
+  // Normalize to uppercase
+  const normalizedStatus = status.toUpperCase();
+  
+  // Map Facebook statuses to our enum values
   const statusMap: { [key: string]: string } = {
-    ACTIVE: entityType === 'campaign' ? 'Eligible' : 'Active',
-    PAUSED: 'Paused',
-    DELETED: 'Removed',
-    ARCHIVED: 'Ended',
+    // Direct mappings
+    'ACTIVE': 'ACTIVE',
+    'PAUSED': 'PAUSED',
+    'DELETED': 'DELETED',
+    'ARCHIVED': 'ARCHIVED',
+    'PENDING': 'PENDING',
+    
+    // Facebook-specific mappings
+    'ELIGIBLE': 'ACTIVE',
+    'DISAPPROVED': 'DISAPPROVED',
+    'REMOVED': 'DELETED',
+    'ENDED': 'ENDED',
+    'REVIEW': 'REVIEW',
+    'REJECTED': 'REJECTED',
+    
+    // Effective status mappings
+    'CAMPAIGN_PAUSED': 'PAUSED',
+    'ADSET_PAUSED': 'PAUSED',
+    'AD_PAUSED': 'PAUSED',
   };
-  return statusMap[status] || 'Pending';
+  
+  return statusMap[normalizedStatus] || 'PENDING';
+}
+
+/**
+ * Converts string date to DateTime object
+ * Handles various date formats from Facebook API
+ */
+export function parseDate(dateString: string | null | undefined): Date {
+  if (!dateString) {
+    return new Date();
+  }
+  
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return new Date();
+    }
+    return date;
+  } catch {
+    return new Date();
+  }
 }

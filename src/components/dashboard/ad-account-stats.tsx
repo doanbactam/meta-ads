@@ -19,6 +19,7 @@ interface AccountStats {
 
 export function AdAccountStats({ adAccountId }: AdAccountStatsProps) {
   const { settings } = useUserSettings();
+  
   const { data: stats, isLoading } = useQuery({
     queryKey: ['ad-account-stats', adAccountId],
     queryFn: async (): Promise<AccountStats> => {
@@ -31,6 +32,18 @@ export function AdAccountStats({ adAccountId }: AdAccountStatsProps) {
     },
     enabled: !!adAccountId,
     staleTime: 30 * 60 * 1000, // 30 minutes - Facebook stats don't change frequently
+  });
+
+  // Fetch ad account data to get currency
+  const { data: adAccount } = useQuery({
+    queryKey: ['ad-account', adAccountId],
+    queryFn: async () => {
+      if (!adAccountId) return null;
+      const response = await fetch(`/api/ad-accounts/${adAccountId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!adAccountId,
   });
 
   if (!adAccountId || isLoading) {
@@ -50,7 +63,7 @@ export function AdAccountStats({ adAccountId }: AdAccountStatsProps) {
       <div className="flex items-center gap-1">
         <DollarSign className="h-3 w-3 text-green-500" />
         <span className="font-medium">
-          {formatCurrency(stats.totalSpent, settings.preferredCurrency, settings.preferredLocale)}
+          {formatCurrency(stats.totalSpent, adAccount?.currency || 'USD', settings.locale)}
         </span>
         <span className="text-muted-foreground">spent</span>
       </div>
@@ -58,7 +71,7 @@ export function AdAccountStats({ adAccountId }: AdAccountStatsProps) {
       <div className="flex items-center gap-1">
         <Eye className="h-3 w-3 text-blue-500" />
         <span className="font-medium">
-          {formatNumber(stats.totalImpressions, settings.preferredLocale)}
+          {formatNumber(stats.totalImpressions, settings.locale)}
         </span>
         <span className="text-muted-foreground">impressions</span>
       </div>
@@ -66,7 +79,7 @@ export function AdAccountStats({ adAccountId }: AdAccountStatsProps) {
       <div className="flex items-center gap-1">
         <MousePointer className="h-3 w-3 text-purple-500" />
         <span className="font-medium">
-          {formatNumber(stats.totalClicks, settings.preferredLocale)}
+          {formatNumber(stats.totalClicks, settings.locale)}
         </span>
         <span className="text-muted-foreground">clicks</span>
       </div>

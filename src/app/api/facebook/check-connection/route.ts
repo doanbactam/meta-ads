@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
 import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
 import { prisma } from '@/lib/server/prisma';
-import { checkRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/server/rate-limiter';
+import { checkRateLimit, RATE_LIMIT_CONFIGS } from '@/app/api/_lib/rate-limiter';
 
 export async function GET(req: NextRequest) {
   try {

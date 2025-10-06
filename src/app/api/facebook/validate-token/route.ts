@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { type NextRequest, NextResponse } from 'next/server';
 import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
-import { checkRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/server/rate-limiter';
+import { checkRateLimit, RATE_LIMIT_CONFIGS } from '@/app/api/_lib/rate-limiter';
 
 export async function POST(req: NextRequest) {
   try {

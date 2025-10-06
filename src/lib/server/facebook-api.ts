@@ -1,4 +1,10 @@
-import { Ad, AdAccount, AdSet, Campaign, FacebookAdsApi } from 'facebook-nodejs-business-sdk';
+import {
+  appRateLimiter,
+  adAccountRateLimiter,
+  insightsCache,
+  entityCache,
+  accountCache,
+} from './rate-limiter';
 
 // Facebook API V23 Error Codes
 export const FACEBOOK_ERROR_CODES = {
@@ -11,12 +17,34 @@ export const FACEBOOK_ERROR_CODES = {
   PERMISSION_DENIED: 200,
 } as const;
 
+// Typed error for Facebook token expiry
+export class FacebookTokenExpiredError extends Error {
+  constructor() {
+    super('FACEBOOK_TOKEN_EXPIRED');
+    this.name = 'FacebookTokenExpiredError';
+  }
+}
+
+// Cache TTLs (in milliseconds)
+const CACHE_TTL = {
+  INSIGHTS: 10 * 60 * 1000, // 10 minutes
+  CAMPAIGNS: 3 * 60 * 1000, // 3 minutes
+  ADSETS: 3 * 60 * 1000, // 3 minutes
+  ADS: 3 * 60 * 1000, // 3 minutes
+  ACCOUNTS: 30 * 60 * 1000, // 30 minutes
+} as const;
+
 export interface FacebookTokenValidation {
   isValid: boolean;
   appId?: string;
   userId?: string;
   expiresAt?: number;
   scopes?: string[];
+  businessIds?: string[];
+  granularScopes?: Array<{
+    scope: string;
+    target_ids?: string[];
+  }>;
   error?: string;
 }
 
@@ -26,6 +54,8 @@ export interface FacebookAdAccountData {
   accountStatus: number;
   currency: string;
   timezone: string;
+  businessId?: string;
+  accessType?: string; // OWNER, AGENCY, ASSIGNED
 }
 
 export interface FacebookCampaignData {
@@ -65,7 +95,165 @@ export class FacebookMarketingAPI {
 
   constructor(accessToken: string) {
     this.accessToken = accessToken;
-    FacebookAdsApi.init(accessToken);
+    // Removed global SDK init to prevent cross-account token collision
+    // Using fetch API directly instead
+  }
+
+  /**
+   * Fetch all pages from Facebook API with pagination support
+   * Facebook API returns max 25-100 items per page, this method fetches all pages
+   * Implements rate limiting and exponential backoff
+   */
+  private async fetchAllPages<T>(
+    initialUrl: string,
+    maxPages: number = 100,
+    rateLimitKey: string = 'default'
+  ): Promise<T[]> {
+    const allData: T[] = [];
+    let nextUrl: string | null = `${initialUrl}&access_token=${this.accessToken}`;
+    let pageCount = 0;
+    let retryCount = 0;
+    const maxRetries = 4;
+    const visited = new Set<string>();
+
+    while (nextUrl && pageCount < maxPages) {
+      // Prevent pagination loops
+      if (visited.has(nextUrl)) {
+        console.warn('Detected paging loop, aborting pagination');
+        break;
+      }
+      visited.add(nextUrl);
+      // Apply rate limiting
+      await appRateLimiter.waitForLimit(rateLimitKey);
+      await adAccountRateLimiter.waitForLimit(rateLimitKey);
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // Increased to 30s
+
+      try {
+        const response: Response = await fetch(nextUrl, {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        // Check rate limit headers
+        const rateLimitRemaining = response.headers.get('x-app-usage');
+        const businessUsage = response.headers.get('x-business-use-case-usage');
+        
+        if (rateLimitRemaining) {
+          try {
+            const usage = JSON.parse(rateLimitRemaining);
+            if (usage.call_count >= 95) {
+              console.warn('Approaching Facebook API rate limit:', usage);
+              await new Promise((resolve) => setTimeout(resolve, 2000)); // Throttle
+            }
+          } catch (e) {
+            // Ignore parse errors
+          }
+        }
+
+        if (!response.ok) {
+          const errorData: any = await response.json().catch(() => ({}));
+          const errorMessage = errorData.error?.message || `HTTP ${response.status}`;
+          const errorCode = errorData.error?.code;
+
+          // Check for token expiry
+          if (
+            errorMessage.includes('Session has expired') ||
+            errorMessage.includes('access token') ||
+            errorMessage.includes('token is invalid') ||
+            errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN ||
+            response.status === 401
+          ) {
+            throw new FacebookTokenExpiredError();
+          }
+
+          // Handle rate limiting with exponential backoff + jitter
+          if (
+            errorCode === FACEBOOK_ERROR_CODES.API_TOO_MANY_CALLS ||
+            errorCode === FACEBOOK_ERROR_CODES.API_USER_TOO_MANY_CALLS ||
+            errorCode === FACEBOOK_ERROR_CODES.RATE_LIMIT_REACHED ||
+            response.status === 429
+          ) {
+            if (retryCount < maxRetries) {
+              const backoffTime = Math.pow(2, retryCount) * 1000 + Math.floor(Math.random() * 250);
+              console.warn(`Rate limit hit, retrying in ${backoffTime}ms (attempt ${retryCount + 1}/${maxRetries})`);
+              await new Promise((resolve) => setTimeout(resolve, backoffTime));
+              retryCount++;
+              continue; // Retry same request
+            }
+            throw new Error('Facebook API rate limit exceeded. Please try again later.');
+          }
+
+          // Handle temporary issues with retry
+          if (errorCode === FACEBOOK_ERROR_CODES.TEMPORARY_ISSUE && retryCount < maxRetries) {
+            const backoffTime = 1000 * (retryCount + 1);
+            console.warn(`Temporary Facebook issue, retrying in ${backoffTime}ms`);
+            await new Promise((resolve) => setTimeout(resolve, backoffTime));
+            retryCount++;
+            continue;
+          }
+
+          throw new Error(errorMessage);
+        }
+
+        // Reset retry count on successful response
+        retryCount = 0;
+
+        const data: any = await response.json();
+
+        if (data.error) {
+          const errorCode = data.error.code;
+          if (errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN) {
+            throw new FacebookTokenExpiredError();
+          }
+          throw new Error(data.error.message);
+        }
+
+        // Add current page data
+        if (data.data && Array.isArray(data.data)) {
+          allData.push(...data.data);
+        }
+
+        // Get next page URL from paging object
+        nextUrl = data.paging?.next || null;
+        pageCount++;
+
+        // Log pagination progress
+        if (nextUrl) {
+          console.log(`Fetched page ${pageCount}, total items: ${allData.length}, fetching next page...`);
+        }
+
+      } catch (error) {
+        clearTimeout(timeoutId);
+        
+        // Re-throw token expiry errors
+        if (error instanceof FacebookTokenExpiredError) {
+          throw error;
+        }
+
+        // Handle network errors
+        const isNetworkError =
+          error instanceof Error &&
+          (error.name === 'AbortError' ||
+            error.message.includes('timeout') ||
+            error.message.includes('fetch failed'));
+
+        throw new Error(
+          isNetworkError
+            ? 'Unable to connect to Facebook. Please check your internet connection.'
+            : error instanceof Error
+              ? error.message
+              : 'Unknown error during pagination'
+        );
+      }
+    }
+
+    console.log(`Pagination complete: fetched ${allData.length} items across ${pageCount} pages`);
+    return allData;
   }
 
   async validateToken(): Promise<FacebookTokenValidation> {
@@ -116,12 +304,33 @@ export class FacebookMarketingAPI {
           };
         }
 
+        // Parse granular_scopes to extract business IDs
+        const granularScopes = tokenData.granular_scopes || [];
+        const businessIds: string[] = [];
+        
+        for (const gs of granularScopes) {
+          if (
+            (gs.scope === 'ads_management' || 
+             gs.scope === 'business_management' ||
+             gs.scope === 'ads_read') &&
+            gs.target_ids &&
+            Array.isArray(gs.target_ids)
+          ) {
+            businessIds.push(...gs.target_ids);
+          }
+        }
+
+        // Remove duplicates
+        const uniqueBusinessIds = Array.from(new Set(businessIds));
+
         return {
           isValid: tokenData.is_valid || false,
           appId: tokenData.app_id,
           userId: tokenData.user_id,
           expiresAt: tokenData.expires_at,
           scopes: tokenData.scopes || [],
+          businessIds: uniqueBusinessIds.length > 0 ? uniqueBusinessIds : undefined,
+          granularScopes: granularScopes.length > 0 ? granularScopes : undefined,
           error: !tokenData.is_valid ? 'Token is not valid' : undefined,
         };
       } catch (error) {
@@ -158,10 +367,106 @@ export class FacebookMarketingAPI {
     };
   }
 
+  /**
+   * Get ad accounts for a specific business (owned + client accounts)
+   * This is the recommended approach when user grants permission to specific businesses
+   */
+  async getBusinessAdAccounts(businessId: string): Promise<FacebookAdAccountData[]> {
+    try {
+      console.log(`Fetching ad accounts for business ${businessId}`);
+      
+      // Fetch both owned and client accounts in parallel
+      const [ownedAccounts, clientAccounts] = await Promise.all([
+        this.getBusinessOwnedAccounts(businessId),
+        this.getBusinessClientAccounts(businessId).catch((err) => {
+          console.warn(`Could not fetch client accounts for business ${businessId}:`, err.message);
+          return [];
+        }),
+      ]);
+
+      // Combine and deduplicate by account ID
+      const allAccounts = [...ownedAccounts, ...clientAccounts];
+      const uniqueAccounts = allAccounts.filter(
+        (account, index, self) => index === self.findIndex((a) => a.id === account.id)
+      );
+
+      console.log(
+        `Found ${uniqueAccounts.length} ad accounts for business ${businessId} (${ownedAccounts.length} owned, ${clientAccounts.length} client)`
+      );
+
+      return uniqueAccounts;
+    } catch (error) {
+      console.error(`Error fetching business ad accounts for ${businessId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get ad accounts owned by a business
+   */
+  private async getBusinessOwnedAccounts(businessId: string): Promise<FacebookAdAccountData[]> {
+    try {
+      const url = `https://graph.facebook.com/v23.0/${businessId}/owned_ad_accounts?fields=${OPTIMIZED_FIELDS.adAccount},business_id,access_type&limit=100`;
+      const accounts = await this.fetchAllPages<any>(url);
+
+      return accounts.map((account: any) => ({
+        id: account.id,
+        name: account.name || 'Unnamed Account',
+        accountStatus: account.account_status || 1,
+        currency: account.currency || 'USD',
+        timezone: account.timezone_name || 'UTC',
+        businessId: account.business_id || businessId,
+        accessType: account.access_type || 'OWNER',
+      }));
+    } catch (error) {
+      console.error(`Error fetching owned accounts for business ${businessId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get ad accounts that the business manages for clients (agency accounts)
+   */
+  private async getBusinessClientAccounts(businessId: string): Promise<FacebookAdAccountData[]> {
+    try {
+      const url = `https://graph.facebook.com/v23.0/${businessId}/client_ad_accounts?fields=${OPTIMIZED_FIELDS.adAccount},business_id,access_type&limit=100`;
+      const accounts = await this.fetchAllPages<any>(url);
+
+      return accounts.map((account: any) => ({
+        id: account.id,
+        name: account.name || 'Unnamed Account',
+        accountStatus: account.account_status || 1,
+        currency: account.currency || 'USD',
+        timezone: account.timezone_name || 'UTC',
+        businessId: account.business_id || businessId,
+        accessType: account.access_type || 'AGENCY',
+      }));
+    } catch (error) {
+      // Client accounts endpoint may fail if business doesn't have agency access
+      // This is expected and should not break the flow
+      throw error;
+    }
+  }
+
+  /**
+   * Get all ad accounts associated with the user (legacy method)
+   * @deprecated Use getBusinessAdAccounts() when possible for better business scope control
+   */
   async getUserAdAccounts(): Promise<FacebookAdAccountData[]> {
     try {
+      // Check cache first
+      const cacheKey = `adaccounts:user`;
+      const cached = accountCache.get(cacheKey);
+      if (cached) {
+        console.log('Cache hit for user ad accounts');
+        return cached;
+      }
+
+      // Apply rate limiting
+      await appRateLimiter.waitForLimit('adaccounts:user');
+
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
       // Use optimized field selection
       const response = await fetch(
@@ -194,13 +499,18 @@ export class FacebookMarketingAPI {
         return [];
       }
 
-      return data.data.map((account: any) => ({
+      const result = data.data.map((account: any) => ({
         id: account.id,
         name: account.name || 'Unnamed Account',
         accountStatus: account.account_status || 1,
         currency: account.currency || 'USD',
         timezone: account.timezone_name || 'UTC',
       }));
+
+      // Cache the result
+      accountCache.set(cacheKey, result, CACHE_TTL.ACCOUNTS);
+
+      return result;
     } catch (error) {
       console.error('Error fetching ad accounts:', error);
       const isNetworkError =
@@ -225,69 +535,19 @@ export class FacebookMarketingAPI {
         ? adAccountId
         : `act_${adAccountId}`;
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-      // Use optimized field selection to reduce data transfer
-      const response = await fetch(
-        `https://graph.facebook.com/v23.0/${formattedAccountId}/campaigns?fields=${OPTIMIZED_FIELDS.campaign}&access_token=${this.accessToken}`,
-        {
-          method: 'GET',
-          headers: {
-            Accept: 'application/json',
-          },
-          signal: controller.signal,
-        }
-      );
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage =
-          errorData.error?.message || `HTTP ${response.status}: Failed to fetch campaigns`;
-        const errorCode = errorData.error?.code;
-
-        // Check if it's a token expiry error using standardized error codes
-        if (
-          errorMessage.includes('Session has expired') ||
-          errorMessage.includes('access token') ||
-          errorMessage.includes('token is invalid') ||
-          errorMessage.includes('Error validating access token') ||
-          errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN ||
-          response.status === 401
-        ) {
-          throw new Error('FACEBOOK_TOKEN_EXPIRED');
-        }
-
-        throw new Error(errorMessage);
+      // Check cache first
+      const cacheKey = `campaigns:${formattedAccountId}`;
+      const cached = entityCache.get(cacheKey);
+      if (cached) {
+        console.log(`Cache hit for campaigns: ${formattedAccountId}`);
+        return cached;
       }
 
-      const data = await response.json();
+      // Use pagination helper to fetch all campaigns
+      const url = `https://graph.facebook.com/v23.0/${formattedAccountId}/campaigns?fields=${OPTIMIZED_FIELDS.campaign}&limit=100`;
+      const campaigns = await this.fetchAllPages<any>(url, 100, `campaigns:${formattedAccountId}`);
 
-      if (data.error) {
-        const errorMessage = data.error.message || 'Failed to fetch campaigns';
-        const errorCode = data.error.code;
-
-        // Check if it's a token expiry error using standardized error codes
-        if (
-          errorMessage.includes('Session has expired') ||
-          errorMessage.includes('access token') ||
-          errorMessage.includes('token is invalid') ||
-          errorMessage.includes('Error validating access token') ||
-          errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN
-        ) {
-          throw new Error('FACEBOOK_TOKEN_EXPIRED');
-        }
-
-        throw new Error(errorMessage);
-      }
-
-      if (!data.data || !Array.isArray(data.data)) {
-        return [];
-      }
-
-      return data.data.map((campaign: any) => ({
+      const result = campaigns.map((campaign: any) => ({
         id: campaign.id,
         name: campaign.name || 'Unnamed Campaign',
         status: campaign.status || 'UNKNOWN',
@@ -296,8 +556,19 @@ export class FacebookMarketingAPI {
         dailyBudget: campaign.daily_budget,
         lifetimeBudget: campaign.lifetime_budget,
       }));
+
+      // Cache the result
+      entityCache.set(cacheKey, result, CACHE_TTL.CAMPAIGNS);
+
+      return result;
     } catch (error) {
       console.error('Error fetching campaigns:', error);
+      
+      // Re-throw token expiry errors
+      if (error instanceof FacebookTokenExpiredError) {
+        throw error;
+      }
+
       const isNetworkError =
         error instanceof Error &&
         (error.name === 'AbortError' ||
@@ -322,15 +593,29 @@ export class FacebookMarketingAPI {
       // Use optimized field selection
       let dateParams = '';
       if (options?.dateFrom && options?.dateTo) {
-        dateParams = `&time_range={"since":"${options.dateFrom}","until":"${options.dateTo}"}`;
+        const timeRange = encodeURIComponent(
+          JSON.stringify({ since: options.dateFrom, until: options.dateTo })
+        );
+        dateParams = `&time_range=${timeRange}`;
       } else if (options?.datePreset) {
         dateParams = `&date_preset=${options.datePreset}`;
       } else {
         dateParams = '&date_preset=last_30d';
       }
 
+      // Check cache first
+      const cacheKey = `insights:campaign:${campaignId}:${dateParams}`;
+      const cached = insightsCache.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
+      // Apply rate limiting
+      await appRateLimiter.waitForLimit(`insights:${campaignId}`);
+      await adAccountRateLimiter.waitForLimit(`insights:${campaignId}`);
+
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
       const response = await fetch(
         `https://graph.facebook.com/v23.0/${campaignId}/insights?fields=${OPTIMIZED_FIELDS.insights}${dateParams}&access_token=${this.accessToken}`,
@@ -358,7 +643,7 @@ export class FacebookMarketingAPI {
           errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN ||
           response.status === 401
         ) {
-          throw new Error('FACEBOOK_TOKEN_EXPIRED');
+          throw new FacebookTokenExpiredError();
         }
 
         console.warn(`Campaign insights error for ${campaignId}:`, errorMessage);
@@ -370,19 +655,21 @@ export class FacebookMarketingAPI {
       if (data.error) {
         const errorCode = data.error.code;
         if (errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN) {
-          throw new Error('FACEBOOK_TOKEN_EXPIRED');
+          throw new FacebookTokenExpiredError();
         }
         console.warn(`Campaign insights error for ${campaignId}:`, data.error.message);
         return null;
       }
 
       if (!data.data || data.data.length === 0) {
+        // Cache null result for shorter duration to avoid repeated calls
+        insightsCache.set(cacheKey, null, 2 * 60 * 1000); // 2 minutes
         return null;
       }
 
       const insights = data.data[0];
 
-      return {
+      const result = {
         impressions: insights.impressions,
         clicks: insights.clicks,
         spend: insights.spend,
@@ -392,9 +679,14 @@ export class FacebookMarketingAPI {
         cpc: insights.cpc,
         cpm: insights.cpm,
       };
+
+      // Cache the result
+      insightsCache.set(cacheKey, result, CACHE_TTL.INSIGHTS);
+
+      return result;
     } catch (error) {
       // Re-throw token expiry errors
-      if (error instanceof Error && error.message === 'FACEBOOK_TOKEN_EXPIRED') {
+      if (error instanceof FacebookTokenExpiredError) {
         throw error;
       }
       console.error('Error fetching campaign insights:', error);
@@ -404,71 +696,30 @@ export class FacebookMarketingAPI {
 
   async getAdSets(campaignId: string) {
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-      // Use optimized field selection
-      const response = await fetch(
-        `https://graph.facebook.com/v23.0/${campaignId}/adsets?fields=${OPTIMIZED_FIELDS.adSet}&access_token=${this.accessToken}`,
-        {
-          method: 'GET',
-          headers: {
-            Accept: 'application/json',
-          },
-          signal: controller.signal,
-        }
-      );
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage =
-          errorData.error?.message || `HTTP ${response.status}: Failed to fetch ad sets`;
-        const errorCode = errorData.error?.code;
-
-        // Check if it's a token expiry error using standardized error codes
-        if (
-          errorMessage.includes('Session has expired') ||
-          errorMessage.includes('access token') ||
-          errorMessage.includes('token is invalid') ||
-          errorMessage.includes('Error validating access token') ||
-          errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN ||
-          response.status === 401
-        ) {
-          throw new Error('FACEBOOK_TOKEN_EXPIRED');
-        }
-
-        throw new Error(errorMessage);
+      // Check cache first
+      const cacheKey = `adsets:${campaignId}`;
+      const cached = entityCache.get(cacheKey);
+      if (cached) {
+        console.log(`Cache hit for ad sets: ${campaignId}`);
+        return cached;
       }
 
-      const data = await response.json();
-
-      if (data.error) {
-        const errorMessage = data.error.message || 'Failed to fetch ad sets';
-        const errorCode = data.error.code;
-
-        // Check if it's a token expiry error using standardized error codes
-        if (
-          errorMessage.includes('Session has expired') ||
-          errorMessage.includes('access token') ||
-          errorMessage.includes('token is invalid') ||
-          errorMessage.includes('Error validating access token') ||
-          errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN
-        ) {
-          throw new Error('FACEBOOK_TOKEN_EXPIRED');
-        }
-
-        throw new Error(errorMessage);
-      }
-
-      if (!data.data || !Array.isArray(data.data)) {
-        return [];
-      }
-
-      return data.data;
+      // Use pagination helper to fetch all ad sets
+      const url = `https://graph.facebook.com/v23.0/${campaignId}/adsets?fields=${OPTIMIZED_FIELDS.adSet}&limit=100`;
+      const adSets = await this.fetchAllPages<any>(url, 100, `adsets:${campaignId}`);
+      
+      // Cache the result
+      entityCache.set(cacheKey, adSets, CACHE_TTL.ADSETS);
+      
+      return adSets;
     } catch (error) {
       console.error('Error fetching ad sets:', error);
+      
+      // Re-throw token expiry errors
+      if (error instanceof FacebookTokenExpiredError) {
+        throw error;
+      }
+
       const isNetworkError =
         error instanceof Error &&
         (error.name === 'AbortError' ||
@@ -493,7 +744,10 @@ export class FacebookMarketingAPI {
       // Use optimized field selection
       let dateParams = '';
       if (options?.dateFrom && options?.dateTo) {
-        dateParams = `&time_range={"since":"${options.dateFrom}","until":"${options.dateTo}"}`;
+        const timeRange = encodeURIComponent(
+          JSON.stringify({ since: options.dateFrom, until: options.dateTo })
+        );
+        dateParams = `&time_range=${timeRange}`;
       } else if (options?.datePreset) {
         dateParams = `&date_preset=${options.datePreset}`;
       } else {
@@ -529,7 +783,7 @@ export class FacebookMarketingAPI {
           errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN ||
           response.status === 401
         ) {
-          throw new Error('FACEBOOK_TOKEN_EXPIRED');
+          throw new FacebookTokenExpiredError();
         }
 
         console.warn(`Ad set insights error for ${adSetId}:`, errorMessage);
@@ -541,7 +795,7 @@ export class FacebookMarketingAPI {
       if (data.error) {
         const errorCode = data.error.code;
         if (errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN) {
-          throw new Error('FACEBOOK_TOKEN_EXPIRED');
+          throw new FacebookTokenExpiredError();
         }
         console.warn(`Ad set insights error for ${adSetId}:`, data.error.message);
         return null;
@@ -565,7 +819,7 @@ export class FacebookMarketingAPI {
       };
     } catch (error) {
       // Re-throw token expiry errors
-      if (error instanceof Error && error.message === 'FACEBOOK_TOKEN_EXPIRED') {
+      if (error instanceof FacebookTokenExpiredError) {
         throw error;
       }
       console.error('Error fetching ad set insights:', error);
@@ -575,71 +829,30 @@ export class FacebookMarketingAPI {
 
   async getAds(adSetId: string) {
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-      // Use optimized field selection
-      const response = await fetch(
-        `https://graph.facebook.com/v23.0/${adSetId}/ads?fields=${OPTIMIZED_FIELDS.ad}&access_token=${this.accessToken}`,
-        {
-          method: 'GET',
-          headers: {
-            Accept: 'application/json',
-          },
-          signal: controller.signal,
-        }
-      );
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage =
-          errorData.error?.message || `HTTP ${response.status}: Failed to fetch ads`;
-        const errorCode = errorData.error?.code;
-
-        // Check if it's a token expiry error using standardized error codes
-        if (
-          errorMessage.includes('Session has expired') ||
-          errorMessage.includes('access token') ||
-          errorMessage.includes('token is invalid') ||
-          errorMessage.includes('Error validating access token') ||
-          errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN ||
-          response.status === 401
-        ) {
-          throw new Error('FACEBOOK_TOKEN_EXPIRED');
-        }
-
-        throw new Error(errorMessage);
+      // Check cache first
+      const cacheKey = `ads:${adSetId}`;
+      const cached = entityCache.get(cacheKey);
+      if (cached) {
+        console.log(`Cache hit for ads: ${adSetId}`);
+        return cached;
       }
 
-      const data = await response.json();
-
-      if (data.error) {
-        const errorMessage = data.error.message || 'Failed to fetch ads';
-        const errorCode = data.error.code;
-
-        // Check if it's a token expiry error using standardized error codes
-        if (
-          errorMessage.includes('Session has expired') ||
-          errorMessage.includes('access token') ||
-          errorMessage.includes('token is invalid') ||
-          errorMessage.includes('Error validating access token') ||
-          errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN
-        ) {
-          throw new Error('FACEBOOK_TOKEN_EXPIRED');
-        }
-
-        throw new Error(errorMessage);
-      }
-
-      if (!data.data || !Array.isArray(data.data)) {
-        return [];
-      }
-
-      return data.data;
+      // Use pagination helper to fetch all ads
+      const url = `https://graph.facebook.com/v23.0/${adSetId}/ads?fields=${OPTIMIZED_FIELDS.ad}&limit=100`;
+      const ads = await this.fetchAllPages<any>(url, 100, `ads:${adSetId}`);
+      
+      // Cache the result
+      entityCache.set(cacheKey, ads, CACHE_TTL.ADS);
+      
+      return ads;
     } catch (error) {
       console.error('Error fetching ads:', error);
+      
+      // Re-throw token expiry errors
+      if (error instanceof FacebookTokenExpiredError) {
+        throw error;
+      }
+
       const isNetworkError =
         error instanceof Error &&
         (error.name === 'AbortError' ||
@@ -664,7 +877,10 @@ export class FacebookMarketingAPI {
       // Use optimized field selection
       let dateParams = '';
       if (options?.dateFrom && options?.dateTo) {
-        dateParams = `&time_range={"since":"${options.dateFrom}","until":"${options.dateTo}"}`;
+        const timeRange = encodeURIComponent(
+          JSON.stringify({ since: options.dateFrom, until: options.dateTo })
+        );
+        dateParams = `&time_range=${timeRange}`;
       } else if (options?.datePreset) {
         dateParams = `&date_preset=${options.datePreset}`;
       } else {
@@ -700,7 +916,7 @@ export class FacebookMarketingAPI {
           errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN ||
           response.status === 401
         ) {
-          throw new Error('FACEBOOK_TOKEN_EXPIRED');
+          throw new FacebookTokenExpiredError();
         }
 
         console.warn(`Ad insights error for ${adId}:`, errorMessage);
@@ -712,7 +928,7 @@ export class FacebookMarketingAPI {
       if (data.error) {
         const errorCode = data.error.code;
         if (errorCode === FACEBOOK_ERROR_CODES.INVALID_TOKEN) {
-          throw new Error('FACEBOOK_TOKEN_EXPIRED');
+          throw new FacebookTokenExpiredError();
         }
         console.warn(`Ad insights error for ${adId}:`, data.error.message);
         return null;
@@ -736,7 +952,7 @@ export class FacebookMarketingAPI {
       };
     } catch (error) {
       // Re-throw token expiry errors
-      if (error instanceof Error && error.message === 'FACEBOOK_TOKEN_EXPIRED') {
+      if (error instanceof FacebookTokenExpiredError) {
         throw error;
       }
       console.error('Error fetching ad insights:', error);

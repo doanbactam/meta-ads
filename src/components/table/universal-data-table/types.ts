@@ -42,7 +42,7 @@ export interface TableConfig<T = any> {
     custom?: Array<{
       label: string;
       icon: any;
-      onClick: (selectedIds: string[]) => void;
+      onClick: (selectedIds: string[], data?: T[]) => void;
       variant?: 'default' | 'outline' | 'ghost';
     }>;
   };

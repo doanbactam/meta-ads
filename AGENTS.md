@@ -168,9 +168,9 @@ e2e/                              # End-to-end tests
 ## 🗄️ Database Schema
 
 ### User
-- **Purpose**: User authentication and preferences
-- **Key Fields**: `clerkId`, `email`, `name`, `role`, `subscriptionPackage`
-- **Settings**: `preferredCurrency`, `preferredLocale`, `preferredTimezone`
+- **Purpose**: User authentication only
+- **Key Fields**: `clerkId`, `email`, `name`, `imageUrl`
+- **Auto-detected Settings**: `locale` (from browser), `timezone` (from system), `currency` (from Facebook Ad Account)
 - **Relations**: One-to-many with `AdAccount`
 
 ### AdAccount

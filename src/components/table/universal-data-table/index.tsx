@@ -35,6 +35,18 @@ export function UniversalDataTable<T extends { id: string }>({
   const { connected, loading: connectionLoading } = useFacebookConnection(adAccountId);
   const { setShowConnectionDialog } = useFacebookStore();
 
+  // Fetch ad account data to get currency
+  const { data: adAccount } = useQuery({
+    queryKey: ['ad-account', adAccountId],
+    queryFn: async () => {
+      if (!adAccountId) return null;
+      const response = await fetch(`/api/ad-accounts/${adAccountId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!adAccountId,
+  });
+
   // Data fetching
   const {
     data: items = [],
@@ -195,6 +207,7 @@ export function UniversalDataTable<T extends { id: string }>({
         visibleColumns={visibleColumns}
         onColumnsChange={setVisibleColumns}
         selectedRows={selectedRows}
+        items={items}
         onRefresh={handleRefresh}
         isRefreshing={isFetching}
         features={features}
@@ -253,7 +266,8 @@ export function UniversalDataTable<T extends { id: string }>({
                 selectedRows={selectedRows}
                 showBulkActions={features.bulkActions}
                 onToggleRow={toggleRow}
-                settings={settings}
+                currency={adAccount?.currency || 'USD'}
+                locale={settings.locale}
               />
             )}
           </tbody>

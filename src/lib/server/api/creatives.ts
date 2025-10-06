@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/server/prisma';
 import type { Creative } from '@/types';
+import { toDbDate, toApiDateOnly } from '@/lib/server/utils/dates';
+import { normalizeCreativeStatus } from '@/lib/server/utils/status';
 
 const EMPTY_CREATIVE_STATS = {
   impressions: 0,
@@ -28,8 +30,8 @@ export async function getCreatives(adGroupId?: string): Promise<Creative[]> {
     engagement: c.engagement,
     spend: c.spend,
     roas: c.roas,
-    date_start: c.dateStart,
-    date_end: c.dateEnd,
+    date_start: toApiDateOnly(c.dateStart) || '',
+    date_end: toApiDateOnly(c.dateEnd) || '',
     created_at: c.createdAt.toISOString(),
     updated_at: c.updatedAt.toISOString(),
   }));
@@ -54,8 +56,8 @@ export async function getCreativeById(id: string): Promise<Creative | null> {
     engagement: creative.engagement,
     spend: creative.spend,
     roas: creative.roas,
-    date_start: creative.dateStart,
-    date_end: creative.dateEnd,
+    date_start: toApiDateOnly(creative.dateStart) || '',
+    date_end: toApiDateOnly(creative.dateEnd) || '',
     created_at: creative.createdAt.toISOString(),
     updated_at: creative.updatedAt.toISOString(),
   };
@@ -69,15 +71,15 @@ export async function createCreative(
       adGroupId: data.ad_group_id,
       name: data.name,
       format: data.format,
-      status: data.status,
+      status: normalizeCreativeStatus(data.status),
       impressions: data.impressions || 0,
       clicks: data.clicks || 0,
       ctr: data.ctr || 0,
       engagement: data.engagement || 0,
       spend: data.spend || 0,
       roas: data.roas || 0,
-      dateStart: data.date_start,
-      dateEnd: data.date_end,
+      dateStart: toDbDate(data.date_start) || new Date(),
+      dateEnd: toDbDate(data.date_end) || new Date(),
     },
   });
 
@@ -93,8 +95,8 @@ export async function createCreative(
     engagement: creative.engagement,
     spend: creative.spend,
     roas: creative.roas,
-    date_start: creative.dateStart,
-    date_end: creative.dateEnd,
+    date_start: toApiDateOnly(creative.dateStart) || '',
+    date_end: toApiDateOnly(creative.dateEnd) || '',
     created_at: creative.createdAt.toISOString(),
     updated_at: creative.updatedAt.toISOString(),
   };
@@ -106,15 +108,15 @@ export async function updateCreative(id: string, updates: Partial<Creative>): Pr
     data: {
       ...(updates.name && { name: updates.name }),
       ...(updates.format && { format: updates.format }),
-      ...(updates.status && { status: updates.status }),
+      ...(updates.status !== undefined && { status: normalizeCreativeStatus(updates.status) }),
       ...(updates.impressions !== undefined && { impressions: updates.impressions }),
       ...(updates.clicks !== undefined && { clicks: updates.clicks }),
       ...(updates.ctr !== undefined && { ctr: updates.ctr }),
       ...(updates.engagement !== undefined && { engagement: updates.engagement }),
       ...(updates.spend !== undefined && { spend: updates.spend }),
       ...(updates.roas !== undefined && { roas: updates.roas }),
-      ...(updates.date_start && { dateStart: updates.date_start }),
-      ...(updates.date_end && { dateEnd: updates.date_end }),
+      ...(updates.date_start !== undefined && { dateStart: toDbDate(updates.date_start) }),
+      ...(updates.date_end !== undefined && { dateEnd: toDbDate(updates.date_end) }),
     },
   });
 
@@ -130,8 +132,8 @@ export async function updateCreative(id: string, updates: Partial<Creative>): Pr
     engagement: creative.engagement,
     spend: creative.spend,
     roas: creative.roas,
-    date_start: creative.dateStart,
-    date_end: creative.dateEnd,
+    date_start: toApiDateOnly(creative.dateStart) || '',
+    date_end: toApiDateOnly(creative.dateEnd) || '',
     created_at: creative.createdAt.toISOString(),
     updated_at: creative.updatedAt.toISOString(),
   };
@@ -174,8 +176,8 @@ export async function duplicateCreative(id: string): Promise<Creative> {
     engagement: duplicate.engagement,
     spend: duplicate.spend,
     roas: duplicate.roas,
-    date_start: duplicate.dateStart,
-    date_end: duplicate.dateEnd,
+    date_start: toApiDateOnly(duplicate.dateStart) || '',
+    date_end: toApiDateOnly(duplicate.dateEnd) || '',
     created_at: duplicate.createdAt.toISOString(),
     updated_at: duplicate.updatedAt.toISOString(),
   };

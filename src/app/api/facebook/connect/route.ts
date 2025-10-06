@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
 import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
 import { prisma } from '@/lib/server/prisma';
-import { checkRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/server/rate-limiter';
+import { checkRateLimit, RATE_LIMIT_CONFIGS } from '@/app/api/_lib/rate-limiter';
 
 export async function POST(req: NextRequest) {
   try {
@@ -68,8 +68,39 @@ export async function POST(req: NextRequest) {
       ? new Date(validation.expiresAt * 1000)
       : new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
 
-    // Fetch all ad accounts authorized by the new token
-    const fbAccounts = await api.getUserAdAccounts();
+    // Fetch ad accounts based on business scope
+    let fbAccounts: any[] = [];
+    const businessIds = validation.businessIds || [];
+
+    if (businessIds.length > 0) {
+      // User granted permission to specific businesses - fetch accounts per business
+      console.log(`[Facebook Connect] User granted access to ${businessIds.length} business(es)`);
+      
+      for (const businessId of businessIds) {
+        try {
+          const businessAccounts = await api.getBusinessAdAccounts(businessId);
+          fbAccounts.push(...businessAccounts);
+          console.log(`[Facebook Connect] Found ${businessAccounts.length} accounts for business ${businessId}`);
+        } catch (error) {
+          console.error(`[Facebook Connect] Failed to fetch accounts for business ${businessId}:`, error);
+          // Continue with other businesses even if one fails
+        }
+      }
+
+      // Deduplicate accounts by ID
+      const uniqueAccountIds = new Set<string>();
+      fbAccounts = fbAccounts.filter((account) => {
+        if (uniqueAccountIds.has(account.id)) {
+          return false;
+        }
+        uniqueAccountIds.add(account.id);
+        return true;
+      });
+    } else {
+      // Fallback: No business scope detected, use legacy method
+      console.log('[Facebook Connect] No business scope detected, using legacy /me/adaccounts endpoint');
+      fbAccounts = await api.getUserAdAccounts();
+    }
 
     if (fbAccounts.length === 0) {
       return NextResponse.json(
@@ -81,6 +112,8 @@ export async function POST(req: NextRequest) {
         { status: 404 }
       );
     }
+
+    console.log(`[Facebook Connect] Total unique accounts found: ${fbAccounts.length}`);
 
     // Extract authorized account IDs (normalize by removing 'act_' prefix)
     const authorizedAccountIds = fbAccounts.map((acc) => acc.id.replace('act_', ''));
@@ -127,6 +160,8 @@ export async function POST(req: NextRequest) {
             facebookAccessToken: accessToken,
             facebookTokenExpiry: expiryDate,
             facebookUserId: validation.userId,
+            facebookBusinessId: fbAccount.businessId || null,
+            facebookAccessType: fbAccount.accessType || null,
             name: fbAccount.name,
             currency: fbAccount.currency || 'USD',
             timeZone: fbAccount.timezone || 'UTC',
@@ -143,6 +178,8 @@ export async function POST(req: NextRequest) {
             facebookTokenExpiry: expiryDate,
             facebookAdAccountId: cleanAccountId,
             facebookUserId: validation.userId,
+            facebookBusinessId: fbAccount.businessId || null,
+            facebookAccessType: fbAccount.accessType || null,
           },
         });
       });

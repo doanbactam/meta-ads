@@ -1,85 +1,28 @@
 'use client';
 
-import { useUser } from '@clerk/nextjs';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext } from 'react';
+import { detectUserLocale, detectUserTimezone } from '@/lib/client/utils/locale-detection';
 
 interface UserSettings {
-  preferredCurrency: string;
-  preferredLocale: string;
-  preferredTimezone: string;
+  locale: string;
+  timezone: string;
 }
 
 interface UserSettingsContextType {
   settings: UserSettings;
-  updateSettings: (newSettings: Partial<UserSettings>) => Promise<void>;
-  isLoading: boolean;
-  error: Error | null;
 }
 
 const UserSettingsContext = createContext<UserSettingsContextType | undefined>(undefined);
 
 export function UserSettingsProvider({ children }: { children: React.ReactNode }) {
-  const { user, isSignedIn } = useUser();
-  const queryClient = useQueryClient();
-
-  const {
-    data: settings,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ['user-settings'],
-    queryFn: async (): Promise<UserSettings> => {
-      const response = await fetch('/api/user/settings');
-      if (!response.ok) {
-        throw new Error('Failed to fetch user settings');
-      }
-      return response.json();
-    },
-    enabled: isSignedIn,
-    staleTime: 60 * 60 * 1000, // 1 hour - Settings rarely change, and we invalidate on updates
-  });
-
-  const updateSettingsMutation = useMutation({
-    mutationFn: async (newSettings: Partial<UserSettings>) => {
-      const response = await fetch('/api/user/settings', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newSettings),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update settings');
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-settings'] });
-    },
-  });
-
-  const updateSettings = async (newSettings: Partial<UserSettings>) => {
-    await updateSettingsMutation.mutateAsync(newSettings);
-  };
-
-  const defaultSettings: UserSettings = {
-    preferredCurrency: 'USD',
-    preferredLocale: 'en-US',
-    preferredTimezone: 'UTC',
+  // Auto-detect user preferences from browser/system
+  const settings: UserSettings = {
+    locale: detectUserLocale(),
+    timezone: detectUserTimezone(),
   };
 
   return (
-    <UserSettingsContext.Provider
-      value={{
-        settings: settings || defaultSettings,
-        updateSettings,
-        isLoading,
-        error: error as Error | null,
-      }}
-    >
+    <UserSettingsContext.Provider value={{ settings }}>
       {children}
     </UserSettingsContext.Provider>
   );

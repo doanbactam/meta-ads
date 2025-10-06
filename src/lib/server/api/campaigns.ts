@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/server/prisma';
 import type { Campaign } from '@/types';
+import { toDbDate, toApiDateOnly } from '@/lib/server/utils/dates';
+import { normalizeStatus } from '@/lib/server/utils/status';
 
 const EMPTY_CAMPAIGN_STATS = {
   spent: 0,
@@ -35,8 +37,8 @@ export async function getCampaignById(id: string): Promise<Campaign | null> {
     ctr: campaign.ctr,
     conversions: campaign.conversions,
     cost_per_conversion: campaign.costPerConversion,
-    date_start: campaign.dateStart,
-    date_end: campaign.dateEnd,
+    date_start: toApiDateOnly(campaign.dateStart) || '',
+    date_end: toApiDateOnly(campaign.dateEnd) || '',
     schedule: campaign.schedule,
     created_at: campaign.createdAt.toISOString(),
     updated_at: campaign.updatedAt.toISOString(),
@@ -50,7 +52,7 @@ export async function createCampaign(
     data: {
       adAccountId: data.adAccountId,
       name: data.name,
-      status: data.status,
+      status: normalizeStatus(data.status),
       budget: data.budget,
       spent: data.spent || 0,
       impressions: data.impressions || 0,
@@ -58,8 +60,8 @@ export async function createCampaign(
       ctr: data.ctr || 0,
       conversions: data.conversions || 0,
       costPerConversion: data.cost_per_conversion || 0,
-      dateStart: data.date_start,
-      dateEnd: data.date_end,
+      dateStart: toDbDate(data.date_start) || new Date(),
+      dateEnd: toDbDate(data.date_end) || new Date(),
       schedule: data.schedule,
     },
   });
@@ -75,8 +77,8 @@ export async function createCampaign(
     ctr: campaign.ctr,
     conversions: campaign.conversions,
     cost_per_conversion: campaign.costPerConversion,
-    date_start: campaign.dateStart,
-    date_end: campaign.dateEnd,
+    date_start: toApiDateOnly(campaign.dateStart) || '',
+    date_end: toApiDateOnly(campaign.dateEnd) || '',
     schedule: campaign.schedule,
     created_at: campaign.createdAt.toISOString(),
     updated_at: campaign.updatedAt.toISOString(),
@@ -88,7 +90,7 @@ export async function updateCampaign(id: string, updates: Partial<Campaign>): Pr
     where: { id },
     data: {
       ...(updates.name && { name: updates.name }),
-      ...(updates.status && { status: updates.status }),
+      ...(updates.status !== undefined && { status: normalizeStatus(updates.status) }),
       ...(updates.budget !== undefined && { budget: updates.budget }),
       ...(updates.spent !== undefined && { spent: updates.spent }),
       ...(updates.impressions !== undefined && { impressions: updates.impressions }),
@@ -98,8 +100,8 @@ export async function updateCampaign(id: string, updates: Partial<Campaign>): Pr
       ...(updates.cost_per_conversion !== undefined && {
         costPerConversion: updates.cost_per_conversion,
       }),
-      ...(updates.date_start && { dateStart: updates.date_start }),
-      ...(updates.date_end && { dateEnd: updates.date_end }),
+      ...(updates.date_start !== undefined && { dateStart: toDbDate(updates.date_start) }),
+      ...(updates.date_end !== undefined && { dateEnd: toDbDate(updates.date_end) }),
       ...(updates.schedule && { schedule: updates.schedule }),
     },
   });
@@ -115,8 +117,8 @@ export async function updateCampaign(id: string, updates: Partial<Campaign>): Pr
     ctr: campaign.ctr,
     conversions: campaign.conversions,
     cost_per_conversion: campaign.costPerConversion,
-    date_start: campaign.dateStart,
-    date_end: campaign.dateEnd,
+    date_start: toApiDateOnly(campaign.dateStart) || '',
+    date_end: toApiDateOnly(campaign.dateEnd) || '',
     schedule: campaign.schedule,
     created_at: campaign.createdAt.toISOString(),
     updated_at: campaign.updatedAt.toISOString(),
@@ -160,8 +162,8 @@ export async function duplicateCampaign(id: string): Promise<Campaign> {
     ctr: duplicate.ctr,
     conversions: duplicate.conversions,
     cost_per_conversion: duplicate.costPerConversion,
-    date_start: duplicate.dateStart,
-    date_end: duplicate.dateEnd,
+    date_start: toApiDateOnly(duplicate.dateStart) || '',
+    date_end: toApiDateOnly(duplicate.dateEnd) || '',
     schedule: duplicate.schedule,
     created_at: duplicate.createdAt.toISOString(),
     updated_at: duplicate.updatedAt.toISOString(),

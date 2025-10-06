@@ -1,0 +1,1468 @@
+{
+  "config": {
+    "configFile": "D:\\ads\\playwright.config.ts",
+    "rootDir": "D:/ads/e2e",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 4
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "playwright-report"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results.json"
+        }
+      ],
+      [
+        "list",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "D:/ads/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "D:/ads/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/ads/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "D:/ads/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/ads/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "D:/ads/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/ads/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "Mobile Chrome",
+        "name": "Mobile Chrome",
+        "testDir": "D:/ads/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/ads/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "Mobile Safari",
+        "name": "Mobile Safari",
+        "testDir": "D:/ads/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.55.1",
+    "workers": 4,
+    "webServer": {
+      "command": "npm run dev",
+      "url": "http://localhost:3000",
+      "reuseExistingServer": true,
+      "timeout": 120000
+    }
+  },
+  "suites": [
+    {
+      "title": "tests\\01-navigation.spec.ts",
+      "file": "tests/01-navigation.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Navigation & Layout",
+          "file": "tests/01-navigation.spec.ts",
+          "line": 9,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should render main layout with header and sidebar",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "timedOut",
+                      "duration": 45271,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at D:\\ads\\e2e\\tests\\01-navigation.spec.ts:12:8",
+                        "location": {
+                          "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                          "column": 8,
+                          "line": 12
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 10 |\u001b[39m   \u001b[36mlet\u001b[39m helpers\u001b[33m:\u001b[39m \u001b[33mTestHelpers\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 12 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 13 |\u001b[39m     helpers \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mTestHelpers\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m\n \u001b[90m 15 |\u001b[39m     \u001b[90m// Mock authentication state before navigation\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                            "column": 8,
+                            "line": 12
+                          },
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 10 |\u001b[39m   \u001b[36mlet\u001b[39m helpers\u001b[33m:\u001b[39m \u001b[33mTestHelpers\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 12 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 13 |\u001b[39m     helpers \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mTestHelpers\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m\n \u001b[90m 15 |\u001b[39m     \u001b[90m// Mock authentication state before navigation\u001b[39m\u001b[0m\n\u001b[2m    at D:\\ads\\e2e\\tests\\01-navigation.spec.ts:12:8\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-06T07:53:29.312Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-54cf0-out-with-header-and-sidebar-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-54cf0-out-with-header-and-sidebar-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-54cf0-out-with-header-and-sidebar-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                        "column": 8,
+                        "line": 12
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-69e605e1d18558dfdade",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 41,
+              "column": 7
+            },
+            {
+              "title": "should navigate to campaigns page",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "timedOut",
+                      "duration": 42482,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at D:\\ads\\e2e\\tests\\01-navigation.spec.ts:12:8",
+                        "location": {
+                          "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                          "column": 8,
+                          "line": 12
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 10 |\u001b[39m   \u001b[36mlet\u001b[39m helpers\u001b[33m:\u001b[39m \u001b[33mTestHelpers\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 12 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 13 |\u001b[39m     helpers \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mTestHelpers\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m\n \u001b[90m 15 |\u001b[39m     \u001b[90m// Mock authentication state before navigation\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                            "column": 8,
+                            "line": 12
+                          },
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 10 |\u001b[39m   \u001b[36mlet\u001b[39m helpers\u001b[33m:\u001b[39m \u001b[33mTestHelpers\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 12 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 13 |\u001b[39m     helpers \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mTestHelpers\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m\n \u001b[90m 15 |\u001b[39m     \u001b[90m// Mock authentication state before navigation\u001b[39m\u001b[0m\n\u001b[2m    at D:\\ads\\e2e\\tests\\01-navigation.spec.ts:12:8\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-06T07:53:29.439Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-ab0e2--navigate-to-campaigns-page-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-ab0e2--navigate-to-campaigns-page-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-ab0e2--navigate-to-campaigns-page-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                        "column": 8,
+                        "line": 12
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-0993302990d289686683",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 55,
+              "column": 7
+            },
+            {
+              "title": "should navigate to dashboard page",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "timedOut",
+                      "duration": 40180,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at D:\\ads\\e2e\\tests\\01-navigation.spec.ts:12:8",
+                        "location": {
+                          "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                          "column": 8,
+                          "line": 12
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 10 |\u001b[39m   \u001b[36mlet\u001b[39m helpers\u001b[33m:\u001b[39m \u001b[33mTestHelpers\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 12 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 13 |\u001b[39m     helpers \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mTestHelpers\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m\n \u001b[90m 15 |\u001b[39m     \u001b[90m// Mock authentication state before navigation\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                            "column": 8,
+                            "line": 12
+                          },
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 10 |\u001b[39m   \u001b[36mlet\u001b[39m helpers\u001b[33m:\u001b[39m \u001b[33mTestHelpers\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 12 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 13 |\u001b[39m     helpers \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mTestHelpers\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m\n \u001b[90m 15 |\u001b[39m     \u001b[90m// Mock authentication state before navigation\u001b[39m\u001b[0m\n\u001b[2m    at D:\\ads\\e2e\\tests\\01-navigation.spec.ts:12:8\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-06T07:53:29.311Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-113ae--navigate-to-dashboard-page-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-113ae--navigate-to-dashboard-page-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-113ae--navigate-to-dashboard-page-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                        "column": 8,
+                        "line": 12
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-d623bda077f8a0437053",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 67,
+              "column": 7
+            },
+            {
+              "title": "should toggle between campaign tabs",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "timedOut",
+                      "duration": 43838,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at D:\\ads\\e2e\\tests\\01-navigation.spec.ts:12:8",
+                        "location": {
+                          "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                          "column": 8,
+                          "line": 12
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 10 |\u001b[39m   \u001b[36mlet\u001b[39m helpers\u001b[33m:\u001b[39m \u001b[33mTestHelpers\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 12 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 13 |\u001b[39m     helpers \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mTestHelpers\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m\n \u001b[90m 15 |\u001b[39m     \u001b[90m// Mock authentication state before navigation\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                            "column": 8,
+                            "line": 12
+                          },
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 10 |\u001b[39m   \u001b[36mlet\u001b[39m helpers\u001b[33m:\u001b[39m \u001b[33mTestHelpers\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 12 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 13 |\u001b[39m     helpers \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mTestHelpers\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m\n \u001b[90m 15 |\u001b[39m     \u001b[90m// Mock authentication state before navigation\u001b[39m\u001b[0m\n\u001b[2m    at D:\\ads\\e2e\\tests\\01-navigation.spec.ts:12:8\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-06T07:53:29.330Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-c8e88-oggle-between-campaign-tabs-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-c8e88-oggle-between-campaign-tabs-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-c8e88-oggle-between-campaign-tabs-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                        "column": 8,
+                        "line": 12
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-f37a9b793219f509b9b6",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 79,
+              "column": 7
+            },
+            {
+              "title": "should have working sidebar navigation",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 1,
+                      "status": "timedOut",
+                      "duration": 36636,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at D:\\ads\\e2e\\tests\\01-navigation.spec.ts:12:8",
+                        "location": {
+                          "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                          "column": 8,
+                          "line": 12
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 10 |\u001b[39m   \u001b[36mlet\u001b[39m helpers\u001b[33m:\u001b[39m \u001b[33mTestHelpers\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 12 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 13 |\u001b[39m     helpers \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mTestHelpers\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m\n \u001b[90m 15 |\u001b[39m     \u001b[90m// Mock authentication state before navigation\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                            "column": 8,
+                            "line": 12
+                          },
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 10 |\u001b[39m   \u001b[36mlet\u001b[39m helpers\u001b[33m:\u001b[39m \u001b[33mTestHelpers\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 12 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 13 |\u001b[39m     helpers \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mTestHelpers\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m\n \u001b[90m 15 |\u001b[39m     \u001b[90m// Mock authentication state before navigation\u001b[39m\u001b[0m\n\u001b[2m    at D:\\ads\\e2e\\tests\\01-navigation.spec.ts:12:8\u001b[22m"
+                        },
+                        {
+                          "location": {
+                            "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                            "column": 16,
+                            "line": 37
+                          },
+                          "message": "TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"load\"\u001b[22m\n\n\n\u001b[0m \u001b[90m 35 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 36 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m     \u001b[36mawait\u001b[39m helpers\u001b[33m.\u001b[39mwaitForPageLoad()\u001b[33m;\u001b[39m\n \u001b[90m 39 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 40 |\u001b[39m\u001b[0m\n\u001b[2m    at D:\\ads\\e2e\\tests\\01-navigation.spec.ts:37:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-06T07:54:21.383Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-b897f--working-sidebar-navigation-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-b897f--working-sidebar-navigation-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-b897f--working-sidebar-navigation-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                        "column": 8,
+                        "line": 12
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-9fea00aa576659c7864e",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 105,
+              "column": 7
+            },
+            {
+              "title": "should display user button when signed in",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 2,
+                      "status": "timedOut",
+                      "duration": 36703,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at D:\\ads\\e2e\\tests\\01-navigation.spec.ts:12:8",
+                        "location": {
+                          "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                          "column": 8,
+                          "line": 12
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 10 |\u001b[39m   \u001b[36mlet\u001b[39m helpers\u001b[33m:\u001b[39m \u001b[33mTestHelpers\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 12 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 13 |\u001b[39m     helpers \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mTestHelpers\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m\n \u001b[90m 15 |\u001b[39m     \u001b[90m// Mock authentication state before navigation\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                            "column": 8,
+                            "line": 12
+                          },
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 10 |\u001b[39m   \u001b[36mlet\u001b[39m helpers\u001b[33m:\u001b[39m \u001b[33mTestHelpers\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 12 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 13 |\u001b[39m     helpers \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mTestHelpers\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m\n \u001b[90m 15 |\u001b[39m     \u001b[90m// Mock authentication state before navigation\u001b[39m\u001b[0m\n\u001b[2m    at D:\\ads\\e2e\\tests\\01-navigation.spec.ts:12:8\u001b[22m"
+                        },
+                        {
+                          "location": {
+                            "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                            "column": 16,
+                            "line": 37
+                          },
+                          "message": "Error: page.goto: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"load\"\u001b[22m\n\n\n\u001b[0m \u001b[90m 35 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 36 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m     \u001b[36mawait\u001b[39m helpers\u001b[33m.\u001b[39mwaitForPageLoad()\u001b[33m;\u001b[39m\n \u001b[90m 39 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 40 |\u001b[39m\u001b[0m\n\u001b[2m    at D:\\ads\\e2e\\tests\\01-navigation.spec.ts:37:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-06T07:54:21.579Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-793e7--user-button-when-signed-in-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-793e7--user-button-when-signed-in-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-793e7--user-button-when-signed-in-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                        "column": 8,
+                        "line": 12
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-aee4c5743b15f654babb",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 123,
+              "column": 7
+            },
+            {
+              "title": "should be responsive on mobile",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 3,
+                      "status": "timedOut",
+                      "duration": 42857,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at D:\\ads\\e2e\\tests\\01-navigation.spec.ts:12:8",
+                        "location": {
+                          "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                          "column": 8,
+                          "line": 12
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 10 |\u001b[39m   \u001b[36mlet\u001b[39m helpers\u001b[33m:\u001b[39m \u001b[33mTestHelpers\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 12 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 13 |\u001b[39m     helpers \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mTestHelpers\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m\n \u001b[90m 15 |\u001b[39m     \u001b[90m// Mock authentication state before navigation\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                            "column": 8,
+                            "line": 12
+                          },
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 10 |\u001b[39m   \u001b[36mlet\u001b[39m helpers\u001b[33m:\u001b[39m \u001b[33mTestHelpers\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 12 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 13 |\u001b[39m     helpers \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mTestHelpers\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m\n \u001b[90m 15 |\u001b[39m     \u001b[90m// Mock authentication state before navigation\u001b[39m\u001b[0m\n\u001b[2m    at D:\\ads\\e2e\\tests\\01-navigation.spec.ts:12:8\u001b[22m"
+                        },
+                        {
+                          "location": {
+                            "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                            "column": 16,
+                            "line": 37
+                          },
+                          "message": "Error: page.goto: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"load\"\u001b[22m\n\n\n\u001b[0m \u001b[90m 35 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 36 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m     \u001b[36mawait\u001b[39m helpers\u001b[33m.\u001b[39mwaitForPageLoad()\u001b[33m;\u001b[39m\n \u001b[90m 39 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 40 |\u001b[39m\u001b[0m\n\u001b[2m    at D:\\ads\\e2e\\tests\\01-navigation.spec.ts:37:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-06T07:54:21.567Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-0aec4-uld-be-responsive-on-mobile-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-0aec4-uld-be-responsive-on-mobile-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-0aec4-uld-be-responsive-on-mobile-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                        "column": 8,
+                        "line": 12
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-500a49fc85c2d449b750",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 132,
+              "column": 7
+            },
+            {
+              "title": "should maintain navigation state across page loads",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 0,
+                      "status": "timedOut",
+                      "duration": 41008,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n    at D:\\ads\\e2e\\tests\\01-navigation.spec.ts:12:8",
+                        "location": {
+                          "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                          "column": 8,
+                          "line": 12
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 10 |\u001b[39m   \u001b[36mlet\u001b[39m helpers\u001b[33m:\u001b[39m \u001b[33mTestHelpers\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 12 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 13 |\u001b[39m     helpers \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mTestHelpers\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m\n \u001b[90m 15 |\u001b[39m     \u001b[90m// Mock authentication state before navigation\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                            "column": 8,
+                            "line": 12
+                          },
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded while running \"beforeEach\" hook.\u001b[39m\n\n\u001b[0m \u001b[90m 10 |\u001b[39m   \u001b[36mlet\u001b[39m helpers\u001b[33m:\u001b[39m \u001b[33mTestHelpers\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 12 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 13 |\u001b[39m     helpers \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mTestHelpers\u001b[39m(page)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m\n \u001b[90m 15 |\u001b[39m     \u001b[90m// Mock authentication state before navigation\u001b[39m\u001b[0m\n\u001b[2m    at D:\\ads\\e2e\\tests\\01-navigation.spec.ts:12:8\u001b[22m"
+                        },
+                        {
+                          "location": {
+                            "file": "D:\\ads\\e2e\\helpers\\test-helpers.ts",
+                            "column": 21,
+                            "line": 34
+                          },
+                          "message": "Error: page.waitForTimeout: Test timeout of 30000ms exceeded.\n\n\u001b[90m   at \u001b[39mhelpers\\test-helpers.ts:34\n\n\u001b[0m \u001b[90m 32 |\u001b[39m\n \u001b[90m 33 |\u001b[39m     \u001b[90m// Give a small buffer for dynamic content\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 34 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mpage\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m500\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                     \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 35 |\u001b[39m   }\n \u001b[90m 36 |\u001b[39m\n \u001b[90m 37 |\u001b[39m   \u001b[90m/**\u001b[39m\u001b[0m\n\u001b[2m    at TestHelpers.waitForPageLoad (D:\\ads\\e2e\\helpers\\test-helpers.ts:34:21)\u001b[22m\n\u001b[2m    at D:\\ads\\e2e\\tests\\01-navigation.spec.ts:38:5\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-06T07:54:25.792Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-d808e-ion-state-across-page-loads-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-d808e-ion-state-across-page-loads-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\ads\\test-results\\tests-01-navigation-Naviga-d808e-ion-state-across-page-loads-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\ads\\e2e\\tests\\01-navigation.spec.ts",
+                        "column": 8,
+                        "line": 12
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-e1d46daf4875c4c2ee37",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 152,
+              "column": 7
+            },
+            {
+              "title": "should render main layout with header and sidebar",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 1,
+                      "status": "interrupted",
+                      "duration": 26,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-06T07:55:28.062Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-f8a758464be965699d74",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 41,
+              "column": 7
+            },
+            {
+              "title": "should navigate to campaigns page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 3,
+                      "status": "interrupted",
+                      "duration": 132,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-06T07:55:27.567Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-b447176cc7a4c71ba264",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 55,
+              "column": 7
+            },
+            {
+              "title": "should navigate to dashboard page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 0,
+                      "status": "interrupted",
+                      "duration": 30,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-06T07:55:29.073Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-35dc6cb281e8b2c1c781",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 67,
+              "column": 7
+            },
+            {
+              "title": "should toggle between campaign tabs",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-ae3cbc1ab9bb070f1a4c",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 79,
+              "column": 7
+            },
+            {
+              "title": "should have working sidebar navigation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-f45c726638163bdbd5d2",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 105,
+              "column": 7
+            },
+            {
+              "title": "should display user button when signed in",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-70e0f40b78458bab89cc",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 123,
+              "column": 7
+            },
+            {
+              "title": "should be responsive on mobile",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-0f7faff068d7de03225c",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 132,
+              "column": 7
+            },
+            {
+              "title": "should maintain navigation state across page loads",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-d25fa31f2985a8219eba",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 152,
+              "column": 7
+            },
+            {
+              "title": "should render main layout with header and sidebar",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-f85ed5f5a780a3104e9a",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 41,
+              "column": 7
+            },
+            {
+              "title": "should navigate to campaigns page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-c677825628e47ea611a6",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 55,
+              "column": 7
+            },
+            {
+              "title": "should navigate to dashboard page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-ef2f0f0b3a2350598aa6",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 67,
+              "column": 7
+            },
+            {
+              "title": "should toggle between campaign tabs",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-b84d0e944152fd0e6519",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 79,
+              "column": 7
+            },
+            {
+              "title": "should have working sidebar navigation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-0e4bf48f0928738cba33",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 105,
+              "column": 7
+            },
+            {
+              "title": "should display user button when signed in",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-bb119bfa49a23d2d302a",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 123,
+              "column": 7
+            },
+            {
+              "title": "should be responsive on mobile",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-1d77041684ca4f070875",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 132,
+              "column": 7
+            },
+            {
+              "title": "should maintain navigation state across page loads",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-346e32c96f997a454d3e",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 152,
+              "column": 7
+            },
+            {
+              "title": "should render main layout with header and sidebar",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-f82d65afc77a819fecc9",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 41,
+              "column": 7
+            },
+            {
+              "title": "should navigate to campaigns page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-5d1c311fd8cb26f71530",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 55,
+              "column": 7
+            },
+            {
+              "title": "should navigate to dashboard page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-e64db820479c2da0f972",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 67,
+              "column": 7
+            },
+            {
+              "title": "should toggle between campaign tabs",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-2d179d8c8f2ebf34a310",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 79,
+              "column": 7
+            },
+            {
+              "title": "should have working sidebar navigation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-a5b07c5a96d641299feb",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 105,
+              "column": 7
+            },
+            {
+              "title": "should display user button when signed in",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-49e2bf20a336bec949bd",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 123,
+              "column": 7
+            },
+            {
+              "title": "should be responsive on mobile",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-8bf07b63a6d1e1626d06",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 132,
+              "column": 7
+            },
+            {
+              "title": "should maintain navigation state across page loads",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-2b175446c285cd182575",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 152,
+              "column": 7
+            },
+            {
+              "title": "should render main layout with header and sidebar",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-439376a47c1b9a6f8584",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 41,
+              "column": 7
+            },
+            {
+              "title": "should navigate to campaigns page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-e25cc2b086221c9662a1",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 55,
+              "column": 7
+            },
+            {
+              "title": "should navigate to dashboard page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-045ab1aaa851b28bda2f",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 67,
+              "column": 7
+            },
+            {
+              "title": "should toggle between campaign tabs",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-f5c6356e6600479a924e",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 79,
+              "column": 7
+            },
+            {
+              "title": "should have working sidebar navigation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-11428b7e46522a3c92ee",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 105,
+              "column": 7
+            },
+            {
+              "title": "should display user button when signed in",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-069208acd3dadf3c9e3b",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 123,
+              "column": 7
+            },
+            {
+              "title": "should be responsive on mobile",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-589c831b4c8e62f8f249",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 132,
+              "column": 7
+            },
+            {
+              "title": "should maintain navigation state across page loads",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e659c46100c6758a8f0f-d1ed3fd8c1a9d3eb5529",
+              "file": "tests/01-navigation.spec.ts",
+              "line": 152,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-10-06T07:53:05.866Z",
+    "duration": 152013.228,
+    "expected": 0,
+    "skipped": 32,
+    "unexpected": 8,
+    "flaky": 0
+  }
+}

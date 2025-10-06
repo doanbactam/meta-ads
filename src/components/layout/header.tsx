@@ -4,7 +4,7 @@ import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/nextjs';
 import { useQuery } from '@tanstack/react-query';
 import { AlertCircle, Facebook, Menu, RefreshCw } from 'lucide-react';
 import { useEffect, useRef } from 'react';
-import { SettingsDialog } from '@/components/common/settings-dialog';
+
 import { AdAccountInfo } from '@/components/dashboard/ad-account-info';
 import { AdAccountStats } from '@/components/dashboard/ad-account-stats';
 import { AdAccountStatus } from '@/components/dashboard/ad-account-status';
@@ -114,6 +114,8 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
             size="sm"
             className="h-8 w-8 p-0 lg:hidden"
             onClick={onToggleSidebar}
+            data-testid="mobile-menu-button"
+            aria-label="Open mobile menu"
           >
             <Menu className="h-4 w-4" />
           </Button>
@@ -172,6 +174,7 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
               onClick={handleRefresh}
               disabled={isLoading}
               title={isLoading ? 'Refreshing accounts...' : 'Refresh ad accounts'}
+              data-testid="refresh-button"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
@@ -184,6 +187,7 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
               className="h-8 gap-1.5 px-3 text-xs"
               onClick={handleConnectFacebook}
               disabled={fbLoading}
+              data-testid="connect-facebook-button"
             >
               <Facebook className="h-3.5 w-3.5" />
               {adAccounts.length === 0 ? 'connect facebook' : 'reconnect'}
@@ -199,9 +203,6 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
         </div>
 
         <div className="flex items-center gap-2">
-          <SettingsDialog />
-
-          <Separator orientation="vertical" className="h-4" />
           <SignedIn>
             <UserButton />
           </SignedIn>

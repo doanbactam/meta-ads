@@ -1,10 +1,25 @@
 'use client';
 
-import { ChevronLeft, LayoutDashboard, Megaphone, Moon, Sun, Terminal } from 'lucide-react';
+import {
+  ChevronLeft,
+  LayoutDashboard,
+  Megaphone,
+  Moon,
+  Sun,
+  Terminal,
+  Search,
+  Settings,
+  HelpCircle,
+  Zap
+} from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
+import { UserSettingsInfo } from '@/components/common/user-settings-info';
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -32,6 +47,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
 
   return (
     <div
+      data-testid="sidebar"
       className={`bg-card border-r border-border flex flex-col transition-all duration-300 ${
         collapsed ? 'w-16' : 'w-52'
       } hidden lg:flex`}
@@ -78,10 +94,14 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         </ul>
       </nav>
 
-      <div className="p-2 border-t border-border">
+      <div className="p-2 border-t border-border space-y-1">
+        {/* User Settings */}
+        <UserSettingsInfo collapsed={collapsed} />
+        
+        {/* Theme Toggle */}
         {!mounted ? (
           // Render placeholder during SSR to avoid hydration mismatch
-          <div className={collapsed ? 'h-20' : 'h-8'} />
+          <div className={collapsed ? 'h-16' : 'h-8'} />
         ) : !collapsed ? (
           <div className="flex items-center gap-1">
             <Button

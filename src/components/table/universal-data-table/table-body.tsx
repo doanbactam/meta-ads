@@ -18,10 +18,8 @@ interface TableBodyProps<T extends { id: string }> {
   selectedRows: string[];
   showBulkActions: boolean;
   onToggleRow: (id: string) => void;
-  settings: {
-    preferredCurrency: string;
-    preferredLocale: string;
-  };
+  currency: string;
+  locale: string;
 }
 
 export function TableBody<T extends { id: string }>({
@@ -31,7 +29,8 @@ export function TableBody<T extends { id: string }>({
   selectedRows,
   showBulkActions,
   onToggleRow,
-  settings,
+  currency,
+  locale,
 }: TableBodyProps<T>) {
   const renderCellValue = (column: TableColumn<T>, item: T) => {
     let value: any;
@@ -74,8 +73,8 @@ export function TableBody<T extends { id: string }>({
       case 'costPerConversion':
         return formatCurrency(
           value !== undefined && value !== null ? value : 0,
-          settings.preferredCurrency,
-          settings.preferredLocale
+          currency,
+          locale
         );
       case 'impressions':
       case 'clicks':
@@ -83,15 +82,17 @@ export function TableBody<T extends { id: string }>({
       case 'engagement':
         return formatNumber(
           value !== undefined && value !== null ? value : 0,
-          settings.preferredLocale
+          locale
         );
       case 'ctr':
       case 'roas':
         return formatPercentage(value !== undefined && value !== null ? value : 0);
       case 'dateRange':
+        // Use the value from accessor which should be { date_start, date_end }
+        const dateRangeValue = value || {};
         return (
           <span className="text-muted-foreground">
-            {formatDateRange((item as any).date_start, (item as any).date_end)}
+            {formatDateRange(dateRangeValue.date_start, dateRangeValue.date_end, locale)}
           </span>
         );
       default:

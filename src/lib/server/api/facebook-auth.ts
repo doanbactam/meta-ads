@@ -1,5 +1,5 @@
 import type { AdAccount } from '@prisma/client';
-import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
+import { FacebookMarketingAPI, FacebookTokenExpiredError } from '@/lib/server/facebook-api';
 import { prisma } from '@/lib/server/prisma';
 
 /**
@@ -29,10 +29,18 @@ export async function getValidFacebookToken(
 
   // Check if token is expired based on stored expiry date
   if (adAccount.facebookTokenExpiry && adAccount.facebookTokenExpiry < new Date()) {
-    // Mark account as paused
-    await prisma.adAccount.update({
-      where: { id: adAccount.id },
-      data: { status: 'PAUSED' },
+    // Mark account as paused using transaction to prevent race conditions
+    await prisma.$transaction(async (tx) => {
+      const current = await tx.adAccount.findUnique({
+        where: { id: adAccount.id },
+        select: { status: true },
+      });
+      if (current?.status !== 'PAUSED') {
+        await tx.adAccount.update({
+          where: { id: adAccount.id },
+          data: { status: 'PAUSED' },
+        });
+      }
     });
 
     return { error: 'Facebook token expired. Please reconnect your account.', status: 401 };
@@ -58,13 +66,21 @@ export async function getValidFacebookToken(
   const validation = await api.validateToken();
 
   if (!validation.isValid) {
-    // Mark account as paused and update token expiry to now
-    await prisma.adAccount.update({
-      where: { id: adAccount.id },
-      data: {
-        status: 'PAUSED',
-        facebookTokenExpiry: new Date(),
-      },
+    // Mark account as paused and update token expiry using transaction
+    await prisma.$transaction(async (tx) => {
+      const current = await tx.adAccount.findUnique({
+        where: { id: adAccount.id },
+        select: { status: true },
+      });
+      if (current?.status !== 'PAUSED') {
+        await tx.adAccount.update({
+          where: { id: adAccount.id },
+          data: {
+            status: 'PAUSED',
+            facebookTokenExpiry: new Date(),
+          },
+        });
+      }
     });
 
     return {
@@ -81,6 +97,9 @@ export async function getValidFacebookToken(
  */
 export function isFacebookTokenExpiredError(error: any): boolean {
   if (!error) return false;
+
+  // Check for typed error first
+  if (error instanceof FacebookTokenExpiredError) return true;
 
   // Handle case where error is a string
   const errorMessage = typeof error === 'string' ? error : error.message || error.error || '';

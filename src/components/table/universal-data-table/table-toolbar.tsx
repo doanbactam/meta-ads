@@ -16,6 +16,7 @@ interface TableToolbarProps<T> {
   visibleColumns: string[];
   onColumnsChange: (columns: string[]) => void;
   selectedRows: string[];
+  items?: T[];
   onRefresh: () => void;
   isRefreshing?: boolean;
   features: {
@@ -35,6 +36,7 @@ export function TableToolbar<T>({
   visibleColumns,
   onColumnsChange,
   selectedRows,
+  items,
   onRefresh,
   isRefreshing = false,
   features,
@@ -56,7 +58,9 @@ export function TableToolbar<T>({
             </div>
           )}
           {features.dateRange && (
-            <FacebookDateRangePicker value={dateRange} onChange={onDateRangeChange} />
+            <div className="ml-auto">
+              <FacebookDateRangePicker value={dateRange} onChange={onDateRangeChange} />
+            </div>
           )}
         </div>
       )}
@@ -132,7 +136,7 @@ export function TableToolbar<T>({
                 variant={action.variant || 'outline'}
                 size="sm"
                 className="h-8 gap-1.5 px-3 text-xs"
-                onClick={() => action.onClick(selectedRows)}
+                onClick={() => action.onClick(selectedRows, items)}
               >
                 <action.icon className="h-3.5 w-3.5" />
                 {action.label}

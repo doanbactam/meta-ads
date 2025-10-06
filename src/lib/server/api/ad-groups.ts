@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/server/prisma';
 import type { AdGroup } from '@/types';
+import { toDbDate, toApiDateOnly } from '@/lib/server/utils/dates';
+import { normalizeAdSetStatus } from '@/lib/server/utils/status';
 
 const EMPTY_AD_GROUP_STATS = {
   spent: 0,
@@ -28,8 +30,8 @@ export async function getAdGroups(campaignId?: string): Promise<AdGroup[]> {
     ctr: ag.ctr,
     cpc: ag.cpc,
     conversions: ag.conversions,
-    date_start: ag.dateStart,
-    date_end: ag.dateEnd,
+    date_start: toApiDateOnly(ag.dateStart) || '',
+    date_end: toApiDateOnly(ag.dateEnd) || '',
     created_at: ag.createdAt.toISOString(),
     updated_at: ag.updatedAt.toISOString(),
   }));
@@ -54,8 +56,8 @@ export async function getAdGroupById(id: string): Promise<AdGroup | null> {
     ctr: adGroup.ctr,
     cpc: adGroup.cpc,
     conversions: adGroup.conversions,
-    date_start: adGroup.dateStart,
-    date_end: adGroup.dateEnd,
+    date_start: toApiDateOnly(adGroup.dateStart) || '',
+    date_end: toApiDateOnly(adGroup.dateEnd) || '',
     created_at: adGroup.createdAt.toISOString(),
     updated_at: adGroup.updatedAt.toISOString(),
   };
@@ -68,7 +70,7 @@ export async function createAdGroup(
     data: {
       campaignId: data.campaign_id,
       name: data.name,
-      status: data.status,
+      status: normalizeAdSetStatus(data.status),
       budget: data.budget,
       spent: data.spent || 0,
       impressions: data.impressions || 0,
@@ -76,8 +78,8 @@ export async function createAdGroup(
       ctr: data.ctr || 0,
       cpc: data.cpc || 0,
       conversions: data.conversions || 0,
-      dateStart: data.date_start,
-      dateEnd: data.date_end,
+      dateStart: toDbDate(data.date_start) || new Date(),
+      dateEnd: toDbDate(data.date_end) || new Date(),
     },
   });
 
@@ -93,8 +95,8 @@ export async function createAdGroup(
     ctr: adGroup.ctr,
     cpc: adGroup.cpc,
     conversions: adGroup.conversions,
-    date_start: adGroup.dateStart,
-    date_end: adGroup.dateEnd,
+    date_start: toApiDateOnly(adGroup.dateStart) || '',
+    date_end: toApiDateOnly(adGroup.dateEnd) || '',
     created_at: adGroup.createdAt.toISOString(),
     updated_at: adGroup.updatedAt.toISOString(),
   };
@@ -105,7 +107,7 @@ export async function updateAdGroup(id: string, updates: Partial<AdGroup>): Prom
     where: { id },
     data: {
       ...(updates.name && { name: updates.name }),
-      ...(updates.status && { status: updates.status }),
+      ...(updates.status !== undefined && { status: normalizeAdSetStatus(updates.status) }),
       ...(updates.budget !== undefined && { budget: updates.budget }),
       ...(updates.spent !== undefined && { spent: updates.spent }),
       ...(updates.impressions !== undefined && { impressions: updates.impressions }),
@@ -113,8 +115,8 @@ export async function updateAdGroup(id: string, updates: Partial<AdGroup>): Prom
       ...(updates.ctr !== undefined && { ctr: updates.ctr }),
       ...(updates.cpc !== undefined && { cpc: updates.cpc }),
       ...(updates.conversions !== undefined && { conversions: updates.conversions }),
-      ...(updates.date_start && { dateStart: updates.date_start }),
-      ...(updates.date_end && { dateEnd: updates.date_end }),
+      ...(updates.date_start !== undefined && { dateStart: toDbDate(updates.date_start) }),
+      ...(updates.date_end !== undefined && { dateEnd: toDbDate(updates.date_end) }),
     },
   });
 
@@ -130,8 +132,8 @@ export async function updateAdGroup(id: string, updates: Partial<AdGroup>): Prom
     ctr: adGroup.ctr,
     cpc: adGroup.cpc,
     conversions: adGroup.conversions,
-    date_start: adGroup.dateStart,
-    date_end: adGroup.dateEnd,
+    date_start: toApiDateOnly(adGroup.dateStart) || '',
+    date_end: toApiDateOnly(adGroup.dateEnd) || '',
     created_at: adGroup.createdAt.toISOString(),
     updated_at: adGroup.updatedAt.toISOString(),
   };
@@ -174,8 +176,8 @@ export async function duplicateAdGroup(id: string): Promise<AdGroup> {
     ctr: duplicate.ctr,
     cpc: duplicate.cpc,
     conversions: duplicate.conversions,
-    date_start: duplicate.dateStart,
-    date_end: duplicate.dateEnd,
+    date_start: toApiDateOnly(duplicate.dateStart) || '',
+    date_end: toApiDateOnly(duplicate.dateEnd) || '',
     created_at: duplicate.createdAt.toISOString(),
     updated_at: duplicate.updatedAt.toISOString(),
   };

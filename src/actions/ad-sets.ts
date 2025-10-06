@@ -16,7 +16,7 @@ const deleteAdSetSchema = z.object({
 
 const updateAdSetStatusSchema = z.object({
   id: z.string(),
-  status: z.enum(['Eligible', 'Paused', 'Disapproved', 'Pending', 'Ended', 'Removed']),
+  status: z.enum(['ACTIVE', 'PAUSED', 'DELETED', 'ARCHIVED', 'PENDING', 'ENDED']),
 });
 
 // Type for action responses

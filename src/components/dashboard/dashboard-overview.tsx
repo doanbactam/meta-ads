@@ -11,8 +11,8 @@ import {
   TrendingDown,
   TrendingUp,
 } from 'lucide-react';
-import { useState } from 'react';
-import { FacebookDateRangePicker } from '@/components/facebook/facebook-date-range-picker';
+
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useOverviewStats } from '@/hooks/use-shared-data';
 import { formatCurrency } from '@/lib/shared/formatters';
@@ -36,13 +36,11 @@ interface OverviewStats {
 }
 
 export function DashboardOverview({ adAccountId }: DashboardOverviewProps) {
-  const [dateRange, setDateRange] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>({
-    from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+  // Overview shows last 30 days by default
+  const dateRange = {
+    from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
     to: new Date(),
-  });
+  };
 
   const { data: overviewStats } = useOverviewStats(adAccountId, dateRange);
 
@@ -114,7 +112,7 @@ export function DashboardOverview({ adAccountId }: DashboardOverviewProps) {
           <h1 className="text-2xl font-semibold text-foreground">dashboard</h1>
           <p className="text-sm text-muted-foreground">overview of your ad account performance</p>
         </div>
-        <FacebookDateRangePicker value={dateRange} onChange={setDateRange} />
+        <div className="text-xs text-muted-foreground">last 30 days</div>
       </div>
 
       {/* Main Stats Cards */}

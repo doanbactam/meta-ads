@@ -16,7 +16,7 @@ const deleteAdSchema = z.object({
 
 const updateAdStatusSchema = z.object({
   id: z.string(),
-  status: z.enum(['Eligible', 'Paused', 'Disapproved', 'Pending', 'Ended', 'Removed']),
+  status: z.enum(['ACTIVE', 'PAUSED', 'DELETED', 'ARCHIVED', 'PENDING', 'REVIEW', 'REJECTED', 'DISAPPROVED']),
 });
 
 // Type for action responses
@@ -42,31 +42,30 @@ export async function duplicateAdAction(
       return { success: false, error: 'Unauthorized' };
     }
 
-    // Get the original campaign
-    const campaign = await prisma.campaign.findUnique({
+    // Get the original creative
+    const creative = await prisma.creative.findUnique({
       where: { id: validated.id },
     });
 
-    if (!campaign) {
-      return { success: false, error: 'Campaign not found' };
+    if (!creative) {
+      return { success: false, error: 'Ad not found' };
     }
 
     // Create duplicate
-    await prisma.campaign.create({
+    await prisma.creative.create({
       data: {
-        adAccountId: campaign.adAccountId,
-        name: `${campaign.name} (Copy)`,
-        status: campaign.status,
-        budget: campaign.budget,
-        spent: 0,
+        adGroupId: creative.adGroupId,
+        name: `${creative.name} (Copy)`,
+        format: creative.format,
+        status: creative.status,
         impressions: 0,
         clicks: 0,
         ctr: 0,
-        conversions: 0,
-        costPerConversion: 0,
-        dateStart: campaign.dateStart,
-        dateEnd: campaign.dateEnd,
-        schedule: campaign.schedule,
+        engagement: 0,
+        spend: 0,
+        roas: 0,
+        dateStart: creative.dateStart,
+        dateEnd: creative.dateEnd,
       },
     });
 
@@ -97,8 +96,8 @@ export async function deleteAdAction(
       return { success: false, error: 'Unauthorized' };
     }
 
-    // Delete campaign
-    await prisma.campaign.delete({
+    // Delete creative
+    await prisma.creative.delete({
       where: { id: validated.id },
     });
 
@@ -129,8 +128,8 @@ export async function updateAdStatusAction(
       return { success: false, error: 'Unauthorized' };
     }
 
-    // Update campaign status
-    await prisma.campaign.update({
+    // Update creative status
+    await prisma.creative.update({
       where: { id: validated.id },
       data: { status: validated.status },
     });

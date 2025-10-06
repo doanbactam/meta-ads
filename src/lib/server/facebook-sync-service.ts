@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/server/prisma';
 import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
-import { mapFacebookStatus } from '@/lib/shared/formatters';
+import { mapFacebookStatus, parseDate } from '@/lib/shared/formatters';
+import type { CampaignStatus, AdSetStatus, CreativeStatus } from '@prisma/client';
 
 /**
  * Facebook Sync Service
@@ -74,7 +75,7 @@ export class FacebookSyncService {
       // Update sync status
       await prisma.adAccount.update({
         where: { id: this.adAccountDbId },
-        data: { syncStatus: 'syncing', syncError: null },
+        data: { syncStatus: 'SYNCING', syncError: null },
       });
 
       // Sync campaigns first
@@ -97,7 +98,7 @@ export class FacebookSyncService {
         where: { id: this.adAccountDbId },
         data: {
           lastSyncedAt: new Date(),
-          syncStatus: result.errors.length > 0 ? 'error' : 'idle',
+          syncStatus: result.errors.length > 0 ? 'ERROR' : 'IDLE',
           syncError: result.errors.length > 0 ? result.errors.join('; ') : null,
         },
       });
@@ -112,7 +113,7 @@ export class FacebookSyncService {
 
       await prisma.adAccount.update({
         where: { id: this.adAccountDbId },
-        data: { syncStatus: 'error', syncError: errorMessage },
+        data: { syncStatus: 'ERROR', syncError: errorMessage },
       });
 
       console.error(`Sync failed for ${this.adAccountId}:`, error);
@@ -142,30 +143,34 @@ export class FacebookSyncService {
             .catch(() => null);
 
           // Upsert campaign
+          // Note: Facebook API returns budget and spend in cents, so we divide by 100 to get dollars
+          const dateStart = parseDate(options.dateFrom);
+          const dateEnd = parseDate(options.dateTo);
+          
           await prisma.campaign.upsert({
             where: { facebookCampaignId: fbCampaign.id },
             create: {
               adAccountId: this.adAccountDbId,
               facebookCampaignId: fbCampaign.id,
               name: fbCampaign.name,
-              status: mapFacebookStatus(fbCampaign.status),
+              status: mapFacebookStatus(fbCampaign.status, 'campaign') as CampaignStatus,
               budget: parseFloat(fbCampaign.dailyBudget || fbCampaign.lifetimeBudget || '0') / 100,
-              spent: parseFloat(insights?.spend || '0'),
+              spent: parseFloat(insights?.spend || '0') / 100,
               impressions: parseInt(insights?.impressions || '0'),
               clicks: parseInt(insights?.clicks || '0'),
               ctr: parseFloat(insights?.ctr || '0'),
               conversions: 0, // Facebook needs conversion tracking setup
               costPerConversion: 0,
-              dateStart: options.dateFrom || new Date().toISOString().split('T')[0],
-              dateEnd: options.dateTo || new Date().toISOString().split('T')[0],
+              dateStart: dateStart as any,
+              dateEnd: dateEnd as any,
               schedule: 'continuous',
               lastSyncedAt: new Date(),
             },
             update: {
               name: fbCampaign.name,
-              status: mapFacebookStatus(fbCampaign.status),
+              status: mapFacebookStatus(fbCampaign.status, 'campaign') as CampaignStatus,
               budget: parseFloat(fbCampaign.dailyBudget || fbCampaign.lifetimeBudget || '0') / 100,
-              spent: parseFloat(insights?.spend || '0'),
+              spent: parseFloat(insights?.spend || '0') / 100,
               impressions: parseInt(insights?.impressions || '0'),
               clicks: parseInt(insights?.clicks || '0'),
               ctr: parseFloat(insights?.ctr || '0'),
@@ -218,33 +223,37 @@ export class FacebookSyncService {
                 })
                 .catch(() => null);
 
+              // Note: Facebook API returns budget and spend in cents, so we divide by 100 to get dollars
+              const dateStart = parseDate(options.dateFrom);
+              const dateEnd = parseDate(options.dateTo);
+              
               await prisma.adGroup.upsert({
                 where: { facebookAdSetId: fbAdSet.id },
                 create: {
                   campaignId: campaign.id,
                   facebookAdSetId: fbAdSet.id,
                   name: fbAdSet.name,
-                  status: mapFacebookStatus(fbAdSet.status, 'adset'),
+                  status: mapFacebookStatus(fbAdSet.status, 'adset') as AdSetStatus,
                   budget: parseFloat(fbAdSet.daily_budget || fbAdSet.lifetime_budget || '0') / 100,
-                  spent: parseFloat(insights?.spend || '0'),
+                  spent: parseFloat(insights?.spend || '0') / 100,
                   impressions: parseInt(insights?.impressions || '0'),
                   clicks: parseInt(insights?.clicks || '0'),
                   ctr: parseFloat(insights?.ctr || '0'),
-                  cpc: parseFloat(insights?.cpc || '0'),
+                  cpc: parseFloat(insights?.cpc || '0') / 100,
                   conversions: 0,
-                  dateStart: options.dateFrom || new Date().toISOString().split('T')[0],
-                  dateEnd: options.dateTo || new Date().toISOString().split('T')[0],
+                  dateStart,
+                  dateEnd,
                   lastSyncedAt: new Date(),
                 },
                 update: {
                   name: fbAdSet.name,
-                  status: mapFacebookStatus(fbAdSet.status, 'adset'),
+                  status: mapFacebookStatus(fbAdSet.status, 'adset') as AdSetStatus,
                   budget: parseFloat(fbAdSet.daily_budget || fbAdSet.lifetime_budget || '0') / 100,
-                  spent: parseFloat(insights?.spend || '0'),
+                  spent: parseFloat(insights?.spend || '0') / 100,
                   impressions: parseInt(insights?.impressions || '0'),
                   clicks: parseInt(insights?.clicks || '0'),
                   ctr: parseFloat(insights?.ctr || '0'),
-                  cpc: parseFloat(insights?.cpc || '0'),
+                  cpc: parseFloat(insights?.cpc || '0') / 100,
                   lastSyncedAt: new Date(),
                 },
               });
@@ -302,6 +311,10 @@ export class FacebookSyncService {
                 })
                 .catch(() => null);
 
+              // Note: Facebook API returns spend in cents, so we divide by 100 to get dollars
+              const dateStart = parseDate(options.dateFrom);
+              const dateEnd = parseDate(options.dateTo);
+              
               await prisma.creative.upsert({
                 where: { facebookAdId: fbAd.id },
                 create: {
@@ -309,25 +322,25 @@ export class FacebookSyncService {
                   facebookAdId: fbAd.id,
                   name: fbAd.name,
                   format: 'Facebook Ad',
-                  status: mapFacebookStatus(fbAd.status),
+                  status: mapFacebookStatus(fbAd.status, 'ad') as CreativeStatus,
                   impressions: parseInt(insights?.impressions || '0'),
                   clicks: parseInt(insights?.clicks || '0'),
                   ctr: parseFloat(insights?.ctr || '0'),
                   engagement: parseInt(insights?.impressions || '0'),
-                  spend: parseFloat(insights?.spend || '0'),
+                  spend: parseFloat(insights?.spend || '0') / 100,
                   roas: 0,
-                  dateStart: options.dateFrom || new Date().toISOString().split('T')[0],
-                  dateEnd: options.dateTo || new Date().toISOString().split('T')[0],
+                  dateStart,
+                  dateEnd,
                   lastSyncedAt: new Date(),
                 },
                 update: {
                   name: fbAd.name,
-                  status: mapFacebookStatus(fbAd.status),
+                  status: mapFacebookStatus(fbAd.status, 'ad') as CreativeStatus,
                   impressions: parseInt(insights?.impressions || '0'),
                   clicks: parseInt(insights?.clicks || '0'),
                   ctr: parseFloat(insights?.ctr || '0'),
                   engagement: parseInt(insights?.impressions || '0'),
-                  spend: parseFloat(insights?.spend || '0'),
+                  spend: parseFloat(insights?.spend || '0') / 100,
                   lastSyncedAt: new Date(),
                 },
               });

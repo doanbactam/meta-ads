@@ -1,197 +1,211 @@
-import { type NextRequest, NextResponse } from 'next/server';
+/**
+ * Facebook API Rate Limiting Implementation
+ * 
+ * Facebook enforces rate limits at multiple levels:
+ * - App-level: 200 calls per hour per user
+ * - Business-level: Higher limits based on spend
+ * - Ad Account-level: Varies based on account tier
+ * 
+ * Best Practices:
+ * 1. Batch requests when possible
+ * 2. Cache responses aggressively
+ * 3. Use field filtering to reduce payload size
+ * 4. Monitor rate limit headers
+ * 5. Implement exponential backoff
+ * 
+ * @see https://developers.facebook.com/docs/graph-api/overview/rate-limiting
+ */
 
 interface RateLimitConfig {
-  windowMs: number; // Time window in milliseconds
-  maxRequests: number; // Maximum requests per window
+  maxRequests: number;
+  windowMs: number;
+  minInterval?: number; // Minimum time between requests
 }
 
-interface RateLimitEntry {
+interface RequestRecord {
+  timestamp: number;
   count: number;
-  resetTime: number;
 }
 
-// In-memory storage for rate limiting
-// In production, use Redis or similar for distributed rate limiting
-const rateLimitStore = new Map<string, RateLimitEntry>();
+export class RateLimiter {
+  private requests: Map<string, RequestRecord[]> = new Map();
+  private config: RateLimitConfig;
+  private lastRequestTime: Map<string, number> = new Map();
 
-// Default rate limit configurations
-export const RATE_LIMIT_CONFIGS = {
-  facebook_api: {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 20, // 20 requests per minute
-  },
-  facebook_connect: {
-    windowMs: 5 * 60 * 1000, // 5 minutes
-    maxRequests: 5, // 5 connection attempts per 5 minutes
-  },
-  facebook_validate: {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 10, // 10 validation attempts per minute
-  },
-} as const;
+  constructor(config: RateLimitConfig) {
+    this.config = config;
+  }
 
-/**
- * Generate a rate limit key based on identifier and endpoint
- */
-function getRateLimitKey(identifier: string, endpoint: string): string {
-  return `ratelimit:${endpoint}:${identifier}`;
+  /**
+   * Check if request is allowed under rate limits
+   */
+  async checkLimit(key: string): Promise<{ allowed: boolean; retryAfter?: number }> {
+    const now = Date.now();
+    const records = this.requests.get(key) || [];
+
+    // Clean up old records outside the window
+    const validRecords = records.filter((r) => now - r.timestamp < this.config.windowMs);
+
+    // Check minimum interval between requests
+    if (this.config.minInterval) {
+      const lastRequest = this.lastRequestTime.get(key);
+      if (lastRequest && now - lastRequest < this.config.minInterval) {
+        const retryAfter = this.config.minInterval - (now - lastRequest);
+        return { allowed: false, retryAfter };
+      }
+    }
+
+    // Count total requests in window
+    const totalRequests = validRecords.reduce((sum, r) => sum + r.count, 0);
+
+    if (totalRequests >= this.config.maxRequests) {
+      const oldestRecord = validRecords[0];
+      const retryAfter = oldestRecord ? this.config.windowMs - (now - oldestRecord.timestamp) : this.config.windowMs;
+      return { allowed: false, retryAfter };
+    }
+
+    // Allow request and record it
+    validRecords.push({ timestamp: now, count: 1 });
+    this.requests.set(key, validRecords);
+    this.lastRequestTime.set(key, now);
+
+    return { allowed: true };
+  }
+
+  /**
+   * Wait for rate limit to allow request
+   */
+  async waitForLimit(key: string): Promise<void> {
+    const check = await this.checkLimit(key);
+    if (!check.allowed && check.retryAfter) {
+      console.log(`Rate limit reached for ${key}, waiting ${check.retryAfter}ms`);
+      await new Promise((resolve) => setTimeout(resolve, check.retryAfter));
+      return this.waitForLimit(key); // Retry
+    }
+  }
+
+  /**
+   * Reset rate limit for a key
+   */
+  reset(key: string): void {
+    this.requests.delete(key);
+    this.lastRequestTime.delete(key);
+  }
+
+  /**
+   * Get current usage stats
+   */
+  getStats(key: string): { requests: number; windowMs: number; resetAt: number } {
+    const now = Date.now();
+    const records = this.requests.get(key) || [];
+    const validRecords = records.filter((r) => now - r.timestamp < this.config.windowMs);
+    const totalRequests = validRecords.reduce((sum, r) => sum + r.count, 0);
+    const oldestRecord = validRecords[0];
+    const resetAt = oldestRecord ? oldestRecord.timestamp + this.config.windowMs : now;
+
+    return {
+      requests: totalRequests,
+      windowMs: this.config.windowMs,
+      resetAt,
+    };
+  }
 }
 
+// Global rate limiter instances
+// App-level: 200 calls per hour (conservative)
+export const appRateLimiter = new RateLimiter({
+  maxRequests: 180, // Leave buffer
+  windowMs: 60 * 60 * 1000, // 1 hour
+  minInterval: 100, // 100ms between requests
+});
+
+// Per-ad-account rate limiter (more generous)
+export const adAccountRateLimiter = new RateLimiter({
+  maxRequests: 50,
+  windowMs: 60 * 1000, // 1 minute
+  minInterval: 50,
+});
+
 /**
- * Clean up expired entries from the rate limit store
+ * Response cache with TTL
  */
-function cleanupExpiredEntries(): void {
-  const now = Date.now();
-  const entries = Array.from(rateLimitStore.entries());
-  for (const [key, entry] of entries) {
-    if (entry.resetTime < now) {
-      rateLimitStore.delete(key);
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+  ttl: number;
+}
+
+export class ResponseCache<T = any> {
+  private cache: Map<string, CacheEntry<T>> = new Map();
+
+  /**
+   * Get cached data if valid
+   */
+  get(key: string): T | null {
+    const entry = this.cache.get(key);
+    if (!entry) return null;
+
+    const now = Date.now();
+    if (now - entry.timestamp > entry.ttl) {
+      this.cache.delete(key);
+      return null;
+    }
+
+    return entry.data;
+  }
+
+  /**
+   * Set cache data with TTL
+   */
+  set(key: string, data: T, ttl: number): void {
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now(),
+      ttl,
+    });
+  }
+
+  /**
+   * Clear cache entry
+   */
+  delete(key: string): void {
+    this.cache.delete(key);
+  }
+
+  /**
+   * Clear all cache
+   */
+  clear(): void {
+    this.cache.clear();
+  }
+
+  /**
+   * Clean up expired entries
+   */
+  cleanup(): void {
+    const now = Date.now();
+    const entriesToDelete: string[] = [];
+    
+    this.cache.forEach((entry, key) => {
+      if (now - entry.timestamp > entry.ttl) {
+        entriesToDelete.push(key);
+      }
+    });
+    
+    for (const key of entriesToDelete) {
+      this.cache.delete(key);
     }
   }
 }
 
-/**
- * Check if a request should be rate limited
- * @param identifier - Unique identifier (e.g., user ID, IP address)
- * @param endpoint - Endpoint name for rate limiting
- * @param config - Rate limit configuration
- * @returns Object with allowed status and remaining requests
- */
-export function checkRateLimit(
-  identifier: string,
-  endpoint: string,
-  config: RateLimitConfig = RATE_LIMIT_CONFIGS.facebook_api
-): {
-  allowed: boolean;
-  remaining: number;
-  resetTime: number;
-  retryAfter?: number;
-} {
-  const key = getRateLimitKey(identifier, endpoint);
-  const now = Date.now();
+// Global caches with different TTLs
+export const insightsCache = new ResponseCache<any>(); // 5-15 minutes for insights
+export const entityCache = new ResponseCache<any>(); // 1-5 minutes for campaigns/adsets/ads
+export const accountCache = new ResponseCache<any>(); // 30 minutes for account data
 
-  // Periodically cleanup expired entries (every 100 requests)
-  if (Math.random() < 0.01) {
-    cleanupExpiredEntries();
-  }
-
-  let entry = rateLimitStore.get(key);
-
-  // Create new entry if doesn't exist or expired
-  if (!entry || entry.resetTime < now) {
-    entry = {
-      count: 0,
-      resetTime: now + config.windowMs,
-    };
-    rateLimitStore.set(key, entry);
-  }
-
-  // Check if rate limit exceeded
-  if (entry.count >= config.maxRequests) {
-    const retryAfter = Math.ceil((entry.resetTime - now) / 1000);
-    return {
-      allowed: false,
-      remaining: 0,
-      resetTime: entry.resetTime,
-      retryAfter,
-    };
-  }
-
-  // Increment counter
-  entry.count++;
-  rateLimitStore.set(key, entry);
-
-  return {
-    allowed: true,
-    remaining: config.maxRequests - entry.count,
-    resetTime: entry.resetTime,
-  };
-}
-
-/**
- * Middleware function to apply rate limiting to Next.js API routes
- */
-export function withRateLimit(
-  handler: (req: NextRequest) => Promise<NextResponse>,
-  endpoint: string,
-  config?: RateLimitConfig
-) {
-  return async (req: NextRequest): Promise<NextResponse> => {
-    // Get identifier from request (prefer user ID, fallback to IP)
-    const userId = req.headers.get('x-user-id') || req.headers.get('x-clerk-user-id');
-    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
-    const identifier = userId || ip;
-
-    // Check rate limit
-    const rateLimitResult = checkRateLimit(
-      identifier,
-      endpoint,
-      config || RATE_LIMIT_CONFIGS.facebook_api
-    );
-
-    // Create response
-    const response = rateLimitResult.allowed
-      ? await handler(req)
-      : NextResponse.json(
-          {
-            error: 'Too many requests',
-            message: 'Rate limit exceeded. Please try again later.',
-            retryAfter: rateLimitResult.retryAfter,
-          },
-          { status: 429 }
-        );
-
-    // Add rate limit headers
-    response.headers.set(
-      'X-RateLimit-Limit',
-      String(config?.maxRequests || RATE_LIMIT_CONFIGS.facebook_api.maxRequests)
-    );
-    response.headers.set('X-RateLimit-Remaining', String(rateLimitResult.remaining));
-    response.headers.set('X-RateLimit-Reset', new Date(rateLimitResult.resetTime).toISOString());
-
-    if (rateLimitResult.retryAfter) {
-      response.headers.set('Retry-After', String(rateLimitResult.retryAfter));
-    }
-
-    return response;
-  };
-}
-
-/**
- * Reset rate limit for a specific identifier and endpoint
- */
-export function resetRateLimit(identifier: string, endpoint: string): void {
-  const key = getRateLimitKey(identifier, endpoint);
-  rateLimitStore.delete(key);
-}
-
-/**
- * Get current rate limit status for an identifier
- */
-export function getRateLimitStatus(
-  identifier: string,
-  endpoint: string,
-  config: RateLimitConfig = RATE_LIMIT_CONFIGS.facebook_api
-): {
-  count: number;
-  remaining: number;
-  resetTime: number;
-} {
-  const key = getRateLimitKey(identifier, endpoint);
-  const entry = rateLimitStore.get(key);
-  const now = Date.now();
-
-  if (!entry || entry.resetTime < now) {
-    return {
-      count: 0,
-      remaining: config.maxRequests,
-      resetTime: now + config.windowMs,
-    };
-  }
-
-  return {
-    count: entry.count,
-    remaining: Math.max(0, config.maxRequests - entry.count),
-    resetTime: entry.resetTime,
-  };
-}
+// Cleanup expired cache entries every 5 minutes
+setInterval(() => {
+  insightsCache.cleanup();
+  entityCache.cleanup();
+  accountCache.cleanup();
+}, 5 * 60 * 1000);

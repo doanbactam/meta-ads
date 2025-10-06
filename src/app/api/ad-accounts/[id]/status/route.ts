@@ -27,7 +27,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const activeCampaigns = await prisma.campaign.count({
       where: {
         adAccountId: adAccountId,
-        status: 'Active',
+        status: 'ACTIVE',
       },
     });
 
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const budgetStats = await prisma.campaign.aggregate({
       where: {
         adAccountId: adAccountId,
-        status: 'Active',
+        status: 'ACTIVE',
       },
       _sum: {
         budget: true,

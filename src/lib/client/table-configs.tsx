@@ -1,8 +1,8 @@
-import { Eye } from 'lucide-react';
+import { Eye, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import type { TableConfig } from '@/components/table/universal-data-table';
 import { useFacebookStore } from '@/lib/client/stores/facebook-store';
-import type { Ad, AdGroup, Campaign } from '@/types';
+import type { Ad, AdGroup, Campaign, AIAnalysisResult } from '@/types';
 
 // Campaign Table Configuration
 export const campaignTableConfig: TableConfig<Campaign> = {
@@ -155,6 +155,84 @@ export const campaignTableConfig: TableConfig<Campaign> = {
         }
       },
     },
+    custom: [
+      {
+        label: 'AI Analysis',
+        icon: Sparkles,
+        onClick: async (ids: string[], data?: Campaign[]) => {
+          if (ids.length !== 1) {
+            toast.error('Please select exactly one campaign for AI analysis');
+            return;
+          }
+
+          const campaignId = ids[0];
+          const campaign = data?.find((c: Campaign) => c.id === campaignId);
+          const campaignName = campaign?.name || 'Campaign';
+
+          // Dynamic import to avoid SSR issues
+          const { createRoot } = await import('react-dom/client');
+          const { AIAnalysisDialog } = await import('@/components/ai/ai-analysis-dialog');
+          const { createElement } = await import('react');
+
+          // Create dialog container
+          const dialogContainer = document.createElement('div');
+          document.body.appendChild(dialogContainer);
+          const root = createRoot(dialogContainer);
+
+          let analysisResult: AIAnalysisResult | null = null;
+          let isLoading = true;
+
+          const renderDialog = () => {
+            root.render(
+              createElement(AIAnalysisDialog, {
+                open: true,
+                onOpenChange: (open: boolean) => {
+                  if (!open) {
+                    root.unmount();
+                    document.body.removeChild(dialogContainer);
+                  }
+                },
+                result: analysisResult,
+                campaignName,
+                isLoading,
+              })
+            );
+          };
+
+          // Show loading dialog
+          renderDialog();
+
+          // Fetch analysis
+          try {
+            const response = await fetch('/api/ai/analyze', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ campaignId }),
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.message || 'Analysis failed');
+            }
+
+            const responseData = await response.json();
+            analysisResult = responseData.analysis;
+            isLoading = false;
+            renderDialog();
+
+            toast.success('Analysis complete!');
+          } catch (error) {
+            console.error('AI analysis error:', error);
+            toast.error(
+              error instanceof Error ? error.message : 'Analysis failed. Please try again.'
+            );
+            root.unmount();
+            document.body.removeChild(dialogContainer);
+          }
+        },
+        variant: 'default' as const,
+      },
+    ],
   },
 
   emptyState: {

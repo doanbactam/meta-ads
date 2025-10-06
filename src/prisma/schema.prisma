@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,40 +7,143 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum UserRole {
-  USER
-  ADMIN
-  SUPER_ADMIN
-}
-
-enum SubscriptionPackage {
-  FREE
-  STARTER
-  PROFESSIONAL
-  ENTERPRISE
-}
-
 model User {
-  id                  String               @id @default(cuid())
-  clerkId             String               @unique @map("clerk_id")
-  email               String               @unique
-  name                String?
-  imageUrl            String?              @map("image_url")
-  role                UserRole             @default(USER)
-  subscriptionPackage SubscriptionPackage  @default(FREE) @map("subscription_package")
-  subscriptionExpiry  DateTime?            @map("subscription_expiry")
-  
-  // User preferences
-  preferredCurrency   String               @default("USD") @map("preferred_currency")
-  preferredLocale     String               @default("en-US") @map("preferred_locale")
-  preferredTimezone   String               @default("UTC") @map("preferred_timezone")
-  
-  createdAt           DateTime             @default(now()) @map("created_at")
-  updatedAt           DateTime             @updatedAt @map("updated_at")
-
+  id         String      @id @default(cuid())
+  clerkId    String      @unique @map("clerk_id")
+  email      String      @unique
+  name       String?
+  imageUrl   String?     @map("image_url")
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
   adAccounts AdAccount[]
 
   @@map("users")
+}
+
+model AdAccount {
+  id                  String          @id @default(cuid())
+  userId              String          @map("user_id")
+  name                String
+  currency            String          @default("USD")
+  timeZone            String          @default("UTC") @map("time_zone")
+  facebookAccessToken String?         @map("facebook_access_token")
+  facebookTokenExpiry DateTime?       @map("facebook_token_expiry")
+  facebookAdAccountId String?         @map("facebook_ad_account_id")
+  facebookUserId      String?         @map("facebook_user_id")
+  facebookPageId      String?         @map("facebook_page_id")
+  facebookBusinessId  String?         @map("facebook_business_id")
+  facebookAccessType  String?         @map("facebook_access_type")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+  platform            Platform        @default(FACEBOOK)
+  status              AdAccountStatus @default(ACTIVE)
+  lastSyncedAt        DateTime?       @map("last_synced_at")
+  syncError           String?         @map("sync_error")
+  syncStatus          SyncStatus      @default(IDLE) @map("sync_status")
+  user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaigns           Campaign[]
+
+  @@unique([userId, facebookAdAccountId], name: "unique_user_facebook_account")
+  @@index([userId])
+  @@index([facebookAdAccountId])
+  @@index([facebookBusinessId])
+  @@index([lastSyncedAt])
+  @@index([status])
+  @@index([syncStatus])
+  @@index([userId, status])
+  @@index([userId, facebookBusinessId])
+  @@map("ad_accounts")
+}
+
+model Campaign {
+  id                 String         @id @default(cuid())
+  adAccountId        String         @map("ad_account_id")
+  name               String
+  budget             Float
+  spent              Float          @default(0)
+  impressions        Int            @default(0)
+  clicks             Int            @default(0)
+  ctr                Float          @default(0)
+  conversions        Int            @default(0)
+  costPerConversion  Float          @default(0) @map("cost_per_conversion")
+  schedule           String
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @updatedAt @map("updated_at")
+  facebookCampaignId String?        @unique @map("facebook_campaign_id")
+  lastSyncedAt       DateTime?      @map("last_synced_at")
+  status             CampaignStatus @default(ACTIVE)
+  dateStart          DateTime       @map("date_start")
+  dateEnd            DateTime       @map("date_end")
+  adGroups           AdGroup[]
+  adAccount          AdAccount      @relation(fields: [adAccountId], references: [id], onDelete: Cascade)
+
+  @@index([adAccountId])
+  @@index([facebookCampaignId])
+  @@index([lastSyncedAt])
+  @@index([status])
+  @@index([adAccountId, status])
+  @@index([adAccountId, lastSyncedAt])
+  @@index([dateStart, dateEnd])
+  @@map("campaigns")
+}
+
+model AdGroup {
+  id              String      @id @default(cuid())
+  campaignId      String      @map("campaign_id")
+  name            String
+  budget          Float
+  spent           Float       @default(0)
+  impressions     Int         @default(0)
+  clicks          Int         @default(0)
+  ctr             Float       @default(0)
+  cpc             Float       @default(0)
+  conversions     Int         @default(0)
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+  facebookAdSetId String?     @unique @map("facebook_adset_id")
+  lastSyncedAt    DateTime?   @map("last_synced_at")
+  status          AdSetStatus @default(ACTIVE)
+  dateStart       DateTime    @map("date_start")
+  dateEnd         DateTime    @map("date_end")
+  campaign        Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  creatives       Creative[]
+
+  @@index([campaignId])
+  @@index([facebookAdSetId])
+  @@index([lastSyncedAt])
+  @@index([status])
+  @@index([campaignId, status])
+  @@index([dateStart, dateEnd])
+  @@map("ad_groups")
+}
+
+model Creative {
+  id           String         @id @default(cuid())
+  adGroupId    String         @map("ad_group_id")
+  name         String
+  format       String
+  impressions  Int            @default(0)
+  clicks       Int            @default(0)
+  ctr          Float          @default(0)
+  engagement   Float          @default(0)
+  spend        Float          @default(0)
+  roas         Float          @default(0)
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+  facebookAdId String?        @unique @map("facebook_ad_id")
+  lastSyncedAt DateTime?      @map("last_synced_at")
+  status       CreativeStatus @default(ACTIVE)
+  dateStart    DateTime       @map("date_start")
+  dateEnd      DateTime       @map("date_end")
+  adGroup      AdGroup        @relation(fields: [adGroupId], references: [id], onDelete: Cascade)
+
+  @@index([adGroupId])
+  @@index([facebookAdId])
+  @@index([lastSyncedAt])
+  @@index([status])
+  @@index([adGroupId, status])
+  @@index([dateStart, dateEnd])
+  @@map("creatives")
 }
 
 enum AdAccountStatus {
@@ -59,115 +159,39 @@ enum Platform {
   MESSENGER
 }
 
-model AdAccount {
-  id                    String           @id @default(cuid())
-  userId                String           @map("user_id")
-  name                  String
-  platform              Platform         @default(FACEBOOK)
-  status                AdAccountStatus  @default(ACTIVE)
-  currency              String           @default("USD")
-  timeZone              String           @default("UTC") @map("time_zone")
-  facebookAccessToken   String?          @map("facebook_access_token") @db.Text
-  facebookTokenExpiry   DateTime?        @map("facebook_token_expiry")
-  facebookAdAccountId   String?          @map("facebook_ad_account_id")
-  facebookUserId        String?          @map("facebook_user_id")
-  facebookPageId        String?          @map("facebook_page_id")
-  lastSyncedAt          DateTime?        @map("last_synced_at")
-  syncStatus            String?          @default("idle") @map("sync_status") // idle, syncing, error
-  syncError             String?          @map("sync_error") @db.Text
-  createdAt             DateTime         @default(now()) @map("created_at")
-  updatedAt             DateTime         @updatedAt @map("updated_at")
-
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  campaigns Campaign[]
-
-  @@unique([userId, facebookAdAccountId], name: "unique_user_facebook_account")
-  @@index([userId])
-  @@index([facebookAdAccountId])
-  @@index([lastSyncedAt])
-  @@map("ad_accounts")
+enum SyncStatus {
+  IDLE
+  SYNCING
+  ERROR
 }
 
-model Campaign {
-  id                   String    @id @default(cuid())
-  adAccountId          String    @map("ad_account_id")
-  facebookCampaignId   String?   @unique @map("facebook_campaign_id")
-  name                 String
-  status               String    // Eligible, Paused, Disapproved, Pending, Ended, Removed
-  budget               Float
-  spent                Float     @default(0)
-  impressions          Int       @default(0)
-  clicks               Int       @default(0)
-  ctr                  Float     @default(0)
-  conversions          Int       @default(0)
-  costPerConversion    Float     @default(0) @map("cost_per_conversion")
-  dateStart            String    @map("date_start")
-  dateEnd              String    @map("date_end")
-  schedule             String
-  lastSyncedAt         DateTime? @map("last_synced_at")
-  createdAt            DateTime  @default(now()) @map("created_at")
-  updatedAt            DateTime  @updatedAt @map("updated_at")
-
-  adAccount            AdAccount  @relation(fields: [adAccountId], references: [id], onDelete: Cascade)
-  adGroups             AdGroup[]
-
-  @@index([adAccountId])
-  @@index([facebookCampaignId])
-  @@index([lastSyncedAt])
-  @@map("campaigns")
+enum CampaignStatus {
+  ACTIVE
+  PAUSED
+  DELETED
+  ARCHIVED
+  PENDING
+  ENDED
+  DISAPPROVED
+  REMOVED
 }
 
-model AdGroup {
-  id                 String    @id @default(cuid())
-  campaignId         String    @map("campaign_id")
-  facebookAdSetId    String?   @unique @map("facebook_adset_id")
-  name               String
-  status             String    // Active, Paused, Pending, Ended
-  budget             Float
-  spent              Float     @default(0)
-  impressions        Int       @default(0)
-  clicks             Int       @default(0)
-  ctr                Float     @default(0)
-  cpc                Float     @default(0)
-  conversions        Int       @default(0)
-  dateStart          String    @map("date_start")
-  dateEnd            String    @map("date_end")
-  lastSyncedAt       DateTime? @map("last_synced_at")
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @updatedAt @map("updated_at")
-
-  campaign    Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  creatives   Creative[]
-
-  @@index([campaignId])
-  @@index([facebookAdSetId])
-  @@index([lastSyncedAt])
-  @@map("ad_groups")
+enum AdSetStatus {
+  ACTIVE
+  PAUSED
+  DELETED
+  ARCHIVED
+  PENDING
+  ENDED
 }
 
-model Creative {
-  id             String    @id @default(cuid())
-  adGroupId      String    @map("ad_group_id")
-  facebookAdId   String?   @unique @map("facebook_ad_id")
-  name           String
-  format         String    // Image, Video, Carousel, Story
-  status         String    // Active, Paused, Review, Rejected
-  impressions    Int       @default(0)
-  clicks         Int       @default(0)
-  ctr            Float     @default(0)
-  engagement     Float     @default(0)
-  spend          Float     @default(0)
-  roas           Float     @default(0)
-  dateStart      String    @map("date_start")
-  dateEnd        String    @map("date_end")
-  lastSyncedAt   DateTime? @map("last_synced_at")
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
-
-  adGroup     AdGroup  @relation(fields: [adGroupId], references: [id], onDelete: Cascade)
-
-  @@index([adGroupId])
-  @@index([facebookAdId])
-  @@index([lastSyncedAt])
-  @@map("creatives")
+enum CreativeStatus {
+  ACTIVE
+  PAUSED
+  DELETED
+  ARCHIVED
+  PENDING
+  REVIEW
+  REJECTED
+  DISAPPROVED
 }
