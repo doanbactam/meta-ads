@@ -1,9 +1,10 @@
 'use client';
 
 import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/nextjs';
-import { useQuery } from '@tanstack/react-query';
-import { AlertCircle, Facebook, Menu, RefreshCw } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { AlertCircle, Facebook, Menu, RefreshCw, Download } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 import { AdAccountInfo } from '@/components/dashboard/ad-account-info';
 import { AdAccountStats } from '@/components/dashboard/ad-account-stats';
@@ -39,6 +40,9 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
     loading: fbLoading,
     connectFacebook,
   } = useFacebookConnection(selectedAdAccount);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const {
     data: adAccountsData,
@@ -102,6 +106,68 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
 
   const handleConnectFacebook = () => {
     setShowConnectionDialog(true);
+  };
+
+  const handleSyncData = async () => {
+    if (!selectedAdAccount) {
+      toast({
+        title: 'No account selected',
+        description: 'Please select an ad account first',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      const response = await fetch(`/api/facebook/sync?adAccountId=${selectedAdAccount}`, {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          toast({
+            title: 'Rate limit exceeded',
+            description: data.message || 'You can only sync 5 times per hour. Please try again later.',
+            variant: 'destructive',
+          });
+        } else if (data.needsReconnection) {
+          toast({
+            title: 'Facebook connection expired',
+            description: 'Please reconnect your Facebook account',
+            variant: 'destructive',
+          });
+          setShowConnectionDialog(true);
+        } else {
+          throw new Error(data.message || 'Failed to sync data');
+        }
+        return;
+      }
+
+      // Invalidate all data queries to refetch
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['campaigns'] }),
+        queryClient.invalidateQueries({ queryKey: ['ad-sets'] }),
+        queryClient.invalidateQueries({ queryKey: ['ads'] }),
+        queryClient.invalidateQueries({ queryKey: ['overview-stats'] }),
+      ]);
+
+      toast({
+        title: 'Data synced successfully',
+        description: `Synced ${data.synced?.campaigns || 0} campaigns, ${data.synced?.adSets || 0} ad sets, and ${data.synced?.ads || 0} ads`,
+      });
+    } catch (error) {
+      console.error('Sync error:', error);
+      toast({
+        title: 'Sync failed',
+        description: error instanceof Error ? error.message : 'Failed to sync data',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   return (
@@ -177,6 +243,18 @@ export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }
               data-testid="refresh-button"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={handleSyncData}
+              disabled={isSyncing || !selectedAdAccount}
+              title={isSyncing ? 'Syncing data...' : 'Sync Facebook data'}
+              data-testid="sync-data-button"
+            >
+              <Download className={`h-3.5 w-3.5 ${isSyncing ? 'animate-pulse' : ''}`} />
             </Button>
 
             <Separator orientation="vertical" className="h-6" />

@@ -191,6 +191,29 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Facebook Connect] Synchronized ${result.updatedAccounts.length} accounts`);
 
+    // Trigger immediate data sync for the first account (non-blocking)
+    if (result.updatedAccounts.length > 0 && result.updatedAccounts[0]) {
+      const firstAccount = result.updatedAccounts[0];
+      if (firstAccount.facebookAdAccountId && firstAccount.facebookAccessToken) {
+        console.log(`[Facebook Connect] Triggering initial data sync for account ${firstAccount.facebookAdAccountId}`);
+
+        // Import sync service dynamically to avoid circular dependencies
+        import('@/lib/server/facebook-sync-service').then(({ FacebookSyncService }) => {
+          const syncService = new FacebookSyncService(
+            firstAccount.facebookAccessToken!,
+            firstAccount.facebookAdAccountId!,
+            firstAccount.id
+          );
+
+          syncService.syncAll({ force: true }).catch((error) => {
+            console.error('[Facebook Connect] Initial sync failed:', error);
+          });
+        }).catch((error) => {
+          console.error('[Facebook Connect] Failed to import sync service:', error);
+        });
+      }
+    }
+
     return NextResponse.json({
       success: true,
       adAccountId: result.updatedAccounts[0]?.id,
@@ -198,7 +221,7 @@ export async function POST(req: NextRequest) {
       tokenExpiry: expiryDate,
       accounts: fbAccounts,
       removedAccounts: result.removedCount,
-      message: `Facebook ${result.updatedAccounts.length > 1 ? 'accounts' : 'account'} synchronized successfully`,
+      message: `Facebook ${result.updatedAccounts.length > 1 ? 'accounts' : 'account'} synchronized successfully. Data sync in progress...`,
     });
   } catch (error) {
     console.error('Error connecting Facebook account:', error);
