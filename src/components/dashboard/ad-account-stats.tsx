@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { DollarSign, Eye, MousePointer, TrendingDown, TrendingUp } from 'lucide-react';
+import { DollarSign, Eye, MousePointer, TrendingUp } from 'lucide-react';
 import { useUserSettings } from '@/lib/client/contexts/user-settings-context';
 import { formatCurrency, formatNumber } from '@/lib/shared/formatters';
 
@@ -19,7 +19,7 @@ interface AccountStats {
 
 export function AdAccountStats({ adAccountId }: AdAccountStatsProps) {
   const { settings } = useUserSettings();
-  
+
   const { data: stats, isLoading } = useQuery({
     queryKey: ['ad-account-stats', adAccountId],
     queryFn: async (): Promise<AccountStats> => {
@@ -70,17 +70,13 @@ export function AdAccountStats({ adAccountId }: AdAccountStatsProps) {
 
       <div className="flex items-center gap-1">
         <Eye className="h-3 w-3 text-blue-500" />
-        <span className="font-medium">
-          {formatNumber(stats.totalImpressions, settings.locale)}
-        </span>
+        <span className="font-medium">{formatNumber(stats.totalImpressions, settings.locale)}</span>
         <span className="text-muted-foreground">impressions</span>
       </div>
 
       <div className="flex items-center gap-1">
         <MousePointer className="h-3 w-3 text-purple-500" />
-        <span className="font-medium">
-          {formatNumber(stats.totalClicks, settings.locale)}
-        </span>
+        <span className="font-medium">{formatNumber(stats.totalClicks, settings.locale)}</span>
         <span className="text-muted-foreground">clicks</span>
       </div>
 

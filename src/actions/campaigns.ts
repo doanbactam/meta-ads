@@ -16,7 +16,16 @@ const deleteCampaignSchema = z.object({
 
 const updateCampaignStatusSchema = z.object({
   id: z.string(),
-  status: z.enum(['ACTIVE', 'PAUSED', 'DELETED', 'ARCHIVED', 'PENDING', 'ENDED', 'DISAPPROVED', 'REMOVED']),
+  status: z.enum([
+    'ACTIVE',
+    'PAUSED',
+    'DELETED',
+    'ARCHIVED',
+    'PENDING',
+    'ENDED',
+    'DISAPPROVED',
+    'REMOVED',
+  ]),
 });
 
 // Type for action responses

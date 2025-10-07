@@ -1,4 +1,4 @@
-import { cva, type VariantProps } from 'cva';
+import { cva } from 'cva';
 import * as React from 'react';
 
 import { cn } from '@/lib/shared/utils';

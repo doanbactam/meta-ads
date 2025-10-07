@@ -1,14 +1,14 @@
 import { auth } from '@clerk/nextjs/server';
-import { type NextRequest, NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getValidFacebookToken } from '@/lib/server/api/facebook-auth';
 import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
-import { prisma } from '@/lib/server/prisma';
 import { FacebookSyncService } from '@/lib/server/facebook-sync-service';
+import { prisma } from '@/lib/server/prisma';
 
 /**
  * Campaigns API Route with Database Caching
- * 
+ *
  * Strategy:
  * 1. Check database first (fast)
  * 2. If no data or outdated (>10 min), trigger background sync
@@ -91,13 +91,12 @@ export async function GET(request: NextRequest) {
 
     // Check if we need to trigger a background sync
     const needsSync =
-      !adAccount.lastSyncedAt ||
-      Date.now() - adAccount.lastSyncedAt.getTime() > SYNC_THRESHOLD;
+      !adAccount.lastSyncedAt || Date.now() - adAccount.lastSyncedAt.getTime() > SYNC_THRESHOLD;
 
     if (needsSync && adAccount.facebookAccessToken && adAccount.facebookAdAccountId) {
       // Trigger background sync (non-blocking)
       const tokenResult = await getValidFacebookToken(adAccountId, user.id);
-      
+
       if (!('error' in tokenResult)) {
         // Don't await - let it run in background
         const syncService = new FacebookSyncService(

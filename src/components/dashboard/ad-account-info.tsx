@@ -1,8 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Building, Clock, Globe } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Clock, Globe } from 'lucide-react';
 
 interface AdAccountInfoProps {
   adAccountId?: string;

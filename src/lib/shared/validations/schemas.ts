@@ -6,7 +6,7 @@ const safeFloatSchema = z
   .transform((val) => {
     if (val === null || val === undefined || val === '') return 0;
     const num = typeof val === 'string' ? parseFloat(val) : val;
-    return isNaN(num) || !isFinite(num) ? 0 : num;
+    return Number.isNaN(num) || !Number.isFinite(num) ? 0 : num;
   })
   .pipe(z.number().finite());
 
@@ -15,7 +15,7 @@ const safeIntSchema = z
   .transform((val) => {
     if (val === null || val === undefined || val === '') return 0;
     const num = typeof val === 'string' ? parseInt(val, 10) : Math.floor(val);
-    return isNaN(num) || !isFinite(num) ? 0 : num;
+    return Number.isNaN(num) || !Number.isFinite(num) ? 0 : num;
   })
   .pipe(z.number().int().finite());
 

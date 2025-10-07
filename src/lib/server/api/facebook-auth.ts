@@ -55,7 +55,7 @@ export async function getValidFacebookToken(
   // Check if token was recently updated (within last 2 minutes)
   // If so, trust the stored token without re-validating with Facebook
   const recentlyUpdated =
-    adAccount.updatedAt && new Date().getTime() - adAccount.updatedAt.getTime() < 2 * 60 * 1000;
+    adAccount.updatedAt && Date.now() - adAccount.updatedAt.getTime() < 2 * 60 * 1000;
 
   if (recentlyUpdated && adAccount.status === 'ACTIVE') {
     return { token: adAccount.facebookAccessToken, adAccount };

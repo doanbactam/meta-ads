@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { TableColumn, type TableConfig } from './types';
+import type { TableConfig } from './types';
 
 interface TableToolbarProps<T> {
   config: TableConfig<T>;

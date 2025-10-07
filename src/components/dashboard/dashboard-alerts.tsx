@@ -111,7 +111,10 @@ export function DashboardAlerts({ adAccountId }: DashboardAlertsProps) {
               })}
             </div>
             <div className="mt-4 pt-3 border-t border-border">
-              <button className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+              <button
+                type="button"
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
                 view all notifications →
               </button>
             </div>

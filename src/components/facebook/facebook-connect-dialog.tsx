@@ -119,7 +119,7 @@ export function FacebookConnectDialog({
 
         try {
           popup?.close();
-        } catch (e) {
+        } catch (_e) {
           // Popup already closed
         }
 
@@ -131,7 +131,7 @@ export function FacebookConnectDialog({
         setError(event.data.error || 'Authentication failed. Please try again.');
         try {
           popup?.close();
-        } catch (e) {
+        } catch (_e) {
           // Popup already closed
         }
       }
@@ -145,7 +145,7 @@ export function FacebookConnectDialog({
       window.removeEventListener('message', handleMessage);
       try {
         popup?.close();
-      } catch (e) {
+      } catch (_e) {
         // Popup already closed
       }
     };

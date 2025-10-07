@@ -33,7 +33,7 @@ export function UniversalDataTable<T extends { id: string }>({
   const [pageSize, setPageSize] = useState(10);
 
   const { settings } = useUserSettings();
-  const { connected, loading: connectionLoading } = useFacebookConnection(adAccountId);
+  const { connected } = useFacebookConnection(adAccountId);
   const { setShowConnectionDialog } = useFacebookStore();
 
   // Fetch ad account data to get currency
@@ -95,14 +95,7 @@ export function UniversalDataTable<T extends { id: string }>({
       }
 
       // Try common variations
-      const possibleKeys = [
-        'campaigns',
-        'adSets',
-        'ads',
-        'data',
-        'items',
-        'results',
-      ];
+      const possibleKeys = ['campaigns', 'adSets', 'ads', 'data', 'items', 'results'];
 
       for (const key of possibleKeys) {
         if (data[key] && Array.isArray(data[key])) {
@@ -160,7 +153,7 @@ export function UniversalDataTable<T extends { id: string }>({
 
   // Pagination
   const totalItems = filteredItems.length;
-  const totalPages = Math.ceil(totalItems / pageSize);
+  const _totalPages = Math.ceil(totalItems / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   const paginatedItems = filteredItems.slice(startIndex, endIndex);

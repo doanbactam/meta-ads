@@ -1,6 +1,6 @@
 'use client';
 
-import { Globe, Clock, Info } from 'lucide-react';
+import { Clock, Globe, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -27,7 +27,7 @@ export function UserSettingsInfo({ collapsed = false }: UserSettingsInfoProps) {
         timeZoneName: 'short',
       });
       const parts = formatter.formatToParts(now);
-      const timeZoneName = parts.find(part => part.type === 'timeZoneName')?.value;
+      const timeZoneName = parts.find((part) => part.type === 'timeZoneName')?.value;
       return timeZoneName || timezone;
     } catch {
       return timezone;

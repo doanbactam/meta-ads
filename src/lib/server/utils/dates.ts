@@ -17,6 +17,6 @@ export function toDbDate(input?: string | Date | null): Date | undefined {
   if (!input) return undefined;
   if (input instanceof Date) return input;
   const parsed = new Date(input);
-  if (isNaN(parsed.getTime())) return undefined;
+  if (Number.isNaN(parsed.getTime())) return undefined;
   return parsed;
 }

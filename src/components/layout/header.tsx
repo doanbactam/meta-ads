@@ -31,12 +31,11 @@ interface HeaderProps {
 }
 
 export function Header({ onToggleSidebar, selectedAdAccount, onAdAccountChange }: HeaderProps) {
-  const { user, isSignedIn } = useUser();
+  const { isSignedIn } = useUser();
   const isInitializedRef = useRef(false);
   const lastAccountsLengthRef = useRef(0);
   const { showConnectionDialog, setShowConnectionDialog } = useFacebookStore();
   const {
-    connected,
     loading: fbLoading,
     connectFacebook,
   } = useFacebookConnection(selectedAdAccount);

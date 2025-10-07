@@ -1,16 +1,16 @@
 import {
-  appRateLimiter,
-  adAccountRateLimiter,
-  insightsCache,
-  entityCache,
-  accountCache,
-} from './rate-limiter';
-import {
-  sanitizeFacebookCampaign,
-  sanitizeFacebookAdSet,
   sanitizeFacebookAd,
   sanitizeFacebookAdAccount,
+  sanitizeFacebookAdSet,
+  sanitizeFacebookCampaign,
 } from '@/lib/shared/data-sanitizer';
+import {
+  accountCache,
+  adAccountRateLimiter,
+  appRateLimiter,
+  entityCache,
+  insightsCache,
+} from './rate-limiter';
 
 // Facebook API V23 Error Codes
 export const FACEBOOK_ERROR_CODES = {
@@ -152,8 +152,8 @@ export class FacebookMarketingAPI {
 
         // Check rate limit headers
         const rateLimitRemaining = response.headers.get('x-app-usage');
-        const businessUsage = response.headers.get('x-business-use-case-usage');
-        
+        const _businessUsage = response.headers.get('x-business-use-case-usage');
+
         if (rateLimitRemaining) {
           try {
             const usage = JSON.parse(rateLimitRemaining);
@@ -161,7 +161,7 @@ export class FacebookMarketingAPI {
               console.warn('Approaching Facebook API rate limit:', usage);
               await new Promise((resolve) => setTimeout(resolve, 2000)); // Throttle
             }
-          } catch (e) {
+          } catch (_e) {
             // Ignore parse errors
           }
         }
@@ -190,8 +190,10 @@ export class FacebookMarketingAPI {
             response.status === 429
           ) {
             if (retryCount < maxRetries) {
-              const backoffTime = Math.pow(2, retryCount) * 1000 + Math.floor(Math.random() * 250);
-              console.warn(`Rate limit hit, retrying in ${backoffTime}ms (attempt ${retryCount + 1}/${maxRetries})`);
+              const backoffTime = 2 ** retryCount * 1000 + Math.floor(Math.random() * 250);
+              console.warn(
+                `Rate limit hit, retrying in ${backoffTime}ms (attempt ${retryCount + 1}/${maxRetries})`
+              );
               await new Promise((resolve) => setTimeout(resolve, backoffTime));
               retryCount++;
               continue; // Retry same request
@@ -235,12 +237,13 @@ export class FacebookMarketingAPI {
 
         // Log pagination progress
         if (nextUrl) {
-          console.log(`Fetched page ${pageCount}, total items: ${allData.length}, fetching next page...`);
+          console.log(
+            `Fetched page ${pageCount}, total items: ${allData.length}, fetching next page...`
+          );
         }
-
       } catch (error) {
         clearTimeout(timeoutId);
-        
+
         // Re-throw token expiry errors
         if (error instanceof FacebookTokenExpiredError) {
           throw error;
@@ -318,12 +321,12 @@ export class FacebookMarketingAPI {
         // Parse granular_scopes to extract business IDs
         const granularScopes = tokenData.granular_scopes || [];
         const businessIds: string[] = [];
-        
+
         for (const gs of granularScopes) {
           if (
-            (gs.scope === 'ads_management' || 
-             gs.scope === 'business_management' ||
-             gs.scope === 'ads_read') &&
+            (gs.scope === 'ads_management' ||
+              gs.scope === 'business_management' ||
+              gs.scope === 'ads_read') &&
             gs.target_ids &&
             Array.isArray(gs.target_ids)
           ) {
@@ -385,7 +388,7 @@ export class FacebookMarketingAPI {
   async getBusinessAdAccounts(businessId: string): Promise<FacebookAdAccountData[]> {
     try {
       console.log(`Fetching ad accounts for business ${businessId}`);
-      
+
       // Fetch both owned and client accounts in parallel
       const [ownedAccounts, clientAccounts] = await Promise.all([
         this.getBusinessOwnedAccounts(businessId),
@@ -441,26 +444,20 @@ export class FacebookMarketingAPI {
    * Get ad accounts that the business manages for clients (agency accounts)
    */
   private async getBusinessClientAccounts(businessId: string): Promise<FacebookAdAccountData[]> {
-    try {
-      const url = `https://graph.facebook.com/v23.0/${businessId}/client_ad_accounts?fields=${OPTIMIZED_FIELDS.adAccount},business_id,access_type&limit=100`;
-      const accounts = await this.fetchAllPages<any>(url);
+    const url = `https://graph.facebook.com/v23.0/${businessId}/client_ad_accounts?fields=${OPTIMIZED_FIELDS.adAccount},business_id,access_type&limit=100`;
+    const accounts = await this.fetchAllPages<any>(url);
 
-      return accounts.map((account: any) =>
-        sanitizeFacebookAdAccount({
-          id: account.id,
-          name: account.name,
-          accountStatus: account.account_status,
-          currency: account.currency,
-          timezone: account.timezone_name,
-          businessId: account.business_id || businessId,
-          accessType: account.access_type || 'AGENCY',
-        })
-      );
-    } catch (error) {
-      // Client accounts endpoint may fail if business doesn't have agency access
-      // This is expected and should not break the flow
-      throw error;
-    }
+    return accounts.map((account: any) =>
+      sanitizeFacebookAdAccount({
+        id: account.id,
+        name: account.name,
+        accountStatus: account.account_status,
+        currency: account.currency,
+        timezone: account.timezone_name,
+        businessId: account.business_id || businessId,
+        accessType: account.access_type || 'AGENCY',
+      })
+    );
   }
 
   /**
@@ -583,7 +580,7 @@ export class FacebookMarketingAPI {
       return result;
     } catch (error) {
       console.error('Error fetching campaigns:', error);
-      
+
       // Re-throw token expiry errors
       if (error instanceof FacebookTokenExpiredError) {
         throw error;
@@ -749,7 +746,7 @@ export class FacebookMarketingAPI {
       return sanitizedAdSets;
     } catch (error) {
       console.error('Error fetching ad sets:', error);
-      
+
       // Re-throw token expiry errors
       if (error instanceof FacebookTokenExpiredError) {
         throw error;
@@ -893,7 +890,7 @@ export class FacebookMarketingAPI {
       return sanitizedAds;
     } catch (error) {
       console.error('Error fetching ads:', error);
-      
+
       // Re-throw token expiry errors
       if (error instanceof FacebookTokenExpiredError) {
         throw error;

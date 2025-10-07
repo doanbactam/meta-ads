@@ -1,11 +1,11 @@
+import { mapFacebookStatus } from './formatters';
 import {
+  facebookAdAccountDataSchema,
+  facebookAdDataSchema,
+  facebookAdSetDataSchema,
   facebookCampaignDataSchema,
   facebookCampaignInsightsSchema,
-  facebookAdSetDataSchema,
-  facebookAdDataSchema,
-  facebookAdAccountDataSchema,
 } from './validations/schemas';
-import { mapFacebookStatus } from './formatters';
 
 /**
  * Safe number parsing utilities with proper validation
@@ -28,12 +28,12 @@ export function safeParseFloat(
 
   const num = typeof value === 'string' ? parseFloat(value) : value;
 
-  if (isNaN(num) || !isFinite(num)) {
+  if (Number.isNaN(num) || !Number.isFinite(num)) {
     return 0;
   }
 
   const result = num / divideBy;
-  return isFinite(result) ? result : 0;
+  return Number.isFinite(result) ? result : 0;
 }
 
 /**
@@ -48,7 +48,7 @@ export function safeParseInt(value: string | number | null | undefined): number 
 
   const num = typeof value === 'string' ? parseInt(value, 10) : Math.floor(value);
 
-  if (isNaN(num) || !isFinite(num)) {
+  if (Number.isNaN(num) || !Number.isFinite(num)) {
     return 0;
   }
 
@@ -263,7 +263,16 @@ export function sanitizeFacebookStatus(
 
   // Validate against allowed enum values
   const validStatuses = {
-    campaign: ['ACTIVE', 'PAUSED', 'DELETED', 'ARCHIVED', 'PENDING', 'ENDED', 'DISAPPROVED', 'REMOVED'],
+    campaign: [
+      'ACTIVE',
+      'PAUSED',
+      'DELETED',
+      'ARCHIVED',
+      'PENDING',
+      'ENDED',
+      'DISAPPROVED',
+      'REMOVED',
+    ],
     adset: ['ACTIVE', 'PAUSED', 'DELETED', 'ARCHIVED', 'PENDING', 'ENDED'],
     ad: ['ACTIVE', 'PAUSED', 'DELETED', 'ARCHIVED', 'PENDING', 'REVIEW', 'REJECTED', 'DISAPPROVED'],
   };
@@ -291,7 +300,7 @@ export function sanitizeDate(dateString: string | null | undefined): Date {
 
   try {
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
+    if (Number.isNaN(date.getTime())) {
       console.warn(`Invalid date string: ${dateString}`);
       return new Date();
     }

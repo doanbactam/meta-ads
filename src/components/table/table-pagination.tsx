@@ -51,7 +51,7 @@ export function TablePagination({
   };
 
   const handleGoToPage = () => {
-    const page = parseInt(goToPage);
+    const page = parseInt(goToPage, 10);
     if (page >= 1 && page <= totalPages) {
       onPageChange(page);
     } else {
@@ -109,7 +109,7 @@ export function TablePagination({
           <span className="text-muted-foreground">rows:</span>
           <Select
             value={pageSize.toString()}
-            onValueChange={(value) => onPageSizeChange(parseInt(value))}
+            onValueChange={(value) => onPageSizeChange(parseInt(value, 10))}
           >
             <SelectTrigger size="sm" className="w-14 text-xs">
               <SelectValue />

@@ -2,8 +2,8 @@ import { auth } from '@clerk/nextjs/server';
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { analyzeCampaign } from '@/lib/ai/analyzer';
-import { prisma } from '@/lib/server/prisma';
 import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
+import { prisma } from '@/lib/server/prisma';
 
 const analyzeSchema = z.object({
   campaignId: z.string(),
@@ -42,17 +42,22 @@ export async function POST(request: NextRequest) {
     });
 
     if (!campaign) {
-      return NextResponse.json(
-        { error: 'Campaign not found or access denied' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Campaign not found or access denied' }, { status: 404 });
     }
 
     // Transform Prisma model to Campaign type
     const campaignData = {
       id: campaign.id,
       name: campaign.name,
-      status: campaign.status as 'ACTIVE' | 'PAUSED' | 'DELETED' | 'ARCHIVED' | 'PENDING' | 'ENDED' | 'DISAPPROVED' | 'REMOVED',
+      status: campaign.status as
+        | 'ACTIVE'
+        | 'PAUSED'
+        | 'DELETED'
+        | 'ARCHIVED'
+        | 'PENDING'
+        | 'ENDED'
+        | 'DISAPPROVED'
+        | 'REMOVED',
       budget: campaign.budget,
       spent: campaign.spent,
       impressions: campaign.impressions,
@@ -78,16 +83,10 @@ export async function POST(request: NextRequest) {
     console.error('AI analysis error:', error);
 
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: error.errors },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid input', details: error.errors }, { status: 400 });
     }
 
     const errorMessage = error instanceof Error ? error.message : 'Analysis failed';
-    return NextResponse.json(
-      { error: 'Analysis failed', message: errorMessage },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Analysis failed', message: errorMessage }, { status: 500 });
   }
 }

@@ -22,9 +22,7 @@ export function UserSettingsProvider({ children }: { children: React.ReactNode }
   };
 
   return (
-    <UserSettingsContext.Provider value={{ settings }}>
-      {children}
-    </UserSettingsContext.Provider>
+    <UserSettingsContext.Provider value={{ settings }}>{children}</UserSettingsContext.Provider>
   );
 }
 

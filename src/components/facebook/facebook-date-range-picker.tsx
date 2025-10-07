@@ -1,10 +1,17 @@
 'use client';
 
-import * as React from 'react';
+import {
+  endOfDay,
+  endOfMonth,
+  format,
+  startOfDay,
+  startOfMonth,
+  subDays,
+  subMonths,
+} from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
-import { format, subDays, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, subMonths } from 'date-fns';
+import * as React from 'react';
 import { DateRange } from 'react-day-picker';
-import { cn } from '@/lib/shared/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -15,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { cn } from '@/lib/shared/utils';
 
 interface FacebookDateRangePickerProps {
   value: { from: Date | undefined; to: Date | undefined };
@@ -42,7 +50,7 @@ const DATE_PRESETS = [
   { value: 'custom', label: 'Custom Range' },
 ] as const;
 
-type DatePreset = typeof DATE_PRESETS[number]['value'];
+type DatePreset = (typeof DATE_PRESETS)[number]['value'];
 
 // Convert preset to actual date range
 function presetToDateRange(preset: DatePreset): { from: Date; to: Date } | null {
@@ -66,12 +74,16 @@ function presetToDateRange(preset: DatePreset): { from: Date; to: Date } | null 
       return { from: startOfDay(subDays(now, 89)), to: endOfDay(now) };
     case 'this_month':
       return { from: startOfMonth(now), to: endOfDay(now) };
-    case 'last_month':
+    case 'last_month': {
       const lastMonth = subMonths(now, 1);
       return { from: startOfMonth(lastMonth), to: endOfMonth(lastMonth) };
-    case 'this_quarter':
-      const quarterStart = startOfMonth(new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1));
+    }
+    case 'this_quarter': {
+      const quarterStart = startOfMonth(
+        new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1)
+      );
       return { from: quarterStart, to: endOfDay(now) };
+    }
     case 'last_3_months':
       return { from: startOfDay(subMonths(now, 3)), to: endOfDay(now) };
     case 'lifetime':
@@ -94,7 +106,11 @@ function detectPreset(from: Date | undefined, to: Date | undefined): DatePreset 
   for (const preset of DATE_PRESETS) {
     if (preset.value === 'custom') continue;
     const range = presetToDateRange(preset.value);
-    if (range && format(range.from, 'yyyy-MM-dd') === fromStr && format(range.to, 'yyyy-MM-dd') === toStr) {
+    if (
+      range &&
+      format(range.from, 'yyyy-MM-dd') === fromStr &&
+      format(range.to, 'yyyy-MM-dd') === toStr
+    ) {
       return preset.value;
     }
   }
@@ -142,15 +158,15 @@ export function FacebookDateRangePicker({
     if (range?.from && range?.to) {
       const fromDate = startOfDay(range.from);
       const toDate = endOfDay(range.to);
-      
+
       onChange({ from: fromDate, to: toDate });
-      
+
       // Also call string callback if provided
       onChangeStrings?.({
         from: format(fromDate, 'yyyy-MM-dd'),
         to: format(toDate, 'yyyy-MM-dd'),
       });
-      
+
       setPreset('custom');
       setIsCalendarOpen(false);
     }
@@ -163,14 +179,15 @@ export function FacebookDateRangePicker({
 
     if (!customDate?.from) return 'Custom Range';
     if (!customDate.to) return format(customDate.from, 'MMM dd, yyyy');
-    
-    const isSameMonth = customDate.from.getMonth() === customDate.to.getMonth() && 
-                        customDate.from.getFullYear() === customDate.to.getFullYear();
-    
+
+    const isSameMonth =
+      customDate.from.getMonth() === customDate.to.getMonth() &&
+      customDate.from.getFullYear() === customDate.to.getFullYear();
+
     if (isSameMonth) {
       return `${format(customDate.from, 'MMM dd')} - ${format(customDate.to, 'dd, yyyy')}`;
     }
-    
+
     return `${format(customDate.from, 'MMM dd')} - ${format(customDate.to, 'MMM dd, yyyy')}`;
   };
 

@@ -1,16 +1,16 @@
-import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { FacebookSyncService, syncAllAdAccounts } from '@/lib/server/facebook-sync-service';
+import { NextResponse } from 'next/server';
 import { getValidFacebookToken } from '@/lib/server/api/facebook-auth';
 import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
+import { FacebookSyncService, syncAllAdAccounts } from '@/lib/server/facebook-sync-service';
 import { prisma } from '@/lib/server/prisma';
 
 /**
  * Sync API Endpoint
- * 
+ *
  * GET /api/sync - Sync all ad accounts (for cron jobs)
  * POST /api/sync - Sync specific ad account (manual trigger)
- * 
+ *
  * Usage:
  * - Cron job: curl https://your-domain.com/api/sync?secret=YOUR_CRON_SECRET
  * - Manual: POST /api/sync with body { adAccountId: "xxx", force: true }
@@ -98,11 +98,7 @@ export async function POST(request: Request) {
     }
 
     // Create sync service and run sync
-    const syncService = new FacebookSyncService(
-      token,
-      adAccount.facebookAdAccountId,
-      adAccount.id
-    );
+    const syncService = new FacebookSyncService(token, adAccount.facebookAdAccountId, adAccount.id);
 
     const result = await syncService.syncAll({ force });
 

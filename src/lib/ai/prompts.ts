@@ -6,7 +6,8 @@ import type { Campaign } from '@/types';
 export function buildCampaignAnalysisPrompt(campaign: Campaign): string {
   const ctr = campaign.ctr * 100;
   const cpc = campaign.clicks > 0 ? campaign.spent / campaign.clicks : 0;
-  const conversionRate = campaign.impressions > 0 ? (campaign.conversions / campaign.impressions) * 100 : 0;
+  const conversionRate =
+    campaign.impressions > 0 ? (campaign.conversions / campaign.impressions) * 100 : 0;
   const budgetUtilization = campaign.budget > 0 ? (campaign.spent / campaign.budget) * 100 : 0;
 
   return `Analyze this Facebook ad campaign and provide actionable insights:
