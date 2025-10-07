@@ -186,7 +186,6 @@ export class FacebookSyncService {
               costPerConversion: insights?.costPerConversion ?? 0,
               dateStart,
               dateEnd,
-              schedule: 'continuous',
               lastSyncedAt: new Date(),
             },
             update: {

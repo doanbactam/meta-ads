@@ -56,31 +56,59 @@ model AdAccount {
 }
 
 model Campaign {
-  id                 String         @id @default(cuid())
-  adAccountId        String         @map("ad_account_id")
-  name               String
-  budget             Float
-  spent              Float          @default(0)
-  impressions        Int            @default(0)
-  clicks             Int            @default(0)
-  ctr                Float          @default(0)
-  conversions        Int            @default(0)
-  costPerConversion  Float          @default(0) @map("cost_per_conversion")
-  schedule           String
-  createdAt          DateTime       @default(now()) @map("created_at")
-  updatedAt          DateTime       @updatedAt @map("updated_at")
-  facebookCampaignId String?        @unique @map("facebook_campaign_id")
-  lastSyncedAt       DateTime?      @map("last_synced_at")
-  status             CampaignStatus @default(ACTIVE)
-  dateStart          DateTime       @map("date_start")
-  dateEnd            DateTime       @map("date_end")
-  adGroups           AdGroup[]
-  adAccount          AdAccount      @relation(fields: [adAccountId], references: [id], onDelete: Cascade)
-
+  id                    String                     @id @default(cuid())
+  adAccountId           String                     @map("ad_account_id")
+  
+  // Facebook fields
+  facebookCampaignId    String?                    @unique @map("facebook_campaign_id")
+  name                  String
+  status                CampaignStatus             @default(ACTIVE)
+  effectiveStatus       CampaignEffectiveStatus?   @map("effective_status")
+  objective             CampaignObjective?
+  
+  // Budget fields - using Decimal for precision
+  spendCap              Decimal?                   @map("spend_cap") @db.Decimal(12, 2)
+  dailyBudget           Decimal?                   @map("daily_budget") @db.Decimal(12, 2)
+  lifetimeBudget        Decimal?                   @map("lifetime_budget") @db.Decimal(12, 2)
+  budgetRemaining       Decimal?                   @map("budget_remaining") @db.Decimal(12, 2)
+  budget                Float                      // Legacy field - kept for backward compatibility
+  
+  // Metrics (cached from insights)
+  spent                 Decimal                    @default(0) @db.Decimal(12, 2)
+  impressions           BigInt                     @default(0)
+  clicks                BigInt                     @default(0)
+  reach                 BigInt?                    @default(0)
+  frequency             Decimal?                   @db.Decimal(10, 4)
+  ctr                   Decimal                    @default(0) @db.Decimal(10, 4)
+  cpc                   Decimal?                   @db.Decimal(10, 4)
+  cpm                   Decimal?                   @db.Decimal(10, 4)
+  conversions           Int                        @default(0)
+  costPerConversion     Decimal                    @default(0) @map("cost_per_conversion") @db.Decimal(10, 4)
+  
+  // Timestamps
+  createdAt             DateTime                   @default(now()) @map("created_at")
+  updatedAt             DateTime                   @updatedAt @map("updated_at")
+  facebookCreatedTime   DateTime?                  @map("facebook_created_time")
+  facebookUpdatedTime   DateTime?                  @map("facebook_updated_time")
+  startTime             DateTime?                  @map("start_time")
+  stopTime              DateTime?                  @map("stop_time")
+  lastSyncedAt          DateTime?                  @map("last_synced_at")
+  dateStart             DateTime                   @map("date_start")
+  dateEnd               DateTime                   @map("date_end")
+  
+  // Additional Facebook fields
+  bidStrategy           String?                    @map("bid_strategy")
+  specialAdCategories   String[]                   @map("special_ad_categories")
+  
+  // Relations
+  adAccount             AdAccount                  @relation(fields: [adAccountId], references: [id], onDelete: Cascade)
+  adGroups              AdGroup[]
+  
   @@index([adAccountId])
   @@index([facebookCampaignId])
-  @@index([lastSyncedAt])
   @@index([status])
+  @@index([effectiveStatus])
+  @@index([lastSyncedAt])
   @@index([adAccountId, status])
   @@index([adAccountId, lastSyncedAt])
   @@index([dateStart, dateEnd])
@@ -88,30 +116,57 @@ model Campaign {
 }
 
 model AdGroup {
-  id              String      @id @default(cuid())
-  campaignId      String      @map("campaign_id")
-  name            String
-  budget          Float
-  spent           Float       @default(0)
-  impressions     Int         @default(0)
-  clicks          Int         @default(0)
-  ctr             Float       @default(0)
-  cpc             Float       @default(0)
-  conversions     Int         @default(0)
-  createdAt       DateTime    @default(now()) @map("created_at")
-  updatedAt       DateTime    @updatedAt @map("updated_at")
-  facebookAdSetId String?     @unique @map("facebook_adset_id")
-  lastSyncedAt    DateTime?   @map("last_synced_at")
-  status          AdSetStatus @default(ACTIVE)
-  dateStart       DateTime    @map("date_start")
-  dateEnd         DateTime    @map("date_end")
-  campaign        Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  creatives       Creative[]
-
+  id                    String                  @id @default(cuid())
+  campaignId            String                  @map("campaign_id")
+  
+  // Facebook fields
+  facebookAdSetId       String?                 @unique @map("facebook_adset_id")
+  name                  String
+  status                AdSetStatus             @default(ACTIVE)
+  effectiveStatus       AdSetEffectiveStatus?   @map("effective_status")
+  
+  // Budget & Bidding - using Decimal for precision
+  dailyBudget           Decimal?                @map("daily_budget") @db.Decimal(12, 2)
+  lifetimeBudget        Decimal?                @map("lifetime_budget") @db.Decimal(12, 2)
+  budgetRemaining       Decimal?                @map("budget_remaining") @db.Decimal(12, 2)
+  bidAmount             Decimal?                @map("bid_amount") @db.Decimal(12, 2)
+  billingEvent          String?                 @map("billing_event")
+  optimizationGoal      String?                 @map("optimization_goal")
+  budget                Float                   // Legacy field - kept for backward compatibility
+  
+  // Targeting (stored as JSON)
+  targeting             Json?
+  
+  // Metrics (cached from insights)
+  spent                 Decimal                 @default(0) @db.Decimal(12, 2)
+  impressions           BigInt                  @default(0)
+  clicks                BigInt                  @default(0)
+  reach                 BigInt?                 @default(0)
+  ctr                   Decimal                 @default(0) @db.Decimal(10, 4)
+  cpc                   Decimal                 @default(0) @db.Decimal(10, 4)
+  cpm                   Decimal?                @db.Decimal(10, 4)
+  conversions           Int                     @default(0)
+  
+  // Timestamps
+  createdAt             DateTime                @default(now()) @map("created_at")
+  updatedAt             DateTime                @updatedAt @map("updated_at")
+  facebookCreatedTime   DateTime?               @map("facebook_created_time")
+  facebookUpdatedTime   DateTime?               @map("facebook_updated_time")
+  startTime             DateTime?               @map("start_time")
+  endTime               DateTime?               @map("end_time")
+  lastSyncedAt          DateTime?               @map("last_synced_at")
+  dateStart             DateTime                @map("date_start")
+  dateEnd               DateTime                @map("date_end")
+  
+  // Relations
+  campaign              Campaign                @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  creatives             Creative[]
+  
   @@index([campaignId])
   @@index([facebookAdSetId])
-  @@index([lastSyncedAt])
   @@index([status])
+  @@index([effectiveStatus])
+  @@index([lastSyncedAt])
   @@index([campaignId, status])
   @@index([dateStart, dateEnd])
   @@map("ad_groups")
@@ -194,4 +249,53 @@ enum CreativeStatus {
   REVIEW
   REJECTED
   DISAPPROVED
+}
+
+enum CampaignEffectiveStatus {
+  ACTIVE
+  PAUSED
+  DELETED
+  PENDING_REVIEW
+  DISAPPROVED
+  PREAPPROVED
+  PENDING_BILLING_INFO
+  CAMPAIGN_PAUSED
+  ARCHIVED
+  ADSET_PAUSED
+  IN_PROCESS
+  WITH_ISSUES
+}
+
+enum AdSetEffectiveStatus {
+  ACTIVE
+  PAUSED
+  DELETED
+  PENDING_REVIEW
+  DISAPPROVED
+  PREAPPROVED
+  PENDING_BILLING_INFO
+  CAMPAIGN_PAUSED
+  ARCHIVED
+  ADSET_PAUSED
+}
+
+enum CampaignObjective {
+  APP_INSTALLS
+  BRAND_AWARENESS
+  CONVERSIONS
+  EVENT_RESPONSES
+  LEAD_GENERATION
+  LINK_CLICKS
+  MESSAGES
+  OUTCOME_AWARENESS
+  OUTCOME_ENGAGEMENT
+  OUTCOME_LEADS
+  OUTCOME_SALES
+  OUTCOME_TRAFFIC
+  PAGE_LIKES
+  POST_ENGAGEMENT
+  PRODUCT_CATALOG_SALES
+  REACH
+  STORE_VISITS
+  VIDEO_VIEWS
 }

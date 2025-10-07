@@ -19,7 +19,6 @@ export interface Campaign {
   cost_per_conversion: number;
   date_start: string;
   date_end: string;
-  schedule: string;
   created_at?: string;
   updated_at?: string;
 }

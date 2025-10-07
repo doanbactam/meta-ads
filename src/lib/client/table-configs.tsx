@@ -70,17 +70,6 @@ export const campaignTableConfig: TableConfig<Campaign> = {
       label: 'cost_per_conv',
       accessor: 'cost_per_conversion',
     },
-    {
-      id: 'dateRange',
-      label: 'date_range',
-      accessor: (item) => ({ date_start: item.date_start, date_end: item.date_end }),
-    },
-    {
-      id: 'schedule',
-      label: 'schedule',
-      accessor: 'schedule',
-      render: (value) => <span className="text-muted-foreground">{value || '--'}</span>,
-    },
   ],
 
   defaultColumns: [
@@ -93,8 +82,6 @@ export const campaignTableConfig: TableConfig<Campaign> = {
     'ctr',
     'conversions',
     'cost',
-    'dateRange',
-    'schedule',
   ],
 
   actions: {
@@ -327,11 +314,6 @@ export const adGroupsTableConfig: TableConfig<AdGroup> = {
       label: 'conversions',
       accessor: 'conversions',
     },
-    {
-      id: 'dateRange',
-      label: 'date_range',
-      accessor: (item) => ({ date_start: item.date_start, date_end: item.date_end }),
-    },
   ],
 
   defaultColumns: [
@@ -345,7 +327,6 @@ export const adGroupsTableConfig: TableConfig<AdGroup> = {
     'ctr',
     'cpc',
     'conversions',
-    'dateRange',
   ],
 
   actions: {
@@ -502,11 +483,6 @@ export const adsTableConfig: TableConfig<Ad> = {
       label: 'roas',
       accessor: 'roas',
     },
-    {
-      id: 'dateRange',
-      label: 'date_range',
-      accessor: (item) => ({ date_start: item.date_start, date_end: item.date_end }),
-    },
   ],
 
   defaultColumns: [
@@ -520,7 +496,6 @@ export const adsTableConfig: TableConfig<Ad> = {
     'engagement',
     'spend',
     'roas',
-    'dateRange',
   ],
 
   actions: {

@@ -11,6 +11,16 @@ import {
   entityCache,
   insightsCache,
 } from './rate-limiter';
+import { FacebookSDKClient } from './facebook-sdk-client';
+import { BatchRequestManager } from './batch-request-manager';
+import { CacheManager } from './cache-manager';
+import { FACEBOOK_API_CONFIG } from './config/facebook';
+import {
+  enhanceTokenValidation,
+  canPerformOperation,
+  validateBusinessAccess,
+  type EnhancedTokenValidation,
+} from './token-validation';
 
 // Facebook API V23 Error Codes
 export const FACEBOOK_ERROR_CODES = {
@@ -99,6 +109,9 @@ const OPTIMIZED_FIELDS = {
 export class FacebookMarketingAPI {
   private accessToken: string;
   private rateLimitPrefix: string;
+  private sdkClient: FacebookSDKClient;
+  private batchManager: BatchRequestManager;
+  private cacheManager: CacheManager;
 
   constructor(accessToken: string) {
     this.accessToken = accessToken;
@@ -107,6 +120,35 @@ export class FacebookMarketingAPI {
     this.rateLimitPrefix = Buffer.from(accessToken)
       .toString('base64')
       .slice(-16, -4);
+
+    // Initialize FacebookSDKClient
+    this.sdkClient = new FacebookSDKClient({
+      accessToken,
+      apiVersion: FACEBOOK_API_CONFIG.apiVersion,
+    });
+
+    // Initialize BatchRequestManager
+    this.batchManager = new BatchRequestManager(this.sdkClient);
+
+    // Initialize CacheManager with configuration
+    this.cacheManager = new CacheManager(1000);
+  }
+
+  /**
+   * Handle API errors and detect token revocation
+   * Requirements: 8.4 - Detect token revocation from API errors
+   */
+  private async handleApiError(error: any, adAccountId?: string): Promise<void> {
+    // Import here to avoid circular dependency
+    const { isTokenRevocationError, handleTokenRevocationFromError } = await import('./token-revocation');
+    
+    // Check if error indicates token revocation
+    const revocationInfo = isTokenRevocationError(error);
+    
+    if (revocationInfo.isRevoked && adAccountId) {
+      console.warn(`Token revocation detected for account ${adAccountId}: ${revocationInfo.reason}`);
+      await handleTokenRevocationFromError(adAccountId, error);
+    }
   }
 
   /**
@@ -382,6 +424,41 @@ export class FacebookMarketingAPI {
   }
 
   /**
+   * Enhanced token validation with granular scope and business ID checking
+   * Requirements: 8.2, 8.5 - Enhanced token validation
+   */
+  async validateTokenEnhanced(): Promise<EnhancedTokenValidation> {
+    const basicValidation = await this.validateToken();
+    return enhanceTokenValidation(basicValidation);
+  }
+
+  /**
+   * Validate token for specific operation and business
+   * Requirements: 8.2, 8.5 - Granular scope checking and business ID validation
+   */
+  async canPerformOperationOnBusiness(
+    operation: 'read' | 'manage',
+    businessId?: string
+  ): Promise<{ allowed: boolean; reason?: string }> {
+    const validation = await this.validateTokenEnhanced();
+    return canPerformOperation(validation, operation, businessId);
+  }
+
+  /**
+   * Validate business access for token
+   * Requirements: 8.5 - Business ID validation
+   */
+  async validateBusinessAccess(businessId: string): Promise<{
+    hasAccess: boolean;
+    businessId: string;
+    accessType?: 'direct' | 'granular';
+    availableBusinessIds: string[];
+  }> {
+    const validation = await this.validateToken();
+    return validateBusinessAccess(businessId, validation);
+  }
+
+  /**
    * Get ad accounts for a specific business (owned + client accounts)
    * This is the recommended approach when user grants permission to specific businesses
    */
@@ -389,26 +466,36 @@ export class FacebookMarketingAPI {
     try {
       console.log(`Fetching ad accounts for business ${businessId}`);
 
-      // Fetch both owned and client accounts in parallel
-      const [ownedAccounts, clientAccounts] = await Promise.all([
-        this.getBusinessOwnedAccounts(businessId),
-        this.getBusinessClientAccounts(businessId).catch((err) => {
-          console.warn(`Could not fetch client accounts for business ${businessId}:`, err.message);
-          return [];
-        }),
-      ]);
+      // Check cache first
+      const cacheKey = `${this.rateLimitPrefix}:business:${businessId}:accounts`;
+      const cached = await this.cacheManager.get<FacebookAdAccountData[]>(cacheKey);
+      if (cached) {
+        console.log(`Cache hit for business ad accounts: ${businessId}`);
+        return cached;
+      }
 
-      // Combine and deduplicate by account ID
-      const allAccounts = [...ownedAccounts, ...clientAccounts];
-      const uniqueAccounts = allAccounts.filter(
-        (account, index, self) => index === self.findIndex((a) => a.id === account.id)
+      // Use SDK client to fetch accounts
+      const accounts = await this.sdkClient.getAdAccounts(businessId);
+
+      // Transform SDK response to internal format
+      const result = accounts.map((account) =>
+        sanitizeFacebookAdAccount({
+          id: account.id,
+          name: account.name,
+          accountStatus: account.account_status,
+          currency: account.currency,
+          timezone: account.timezone_name,
+          businessId: account.business?.id || businessId,
+          accessType: account.access_type,
+        })
       );
 
-      console.log(
-        `Found ${uniqueAccounts.length} ad accounts for business ${businessId} (${ownedAccounts.length} owned, ${clientAccounts.length} client)`
-      );
+      // Cache the result
+      this.cacheManager.set(cacheKey, result, 'adAccount');
 
-      return uniqueAccounts;
+      console.log(`Found ${result.length} ad accounts for business ${businessId}`);
+
+      return result;
     } catch (error) {
       console.error(`Error fetching business ad accounts for ${businessId}:`, error);
       throw error;

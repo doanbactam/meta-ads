@@ -40,7 +40,6 @@ async function getCampaignsFromDatabase(adAccountId: string) {
     cost_per_conversion: campaign.costPerConversion,
     date_start: campaign.dateStart,
     date_end: campaign.dateEnd,
-    schedule: campaign.schedule,
     created_at: campaign.createdAt.toISOString(),
     updated_at: campaign.updatedAt.toISOString(),
   }));

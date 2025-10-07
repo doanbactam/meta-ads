@@ -67,7 +67,6 @@ export async function POST(request: NextRequest) {
       cost_per_conversion: campaign.costPerConversion,
       date_start: campaign.dateStart.toISOString().split('T')[0],
       date_end: campaign.dateEnd.toISOString().split('T')[0],
-      schedule: campaign.schedule,
       created_at: campaign.createdAt.toISOString(),
       updated_at: campaign.updatedAt.toISOString(),
     };

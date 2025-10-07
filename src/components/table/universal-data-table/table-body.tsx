@@ -1,7 +1,6 @@
 'use client';
 
-import { FormatBadge } from '@/components/common/format-badge';
-import { StatusBadge } from '@/components/common/status-badge';
+import { FormatBadge, StatusBadge } from '@/components/common/badges';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   formatCurrency,

@@ -78,7 +78,6 @@ async function main() {
       costPerConversion: 5.22,
       dateStart: '2025-06-01',
       dateEnd: '2025-08-31',
-      schedule: 'Daily 9am-9pm',
     },
   });
 
@@ -96,7 +95,6 @@ async function main() {
       costPerConversion: 4.29,
       dateStart: '2025-05-15',
       dateEnd: '2025-07-15',
-      schedule: 'All day',
     },
   });
 
@@ -114,7 +112,6 @@ async function main() {
       costPerConversion: 6.15,
       dateStart: '2025-07-01',
       dateEnd: '2025-09-30',
-      schedule: 'Daily 10am-10pm',
     },
   });
 
@@ -132,7 +129,6 @@ async function main() {
       costPerConversion: 11.84,
       dateStart: '2025-06-15',
       dateEnd: '2025-09-15',
-      schedule: 'Weekdays 8am-6pm',
     },
   });
 
