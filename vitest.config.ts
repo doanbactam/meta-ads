@@ -9,7 +9,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    setupFiles: ['./tests/setup.ts'],
+    // setupFiles: ['./tests/setup.ts'], // Temporarily disabled for verification
     env: {
       TEST_DATABASE_URL: process.env.TEST_DATABASE_URL || '',
       FACEBOOK_APP_ID: process.env.FACEBOOK_APP_ID || 'test_app_id',
