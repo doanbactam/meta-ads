@@ -98,11 +98,15 @@ const OPTIMIZED_FIELDS = {
 
 export class FacebookMarketingAPI {
   private accessToken: string;
+  private rateLimitPrefix: string;
 
   constructor(accessToken: string) {
     this.accessToken = accessToken;
-    // Removed global SDK init to prevent cross-account token collision
-    // Using fetch API directly instead
+    // Create a short, unique-ish identifier from the access token to namespace
+    // rate limits and cache entries on a per-user basis.
+    this.rateLimitPrefix = Buffer.from(accessToken)
+      .toString('base64')
+      .slice(-16, -4);
   }
 
   /**
@@ -129,9 +133,10 @@ export class FacebookMarketingAPI {
         break;
       }
       visited.add(nextUrl);
-      // Apply rate limiting
-      await appRateLimiter.waitForLimit(rateLimitKey);
-      await adAccountRateLimiter.waitForLimit(rateLimitKey);
+      // Apply rate limiting with per-user prefix
+      const prefixedRateLimitKey = `${this.rateLimitPrefix}:${rateLimitKey}`;
+      await appRateLimiter.waitForLimit(prefixedRateLimitKey);
+      await adAccountRateLimiter.waitForLimit(prefixedRateLimitKey);
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // Increased to 30s
@@ -464,16 +469,16 @@ export class FacebookMarketingAPI {
    */
   async getUserAdAccounts(): Promise<FacebookAdAccountData[]> {
     try {
-      // Check cache first
-      const cacheKey = `adaccounts:user`;
+      // Check cache first with per-user prefix
+      const cacheKey = `${this.rateLimitPrefix}:adaccounts:user`;
       const cached = accountCache.get(cacheKey);
       if (cached) {
-        console.log('Cache hit for user ad accounts');
+        console.log(`Cache hit for user ad accounts: ${this.rateLimitPrefix}`);
         return cached;
       }
 
-      // Apply rate limiting
-      await appRateLimiter.waitForLimit('adaccounts:user');
+      // Apply rate limiting with per-user prefix
+      await appRateLimiter.waitForLimit(cacheKey);
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -548,11 +553,11 @@ export class FacebookMarketingAPI {
         ? adAccountId
         : `act_${adAccountId}`;
 
-      // Check cache first
-      const cacheKey = `campaigns:${formattedAccountId}`;
+      // Check cache first with per-user prefix
+      const cacheKey = `${this.rateLimitPrefix}:campaigns:${formattedAccountId}`;
       const cached = entityCache.get(cacheKey);
       if (cached) {
-        console.log(`Cache hit for campaigns: ${formattedAccountId}`);
+        console.log(`Cache hit for campaigns: ${cacheKey}`);
         return cached;
       }
 
@@ -618,16 +623,17 @@ export class FacebookMarketingAPI {
         dateParams = '&date_preset=last_30d';
       }
 
-      // Check cache first
-      const cacheKey = `insights:campaign:${campaignId}:${dateParams}`;
+      // Check cache first with per-user prefix
+      const cacheKey = `${this.rateLimitPrefix}:insights:campaign:${campaignId}:${dateParams}`;
       const cached = insightsCache.get(cacheKey);
       if (cached) {
         return cached;
       }
 
-      // Apply rate limiting
-      await appRateLimiter.waitForLimit(`insights:${campaignId}`);
-      await adAccountRateLimiter.waitForLimit(`insights:${campaignId}`);
+      // Apply rate limiting with per-user prefix
+      const rateLimitKey = `${this.rateLimitPrefix}:insights:${campaignId}`;
+      await appRateLimiter.waitForLimit(rateLimitKey);
+      await adAccountRateLimiter.waitForLimit(rateLimitKey);
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -711,11 +717,11 @@ export class FacebookMarketingAPI {
 
   async getAdSets(campaignId: string) {
     try {
-      // Check cache first
-      const cacheKey = `adsets:${campaignId}`;
+      // Check cache first with per-user prefix
+      const cacheKey = `${this.rateLimitPrefix}:adsets:${campaignId}`;
       const cached = entityCache.get(cacheKey);
       if (cached) {
-        console.log(`Cache hit for ad sets: ${campaignId}`);
+        console.log(`Cache hit for ad sets: ${cacheKey}`);
         return cached;
       }
 
@@ -858,11 +864,11 @@ export class FacebookMarketingAPI {
 
   async getAds(adSetId: string) {
     try {
-      // Check cache first
-      const cacheKey = `ads:${adSetId}`;
+      // Check cache first with per-user prefix
+      const cacheKey = `${this.rateLimitPrefix}:ads:${adSetId}`;
       const cached = entityCache.get(cacheKey);
       if (cached) {
-        console.log(`Cache hit for ads: ${adSetId}`);
+        console.log(`Cache hit for ads: ${cacheKey}`);
         return cached;
       }
 

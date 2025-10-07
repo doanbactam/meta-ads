@@ -99,44 +99,48 @@ export function sanitizeFacebookCampaign(data: any) {
 
 /**
  * Sanitize Facebook insights data with safe number parsing
+ * This function is designed to be resilient. If Zod validation fails,
+ * it logs a warning but still attempts to parse the raw data field by field.
  */
 export function sanitizeFacebookInsights(data: any) {
-  try {
-    const validated = facebookCampaignInsightsSchema.parse(data);
+  // Use zod's .safeParse to avoid throwing an error on validation failure
+  const validation = facebookCampaignInsightsSchema.safeParse(data);
+  let sourceData: any;
 
-    return {
-      impressions: safeParseInt(validated.impressions),
-      clicks: safeParseInt(validated.clicks),
-      // Facebook returns spend in cents, convert to dollars
-      spend: safeParseFloat(validated.spend, 100),
-      reach: safeParseInt(validated.reach),
-      frequency: safeParseFloat(validated.frequency),
-      // CTR is already a percentage
-      ctr: safeParsePercentage(validated.ctr),
-      // CPC is in cents, convert to dollars
-      cpc: safeParseFloat(validated.cpc, 100),
-      // CPM is in cents, convert to dollars
-      cpm: safeParseFloat(validated.cpm, 100),
-      conversions: safeParseInt(validated.conversions),
-      // Cost per conversion is in cents, convert to dollars
-      costPerConversion: safeParseFloat(validated.costPerConversion, 100),
-    };
-  } catch (error) {
-    console.warn('Failed to validate insights data:', error);
-    // Return safe zero values if validation fails
-    return {
-      impressions: 0,
-      clicks: 0,
-      spend: 0,
-      reach: 0,
-      frequency: 0,
-      ctr: 0,
-      cpc: 0,
-      cpm: 0,
-      conversions: 0,
-      costPerConversion: 0,
-    };
+  if (validation.success) {
+    // If validation succeeds, use the validated (and typed) data
+    sourceData = validation.data;
+  } else {
+    // If validation fails, log the issues but proceed with the original raw data.
+    // This makes the sanitization resilient to unexpected API changes.
+    console.warn(
+      'Failed to validate insights data, proceeding with raw data:',
+      validation.error.flatten()
+    );
+    sourceData = data || {}; // Use raw data, ensuring it's not null/undefined
   }
+
+  // Sanitize each field individually from the source data.
+  // The safeParse functions will handle incorrect types, null, or undefined values
+  // by returning a safe default (0), preventing a single bad field from
+  // invalidating the entire dataset.
+  return {
+    impressions: safeParseInt(sourceData.impressions),
+    clicks: safeParseInt(sourceData.clicks),
+    // Facebook returns spend in cents, convert to dollars
+    spend: safeParseFloat(sourceData.spend, 100),
+    reach: safeParseInt(sourceData.reach),
+    frequency: safeParseFloat(sourceData.frequency),
+    // CTR is already a percentage
+    ctr: safeParsePercentage(sourceData.ctr),
+    // CPC is in cents, convert to dollars
+    cpc: safeParseFloat(sourceData.cpc, 100),
+    // CPM is in cents, convert to dollars
+    cpm: safeParseFloat(sourceData.cpm, 100),
+    conversions: safeParseInt(sourceData.conversions),
+    // Cost per conversion is in cents, convert to dollars
+    costPerConversion: safeParseFloat(sourceData.costPerConversion, 100),
+  };
 }
 
 /**
