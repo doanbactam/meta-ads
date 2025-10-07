@@ -74,13 +74,17 @@ export async function POST(req: NextRequest) {
 
     if (businessIds.length > 0) {
       // User granted permission to specific businesses - fetch accounts per business
-      console.log(`[Facebook Connect] User granted access to ${businessIds.length} business(es)`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Facebook Connect] User granted access to ${businessIds.length} business(es)`);
+      }
       
       for (const businessId of businessIds) {
         try {
           const businessAccounts = await api.getBusinessAdAccounts(businessId);
           fbAccounts.push(...businessAccounts);
-          console.log(`[Facebook Connect] Found ${businessAccounts.length} accounts for business ${businessId}`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`[Facebook Connect] Found ${businessAccounts.length} accounts for business ${businessId}`);
+          }
         } catch (error) {
           console.error(`[Facebook Connect] Failed to fetch accounts for business ${businessId}:`, error);
           // Continue with other businesses even if one fails
@@ -98,7 +102,9 @@ export async function POST(req: NextRequest) {
       });
     } else {
       // Fallback: No business scope detected, use legacy method
-      console.log('[Facebook Connect] No business scope detected, using legacy /me/adaccounts endpoint');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Facebook Connect] No business scope detected, using legacy /me/adaccounts endpoint');
+      }
       fbAccounts = await api.getUserAdAccounts();
     }
 
@@ -113,7 +119,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log(`[Facebook Connect] Total unique accounts found: ${fbAccounts.length}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Facebook Connect] Total unique accounts found: ${fbAccounts.length}`);
+    }
 
     // Extract authorized account IDs (normalize by removing 'act_' prefix)
     const authorizedAccountIds = fbAccounts.map((acc) => acc.id.replace('act_', ''));
@@ -142,7 +150,9 @@ export async function POST(req: NextRequest) {
           },
         });
         removedCount = deleteResult.count;
-        console.log(`[Facebook Connect] Removed ${removedCount} unauthorized ad accounts`);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[Facebook Connect] Removed ${removedCount} unauthorized ad accounts`);
+        }
       }
 
       // Upsert all authorized accounts (much faster than loop)
@@ -189,7 +199,9 @@ export async function POST(req: NextRequest) {
       return { updatedAccounts, removedCount };
     });
 
-    console.log(`[Facebook Connect] Synchronized ${result.updatedAccounts.length} accounts`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Facebook Connect] Synchronized ${result.updatedAccounts.length} accounts`);
+    }
 
     // Trigger immediate data sync for the first account (non-blocking)
     if (result.updatedAccounts.length > 0 && result.updatedAccounts[0]) {

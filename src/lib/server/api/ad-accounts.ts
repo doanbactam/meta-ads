@@ -12,9 +12,14 @@ export interface AdAccount {
   updated_at: string;
 }
 
-export async function getAdAccounts(userId?: string): Promise<AdAccount[]> {
+export async function getAdAccounts(userId: string): Promise<AdAccount[]> {
+  // Always require userId to prevent unauthorized access
+  if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
+    throw new Error('Valid userId is required to fetch ad accounts');
+  }
+
   const accounts = await prisma.adAccount.findMany({
-    where: userId ? { userId } : undefined,
+    where: { userId },
     orderBy: { createdAt: 'desc' },
   });
 
@@ -30,9 +35,20 @@ export async function getAdAccounts(userId?: string): Promise<AdAccount[]> {
   }));
 }
 
-export async function getAdAccountById(id: string): Promise<AdAccount | null> {
-  const account = await prisma.adAccount.findUnique({
-    where: { id },
+export async function getAdAccountById(id: string, userId: string): Promise<AdAccount | null> {
+  // Validate inputs
+  if (!id || typeof id !== 'string' || id.trim().length === 0) {
+    throw new Error('Valid account ID is required');
+  }
+  if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
+    throw new Error('Valid userId is required');
+  }
+
+  const account = await prisma.adAccount.findFirst({
+    where: { 
+      id,
+      userId // Ensure user can only access their own accounts
+    },
   });
 
   if (!account) return null;
@@ -75,7 +91,24 @@ export async function createAdAccount(
   };
 }
 
-export async function updateAdAccount(id: string, updates: Partial<AdAccount>): Promise<AdAccount> {
+export async function updateAdAccount(id: string, userId: string, updates: Partial<AdAccount>): Promise<AdAccount> {
+  // Validate inputs
+  if (!id || typeof id !== 'string' || id.trim().length === 0) {
+    throw new Error('Valid account ID is required');
+  }
+  if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
+    throw new Error('Valid userId is required');
+  }
+
+  // First verify the account belongs to the user
+  const existingAccount = await prisma.adAccount.findFirst({
+    where: { id, userId },
+  });
+
+  if (!existingAccount) {
+    throw new Error('Ad account not found or access denied');
+  }
+
   const account = await prisma.adAccount.update({
     where: { id },
     data: {
@@ -99,7 +132,24 @@ export async function updateAdAccount(id: string, updates: Partial<AdAccount>): 
   };
 }
 
-export async function deleteAdAccount(id: string): Promise<void> {
+export async function deleteAdAccount(id: string, userId: string): Promise<void> {
+  // Validate inputs
+  if (!id || typeof id !== 'string' || id.trim().length === 0) {
+    throw new Error('Valid account ID is required');
+  }
+  if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
+    throw new Error('Valid userId is required');
+  }
+
+  // First verify the account belongs to the user
+  const existingAccount = await prisma.adAccount.findFirst({
+    where: { id, userId },
+  });
+
+  if (!existingAccount) {
+    throw new Error('Ad account not found or access denied');
+  }
+
   await prisma.adAccount.delete({
     where: { id },
   });
