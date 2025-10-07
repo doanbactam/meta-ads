@@ -1,8 +1,7 @@
 import { Eye, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import type { TableConfig } from '@/components/table/universal-data-table';
-import { useFacebookStore } from '@/lib/client/stores/facebook-store';
-import type { Ad, AdGroup, Campaign, AIAnalysisResult } from '@/types';
+import type { Ad, AdGroup, AIAnalysisResult, Campaign } from '@/types';
 
 // Campaign Table Configuration
 export const campaignTableConfig: TableConfig<Campaign> = {

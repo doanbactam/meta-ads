@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 export const dynamic = 'force-dynamic';
 
 export default function FacebookCallbackPage() {
-  const router = useRouter();
+  const _router = useRouter();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('Processing Facebook authentication...');
 

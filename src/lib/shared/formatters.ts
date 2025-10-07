@@ -3,7 +3,7 @@ export function formatCurrency(
   currency: string = 'USD',
   locale: string = 'en-US'
 ): string {
-  if (value === null || value === undefined || isNaN(value)) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
     return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency: currency,
@@ -20,26 +20,29 @@ export function formatCurrency(
 }
 
 export function formatNumber(value: number | null | undefined, locale: string = 'en-US'): string {
-  if (value === null || value === undefined || isNaN(value)) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
     return '0';
   }
   return new Intl.NumberFormat(locale).format(value);
 }
 
 export function formatPercentage(value: number | null | undefined): string {
-  if (value === null || value === undefined || isNaN(value)) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
     return '0.00%';
   }
   return `${value.toFixed(2)}%`;
 }
 
-export function formatDate(date: string | Date | null | undefined, locale: string = 'en-US'): string {
+export function formatDate(
+  date: string | Date | null | undefined,
+  locale: string = 'en-US'
+): string {
   if (!date) {
     return '--';
   }
   try {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
-    if (isNaN(dateObj.getTime())) {
+    if (Number.isNaN(dateObj.getTime())) {
       return '--';
     }
     return dateObj.toLocaleDateString(locale, {
@@ -80,30 +83,30 @@ export function mapFacebookStatus(
 ): string {
   // Normalize to uppercase
   const normalizedStatus = status.toUpperCase();
-  
+
   // Map Facebook statuses to our enum values
   const statusMap: { [key: string]: string } = {
     // Direct mappings
-    'ACTIVE': 'ACTIVE',
-    'PAUSED': 'PAUSED',
-    'DELETED': 'DELETED',
-    'ARCHIVED': 'ARCHIVED',
-    'PENDING': 'PENDING',
-    
+    ACTIVE: 'ACTIVE',
+    PAUSED: 'PAUSED',
+    DELETED: 'DELETED',
+    ARCHIVED: 'ARCHIVED',
+    PENDING: 'PENDING',
+
     // Facebook-specific mappings
-    'ELIGIBLE': 'ACTIVE',
-    'DISAPPROVED': 'DISAPPROVED',
-    'REMOVED': 'DELETED',
-    'ENDED': 'ENDED',
-    'REVIEW': 'REVIEW',
-    'REJECTED': 'REJECTED',
-    
+    ELIGIBLE: 'ACTIVE',
+    DISAPPROVED: 'DISAPPROVED',
+    REMOVED: 'DELETED',
+    ENDED: 'ENDED',
+    REVIEW: 'REVIEW',
+    REJECTED: 'REJECTED',
+
     // Effective status mappings
-    'CAMPAIGN_PAUSED': 'PAUSED',
-    'ADSET_PAUSED': 'PAUSED',
-    'AD_PAUSED': 'PAUSED',
+    CAMPAIGN_PAUSED: 'PAUSED',
+    ADSET_PAUSED: 'PAUSED',
+    AD_PAUSED: 'PAUSED',
   };
-  
+
   return statusMap[normalizedStatus] || 'PENDING';
 }
 
@@ -115,10 +118,10 @@ export function parseDate(dateString: string | null | undefined): Date {
   if (!dateString) {
     return new Date();
   }
-  
+
   try {
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
+    if (Number.isNaN(date.getTime())) {
       return new Date();
     }
     return date;

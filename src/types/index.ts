@@ -1,7 +1,15 @@
 export interface Campaign {
   id: string;
   name: string;
-  status: 'ACTIVE' | 'PAUSED' | 'DELETED' | 'ARCHIVED' | 'PENDING' | 'ENDED' | 'DISAPPROVED' | 'REMOVED';
+  status:
+    | 'ACTIVE'
+    | 'PAUSED'
+    | 'DELETED'
+    | 'ARCHIVED'
+    | 'PENDING'
+    | 'ENDED'
+    | 'DISAPPROVED'
+    | 'REMOVED';
   budget: number;
   spent: number;
   impressions: number;
@@ -39,7 +47,15 @@ export interface Ad {
   ad_group_id: string;
   name: string;
   format: 'Image' | 'Video' | 'Carousel' | 'Story';
-  status: 'ACTIVE' | 'PAUSED' | 'DELETED' | 'ARCHIVED' | 'PENDING' | 'REVIEW' | 'REJECTED' | 'DISAPPROVED';
+  status:
+    | 'ACTIVE'
+    | 'PAUSED'
+    | 'DELETED'
+    | 'ARCHIVED'
+    | 'PENDING'
+    | 'REVIEW'
+    | 'REJECTED'
+    | 'DISAPPROVED';
   impressions: number;
   clicks: number;
   ctr: number;

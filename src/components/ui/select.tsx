@@ -1,7 +1,7 @@
 'use client';
 
 import * as SelectPrimitive from '@radix-ui/react-select';
-import { cva, type VariantProps } from 'cva';
+import { cva } from 'cva';
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 import type * as React from 'react';
 
@@ -32,17 +32,11 @@ const selectTriggerVariants = cva({
   },
 });
 
-export interface SelectTriggerProps
-  extends React.ComponentProps<typeof SelectPrimitive.Trigger> {
+export interface SelectTriggerProps extends React.ComponentProps<typeof SelectPrimitive.Trigger> {
   size?: 'default' | 'sm';
 }
 
-function SelectTrigger({
-  className,
-  size = 'default',
-  children,
-  ...props
-}: SelectTriggerProps) {
+function SelectTrigger({ className, size = 'default', children, ...props }: SelectTriggerProps) {
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"

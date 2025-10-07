@@ -1,10 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
-import { type NextRequest, NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getValidFacebookToken } from '@/lib/server/api/facebook-auth';
 import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
-import { prisma } from '@/lib/server/prisma';
 import { FacebookSyncService } from '@/lib/server/facebook-sync-service';
+import { prisma } from '@/lib/server/prisma';
 
 /**
  * Ad Sets API Route with Database Caching
@@ -98,12 +98,11 @@ export async function GET(request: NextRequest) {
 
     // Check if we need to trigger a background sync
     const needsSync =
-      !adAccount.lastSyncedAt ||
-      Date.now() - adAccount.lastSyncedAt.getTime() > SYNC_THRESHOLD;
+      !adAccount.lastSyncedAt || Date.now() - adAccount.lastSyncedAt.getTime() > SYNC_THRESHOLD;
 
     if (needsSync && adAccount.facebookAccessToken && adAccount.facebookAdAccountId) {
       const tokenResult = await getValidFacebookToken(adAccountId, user.id);
-      
+
       if (!('error' in tokenResult)) {
         const syncService = new FacebookSyncService(
           tokenResult.token,

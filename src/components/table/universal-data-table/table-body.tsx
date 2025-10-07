@@ -71,23 +71,16 @@ export function TableBody<T extends { id: string }>({
       case 'cpc':
       case 'cost':
       case 'costPerConversion':
-        return formatCurrency(
-          value !== undefined && value !== null ? value : 0,
-          currency,
-          locale
-        );
+        return formatCurrency(value !== undefined && value !== null ? value : 0, currency, locale);
       case 'impressions':
       case 'clicks':
       case 'conversions':
       case 'engagement':
-        return formatNumber(
-          value !== undefined && value !== null ? value : 0,
-          locale
-        );
+        return formatNumber(value !== undefined && value !== null ? value : 0, locale);
       case 'ctr':
       case 'roas':
         return formatPercentage(value !== undefined && value !== null ? value : 0);
-      case 'dateRange':
+      case 'dateRange': {
         // Use the value from accessor which should be { date_start, date_end }
         const dateRangeValue = value || {};
         return (
@@ -95,6 +88,7 @@ export function TableBody<T extends { id: string }>({
             {formatDateRange(dateRangeValue.date_start, dateRangeValue.date_end, locale)}
           </span>
         );
+      }
       default:
         // Handle various types of values
         if (value === undefined || value === null) {

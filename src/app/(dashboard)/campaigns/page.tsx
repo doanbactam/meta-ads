@@ -39,9 +39,15 @@ function CampaignsContent() {
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-3" data-testid="campaign-tabs">
-          <TabsTrigger value="campaigns" data-testid="campaigns-tab">campaigns</TabsTrigger>
-          <TabsTrigger value="ad-sets" data-testid="ad-sets-tab">ad sets</TabsTrigger>
-          <TabsTrigger value="ads" data-testid="ads-tab">ads</TabsTrigger>
+          <TabsTrigger value="campaigns" data-testid="campaigns-tab">
+            campaigns
+          </TabsTrigger>
+          <TabsTrigger value="ad-sets" data-testid="ad-sets-tab">
+            ad sets
+          </TabsTrigger>
+          <TabsTrigger value="ads" data-testid="ads-tab">
+            ads
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="campaigns" className="mt-4">

@@ -7,7 +7,6 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { UniversalDataTable } from '@/components/table/universal-data-table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useFacebookConnection } from '@/hooks/use-facebook-connection';
-import { useFacebookStore } from '@/lib/client/stores/facebook-store';
 import {
   adGroupsTableConfig,
   adsTableConfig,
@@ -19,8 +18,7 @@ export function AdManagerDashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedAdAccount, setSelectedAdAccount] = useState<string>('');
   const { isLoaded, isSignedIn } = useUser();
-  const { connected, loading } = useFacebookConnection(selectedAdAccount);
-  const { showConnectionDialog } = useFacebookStore();
+  const { loading } = useFacebookConnection(selectedAdAccount);
 
   useEffect(() => {
     // Only show connection dialog if user explicitly needs to connect

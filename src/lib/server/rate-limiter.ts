@@ -1,18 +1,18 @@
 /**
  * Facebook API Rate Limiting Implementation
- * 
+ *
  * Facebook enforces rate limits at multiple levels:
  * - App-level: 200 calls per hour per user
  * - Business-level: Higher limits based on spend
  * - Ad Account-level: Varies based on account tier
- * 
+ *
  * Best Practices:
  * 1. Batch requests when possible
  * 2. Cache responses aggressively
  * 3. Use field filtering to reduce payload size
  * 4. Monitor rate limit headers
  * 5. Implement exponential backoff
- * 
+ *
  * @see https://developers.facebook.com/docs/graph-api/overview/rate-limiting
  */
 
@@ -60,7 +60,9 @@ export class RateLimiter {
 
     if (totalRequests >= this.config.maxRequests) {
       const oldestRecord = validRecords[0];
-      const retryAfter = oldestRecord ? this.config.windowMs - (now - oldestRecord.timestamp) : this.config.windowMs;
+      const retryAfter = oldestRecord
+        ? this.config.windowMs - (now - oldestRecord.timestamp)
+        : this.config.windowMs;
       return { allowed: false, retryAfter };
     }
 
@@ -185,13 +187,13 @@ export class ResponseCache<T = any> {
   cleanup(): void {
     const now = Date.now();
     const entriesToDelete: string[] = [];
-    
+
     this.cache.forEach((entry, key) => {
       if (now - entry.timestamp > entry.ttl) {
         entriesToDelete.push(key);
       }
     });
-    
+
     for (const key of entriesToDelete) {
       this.cache.delete(key);
     }
@@ -204,8 +206,11 @@ export const entityCache = new ResponseCache<any>(); // 1-5 minutes for campaign
 export const accountCache = new ResponseCache<any>(); // 30 minutes for account data
 
 // Cleanup expired cache entries every 5 minutes
-setInterval(() => {
-  insightsCache.cleanup();
-  entityCache.cleanup();
-  accountCache.cleanup();
-}, 5 * 60 * 1000);
+setInterval(
+  () => {
+    insightsCache.cleanup();
+    entityCache.cleanup();
+    accountCache.cleanup();
+  },
+  5 * 60 * 1000
+);

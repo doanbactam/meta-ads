@@ -66,8 +66,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
           if (insights) {
             totalSpent += parseFloat(insights.spend || '0');
-            totalImpressions += parseInt(insights.impressions || '0');
-            totalClicks += parseInt(insights.clicks || '0');
+            totalImpressions += parseInt(insights.impressions || '0', 10);
+            totalClicks += parseInt(insights.clicks || '0', 10);
           }
 
           if (campaign.status === 'ACTIVE') {

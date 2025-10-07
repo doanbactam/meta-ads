@@ -1,9 +1,9 @@
 import { auth } from '@clerk/nextjs/server';
 import { type NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, RATE_LIMIT_CONFIGS } from '@/app/api/_lib/rate-limiter';
 import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
 import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
 import { prisma } from '@/lib/server/prisma';
-import { checkRateLimit, RATE_LIMIT_CONFIGS } from '@/app/api/_lib/rate-limiter';
 
 export async function GET(req: NextRequest) {
   try {
@@ -99,7 +99,7 @@ export async function GET(req: NextRequest) {
     // If token was recently updated (within last 2 minutes) and status is active,
     // skip Facebook API validation to prevent race conditions and unnecessary API calls
     const recentlyUpdated =
-      adAccount.updatedAt && new Date().getTime() - adAccount.updatedAt.getTime() < 2 * 60 * 1000;
+      adAccount.updatedAt && Date.now() - adAccount.updatedAt.getTime() < 2 * 60 * 1000;
 
     if (recentlyUpdated && adAccount.status === 'ACTIVE') {
       // Token was just updated, trust it without re-validating

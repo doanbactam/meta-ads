@@ -1,7 +1,8 @@
 'use client';
 
-import { Sparkles, Copy, Download, TrendingUp, AlertCircle, Lightbulb, Target } from 'lucide-react';
+import { AlertCircle, Copy, Download, Lightbulb, Sparkles, Target, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -9,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import type { AIAnalysisResult } from '@/types';
 
 interface AIAnalysisDialogProps {
@@ -64,9 +64,7 @@ export function AIAnalysisDialog({
           <div className="flex items-center justify-center py-12">
             <div className="flex flex-col items-center gap-4">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              <p className="text-sm text-muted-foreground">
-                Analyzing campaign performance...
-              </p>
+              <p className="text-sm text-muted-foreground">Analyzing campaign performance...</p>
             </div>
           </div>
         )}

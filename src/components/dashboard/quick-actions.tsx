@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart3, Copy, Download, Pause, Play, Plus, RefreshCw, Settings } from 'lucide-react';
+import { BarChart3, Copy, Download, Play, Plus, RefreshCw, Settings } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -119,6 +119,7 @@ export function QuickActions({ adAccountId, onRefresh }: QuickActionsProps) {
             const Icon = action.icon;
             return (
               <button
+                type="button"
                 key={action.title}
                 onClick={action.action}
                 className="w-full flex items-center gap-3 p-3 text-left border border-border rounded-sm hover:bg-muted/30 transition-colors"

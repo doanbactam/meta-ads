@@ -12,27 +12,12 @@ import {
   TrendingUp,
 } from 'lucide-react';
 
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useOverviewStats } from '@/hooks/use-shared-data';
 import { formatCurrency } from '@/lib/shared/formatters';
 
 interface DashboardOverviewProps {
   adAccountId?: string;
-}
-
-interface OverviewStats {
-  totalSpend: number;
-  totalImpressions: number;
-  totalClicks: number;
-  totalConversions: number;
-  averageCtr: number;
-  averageCpc: number;
-  averageRoas: number;
-  spendChange: number;
-  impressionsChange: number;
-  clicksChange: number;
-  conversionsChange: number;
 }
 
 export function DashboardOverview({ adAccountId }: DashboardOverviewProps) {

@@ -7,19 +7,12 @@ import {
   Moon,
   Sun,
   Terminal,
-  Search,
-  Settings,
-  HelpCircle,
-  Zap
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Badge } from '@/components/ui/badge';
 import { UserSettingsInfo } from '@/components/common/user-settings-info';
+import { Button } from '@/components/ui/button';
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -97,7 +90,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
       <div className="p-2 border-t border-border space-y-1">
         {/* User Settings */}
         <UserSettingsInfo collapsed={collapsed} />
-        
+
         {/* Theme Toggle */}
         {!mounted ? (
           // Render placeholder during SSR to avoid hydration mismatch

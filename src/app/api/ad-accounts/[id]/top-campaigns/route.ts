@@ -13,7 +13,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { searchParams } = new URL(request.url);
     const from = searchParams.get('from');
     const to = searchParams.get('to');
-    const limit = parseInt(searchParams.get('limit') || '5');
+    const limit = parseInt(searchParams.get('limit') || '5', 10);
 
     // Verify user has access to this ad account
     const adAccount = await prisma.adAccount.findFirst({

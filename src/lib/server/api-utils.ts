@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/server/prisma';
 
 /**
@@ -84,8 +84,8 @@ export function calculatePercentageChange(current: number, previous: number): nu
  * Utility function để handle pagination
  */
 export function parsePagination(searchParams: URLSearchParams) {
-  const page = parseInt(searchParams.get('page') || '1');
-  const limit = parseInt(searchParams.get('limit') || '10');
+  const page = parseInt(searchParams.get('page') || '1', 10);
+  const limit = parseInt(searchParams.get('limit') || '10', 10);
   const offset = (page - 1) * limit;
 
   return { page, limit, offset };

@@ -100,7 +100,7 @@ async function main() {
     },
   });
 
-  const campaign3 = await prisma.campaign.create({
+  const _campaign3 = await prisma.campaign.create({
     data: {
       adAccountId: instagramAccount.id,
       name: 'Product Launch - Instagram',

@@ -1,16 +1,15 @@
-import { prisma } from '@/lib/server/prisma';
+import type { AdSetStatus, CampaignStatus, CreativeStatus } from '@prisma/client';
 import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
-import { parseDate } from '@/lib/shared/formatters';
+import { prisma } from '@/lib/server/prisma';
 import {
-  sanitizeFacebookCampaign,
-  sanitizeFacebookInsights,
-  sanitizeFacebookAdSet,
-  sanitizeFacebookAd,
-  sanitizeFacebookStatus,
   getBudgetAmount,
   sanitizeDate,
+  sanitizeFacebookAd,
+  sanitizeFacebookAdSet,
+  sanitizeFacebookCampaign,
+  sanitizeFacebookInsights,
+  sanitizeFacebookStatus,
 } from '@/lib/shared/data-sanitizer';
-import type { CampaignStatus, AdSetStatus, CreativeStatus } from '@prisma/client';
 
 /**
  * Facebook Sync Service
@@ -165,7 +164,11 @@ export class FacebookSyncService {
           const dateEnd = sanitizeDate(options.dateTo);
 
           // Validate and map status
-          const status = sanitizeFacebookStatus(fbCampaign.status, 'campaign', 'PAUSED') as CampaignStatus;
+          const status = sanitizeFacebookStatus(
+            fbCampaign.status,
+            'campaign',
+            'PAUSED'
+          ) as CampaignStatus;
 
           await prisma.campaign.upsert({
             where: { facebookCampaignId: fbCampaign.id },
@@ -259,7 +262,11 @@ export class FacebookSyncService {
               const dateEnd = sanitizeDate(options.dateTo);
 
               // Validate and map status
-              const status = sanitizeFacebookStatus(fbAdSet.status, 'adset', 'PAUSED') as AdSetStatus;
+              const status = sanitizeFacebookStatus(
+                fbAdSet.status,
+                'adset',
+                'PAUSED'
+              ) as AdSetStatus;
 
               await prisma.adGroup.upsert({
                 where: { facebookAdSetId: fbAdSet.id },

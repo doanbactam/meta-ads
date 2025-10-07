@@ -1,9 +1,9 @@
 import { auth } from '@clerk/nextjs/server';
 import { type NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, RATE_LIMIT_CONFIGS } from '@/app/api/_lib/rate-limiter';
 import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
 import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
 import { prisma } from '@/lib/server/prisma';
-import { checkRateLimit, RATE_LIMIT_CONFIGS } from '@/app/api/_lib/rate-limiter';
 
 export async function POST(req: NextRequest) {
   try {
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { accessToken, adAccountId } = body;
+    const { accessToken } = body;
 
     if (!accessToken) {
       return NextResponse.json({ error: 'Access token is required' }, { status: 400 });
@@ -75,14 +75,19 @@ export async function POST(req: NextRequest) {
     if (businessIds.length > 0) {
       // User granted permission to specific businesses - fetch accounts per business
       console.log(`[Facebook Connect] User granted access to ${businessIds.length} business(es)`);
-      
+
       for (const businessId of businessIds) {
         try {
           const businessAccounts = await api.getBusinessAdAccounts(businessId);
           fbAccounts.push(...businessAccounts);
-          console.log(`[Facebook Connect] Found ${businessAccounts.length} accounts for business ${businessId}`);
+          console.log(
+            `[Facebook Connect] Found ${businessAccounts.length} accounts for business ${businessId}`
+          );
         } catch (error) {
-          console.error(`[Facebook Connect] Failed to fetch accounts for business ${businessId}:`, error);
+          console.error(
+            `[Facebook Connect] Failed to fetch accounts for business ${businessId}:`,
+            error
+          );
           // Continue with other businesses even if one fails
         }
       }
@@ -98,7 +103,9 @@ export async function POST(req: NextRequest) {
       });
     } else {
       // Fallback: No business scope detected, use legacy method
-      console.log('[Facebook Connect] No business scope detected, using legacy /me/adaccounts endpoint');
+      console.log(
+        '[Facebook Connect] No business scope detected, using legacy /me/adaccounts endpoint'
+      );
       fbAccounts = await api.getUserAdAccounts();
     }
 

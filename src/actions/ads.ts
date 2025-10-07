@@ -16,7 +16,16 @@ const deleteAdSchema = z.object({
 
 const updateAdStatusSchema = z.object({
   id: z.string(),
-  status: z.enum(['ACTIVE', 'PAUSED', 'DELETED', 'ARCHIVED', 'PENDING', 'REVIEW', 'REJECTED', 'DISAPPROVED']),
+  status: z.enum([
+    'ACTIVE',
+    'PAUSED',
+    'DELETED',
+    'ARCHIVED',
+    'PENDING',
+    'REVIEW',
+    'REJECTED',
+    'DISAPPROVED',
+  ]),
 });
 
 // Type for action responses
