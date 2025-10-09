@@ -28,6 +28,10 @@ export const facebookCampaignDataSchema = z.object({
   spendCap: z.string().optional().nullable(),
   dailyBudget: z.string().optional().nullable(),
   lifetimeBudget: z.string().optional().nullable(),
+  createdTime: z.string().optional().nullable(),
+  updatedTime: z.string().optional().nullable(),
+  startTime: z.string().optional().nullable(),
+  stopTime: z.string().optional().nullable(),
 });
 
 export const facebookCampaignInsightsSchema = z.object({
@@ -41,6 +45,8 @@ export const facebookCampaignInsightsSchema = z.object({
   cpm: z.string().optional().nullable(),
   conversions: z.string().optional().nullable(),
   costPerConversion: z.string().optional().nullable(),
+  date_start: z.string().optional().nullable(),
+  date_stop: z.string().optional().nullable(),
 });
 
 export const facebookAdSetDataSchema = z.object({
@@ -52,6 +58,10 @@ export const facebookAdSetDataSchema = z.object({
   lifetime_budget: z.string().optional().nullable(),
   bid_amount: z.string().optional().nullable(),
   targeting: z.any().optional().nullable(),
+  created_time: z.string().optional().nullable(),
+  updated_time: z.string().optional().nullable(),
+  start_time: z.string().optional().nullable(),
+  end_time: z.string().optional().nullable(),
 });
 
 export const facebookAdDataSchema = z.object({
@@ -60,6 +70,8 @@ export const facebookAdDataSchema = z.object({
   status: z.string().default('PAUSED'),
   effective_status: z.string().optional().nullable(),
   creative: z.any().optional().nullable(),
+  created_time: z.string().optional().nullable(),
+  updated_time: z.string().optional().nullable(),
 });
 
 export const facebookAdAccountDataSchema = z.object({

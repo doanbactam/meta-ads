@@ -49,13 +49,7 @@ export function UniversalDataTable<T extends { id: string }>({
   });
 
   // Data fetching
-  const {
-    data: items = [],
-    isLoading: loading,
-    error,
-    refetch,
-    isFetching,
-  } = useQuery({
+  const { data, error, refetch, isFetching } = useQuery<T[], Error, T[]>({
     queryKey: [config.queryKey, adAccountId, dateRange],
     queryFn: async (): Promise<T[]> => {
       if (!adAccountId) return [];
@@ -108,6 +102,9 @@ export function UniversalDataTable<T extends { id: string }>({
       return [];
     },
     enabled: !!adAccountId,
+    // @ts-expect-error Suspense mode is supported at runtime but omitted from the current type definitions
+    suspense: !!adAccountId,
+    throwOnError: false,
     staleTime: 60 * 60 * 1000, // 1 hour - Facebook data doesn't change frequently
     refetchOnWindowFocus: false,
     retry: (failureCount, error) => {
@@ -118,6 +115,7 @@ export function UniversalDataTable<T extends { id: string }>({
       return failureCount < 1;
     },
   });
+  const items = data ?? [];
 
   // Filter items based on search and status
   const filteredItems = items.filter((item) => {
@@ -233,7 +231,7 @@ export function UniversalDataTable<T extends { id: string }>({
             onToggleAll={toggleAll}
           />
           <tbody>
-            {loading ? (
+            {items.length === 0 && isFetching ? (
               <TableEmptyState
                 type="loading"
                 config={config}
@@ -299,3 +297,4 @@ export function UniversalDataTable<T extends { id: string }>({
 
 // Re-export types for convenience
 export type { TableColumn, TableConfig, UniversalDataTableProps } from './types';
+export { UniversalDataTableSkeleton } from './table-skeleton';

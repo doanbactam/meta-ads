@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/server/prisma';
+import { safeParseDate } from '@/lib/shared/data-sanitizer';
 
 /**
  * Utility function để handle authentication và params trong API routes
@@ -58,17 +59,20 @@ export async function verifyAdAccountAccess(userId: string, adAccountId: string)
  * Utility function để parse date range từ search params
  */
 export function parseDateRange(searchParams: URLSearchParams) {
-  const from = searchParams.get('from');
-  const to = searchParams.get('to');
+  const fromRaw = searchParams.get('from');
+  const toRaw = searchParams.get('to');
 
-  const dateFilter: any = {};
-  if (from) dateFilter.gte = new Date(from);
-  if (to) dateFilter.lte = new Date(to);
+  const from = safeParseDate(fromRaw);
+  const to = safeParseDate(toRaw);
+
+  const dateFilter: Record<string, Date> = {};
+  if (from) dateFilter.gte = from;
+  if (to) dateFilter.lte = to;
 
   return {
     dateFilter: Object.keys(dateFilter).length > 0 ? dateFilter : undefined,
-    from: from ? new Date(from) : undefined,
-    to: to ? new Date(to) : undefined,
+    from,
+    to,
   };
 }
 

@@ -3,6 +3,7 @@ import {
   sanitizeFacebookAdAccount,
   sanitizeFacebookAdSet,
   sanitizeFacebookCampaign,
+  sanitizeFacebookInsights,
 } from '@/lib/shared/data-sanitizer';
 import {
   accountCache,
@@ -14,6 +15,7 @@ import {
 import { FacebookSDKClient } from './facebook-sdk-client';
 import { BatchRequestManager } from './batch-request-manager';
 import { CacheManager } from './cache-manager';
+import { getCacheManager } from './cache';
 import { FACEBOOK_API_CONFIG } from './config/facebook';
 import {
   enhanceTokenValidation,
@@ -82,28 +84,36 @@ export interface FacebookCampaignData {
   spendCap?: string;
   dailyBudget?: string;
   lifetimeBudget?: string;
+  createdTime?: Date;
+  updatedTime?: Date;
+  startTime?: Date;
+  stopTime?: Date;
 }
 
 export interface FacebookCampaignInsights {
-  impressions?: string;
-  clicks?: string;
-  spend?: string;
-  reach?: string;
-  frequency?: string;
-  ctr?: string;
-  cpc?: string;
-  cpm?: string;
-  conversions?: string;
-  costPerConversion?: string;
+  impressions: number;
+  clicks: number;
+  spend: number;
+  reach: number;
+  frequency: number;
+  ctr: number;
+  cpc: number;
+  cpm: number;
+  conversions: number;
+  costPerConversion: number;
+  dateStart?: Date;
+  dateStop?: Date;
 }
 
 // Optimized field sets for API requests to reduce data transfer
 const OPTIMIZED_FIELDS = {
   adAccount: 'id,name,account_status,currency,timezone_name',
-  campaign: 'id,name,status,effective_status,objective,spend_cap,daily_budget,lifetime_budget',
-  adSet: 'id,name,status,effective_status,daily_budget,lifetime_budget,bid_amount,targeting',
-  ad: 'id,name,status,effective_status,creative',
-  insights: 'impressions,clicks,spend,reach,frequency,ctr,cpc,cpm',
+  campaign:
+    'id,name,status,effective_status,objective,spend_cap,daily_budget,lifetime_budget,start_time,stop_time,created_time,updated_time',
+  adSet:
+    'id,name,status,effective_status,daily_budget,lifetime_budget,bid_amount,targeting,start_time,end_time,created_time,updated_time',
+  ad: 'id,name,status,effective_status,creative,created_time,updated_time',
+  insights: 'impressions,clicks,spend,reach,frequency,ctr,cpc,cpm,date_start,date_stop',
 } as const;
 
 export class FacebookMarketingAPI {
@@ -121,17 +131,19 @@ export class FacebookMarketingAPI {
       .toString('base64')
       .slice(-16, -4);
 
+    // Initialize CacheManager with configuration
+    this.cacheManager = getCacheManager();
+
     // Initialize FacebookSDKClient
     this.sdkClient = new FacebookSDKClient({
       accessToken,
       apiVersion: FACEBOOK_API_CONFIG.apiVersion,
+      cacheManager: this.cacheManager,
+      userId: this.rateLimitPrefix,
     });
 
     // Initialize BatchRequestManager
     this.batchManager = new BatchRequestManager(this.sdkClient);
-
-    // Initialize CacheManager with configuration
-    this.cacheManager = new CacheManager(1000);
   }
 
   /**
@@ -316,42 +328,57 @@ export class FacebookMarketingAPI {
     const maxRetries = 2;
     let lastError: Error | null = null;
 
+    const { appId, appSecret, apiVersion } = FACEBOOK_API_CONFIG;
+
+    if (!appId || !appSecret) {
+      console.error('[FacebookMarketingAPI] Missing app credentials for token validation');
+      return {
+        isValid: false,
+        error: 'Facebook app credentials are not configured',
+      };
+    }
+
+    const appAccessToken = `${appId}|${appSecret}`;
+    const endpoint = new URL(`https://graph.facebook.com/${apiVersion}/debug_token`);
+
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
 
-        const response = await fetch(
-          `https://graph.facebook.com/v23.0/debug_token?input_token=${this.accessToken}&access_token=${this.accessToken}`,
-          {
-            method: 'GET',
-            headers: {
-              Accept: 'application/json',
-            },
-            signal: controller.signal,
-          }
-        );
+        endpoint.search = new URLSearchParams({
+          input_token: this.accessToken,
+          access_token: appAccessToken,
+        }).toString();
+
+        const response = await fetch(endpoint.toString(), {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+          signal: controller.signal,
+        });
 
         clearTimeout(timeoutId);
 
+        const payload = await response.json().catch(() => undefined);
+
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
+          const errorMessage =
+            payload?.error?.message ||
+            `HTTP ${response.status}: Failed to validate token`;
           return {
             isValid: false,
-            error: errorData.error?.message || `HTTP ${response.status}: Failed to validate token`,
+            error: errorMessage,
           };
         }
 
-        const data = await response.json();
-
-        if (data.error) {
+        if (payload?.error) {
           return {
             isValid: false,
-            error: data.error.message || 'Token validation failed',
+            error: payload.error.message || 'Token validation failed',
           };
         }
 
-        const tokenData = data.data;
+        const tokenData = payload?.data;
 
         if (!tokenData) {
           return {
@@ -369,41 +396,38 @@ export class FacebookMarketingAPI {
             (gs.scope === 'ads_management' ||
               gs.scope === 'business_management' ||
               gs.scope === 'ads_read') &&
-            gs.target_ids &&
             Array.isArray(gs.target_ids)
           ) {
             businessIds.push(...gs.target_ids);
           }
         }
 
-        // Remove duplicates
         const uniqueBusinessIds = Array.from(new Set(businessIds));
 
         return {
-          isValid: tokenData.is_valid || false,
+          isValid: Boolean(tokenData.is_valid),
           appId: tokenData.app_id,
           userId: tokenData.user_id,
           expiresAt: tokenData.expires_at,
           scopes: tokenData.scopes || [],
           businessIds: uniqueBusinessIds.length > 0 ? uniqueBusinessIds : undefined,
           granularScopes: granularScopes.length > 0 ? granularScopes : undefined,
-          error: !tokenData.is_valid ? 'Token is not valid' : undefined,
+          error: tokenData.is_valid ? undefined : 'Token is not valid',
         };
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Unknown error');
 
-        // Check if it's a timeout or connection error
+        const message = lastError.message || '';
         const isNetworkError =
           lastError.name === 'AbortError' ||
-          lastError.message.includes('timeout') ||
-          lastError.message.includes('ECONNREFUSED') ||
-          lastError.message.includes('ETIMEDOUT') ||
-          lastError.message.includes('ConnectTimeoutError');
+          message.includes('timeout') ||
+          message.includes('ECONNREFUSED') ||
+          message.includes('ETIMEDOUT') ||
+          message.includes('ConnectTimeoutError');
 
-        // Only retry on network errors
         if (isNetworkError && attempt < maxRetries) {
           console.log(`Token validation attempt ${attempt + 1} failed, retrying...`);
-          await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1))); // Exponential backoff
+          await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1)));
           continue;
         }
 
@@ -658,6 +682,10 @@ export class FacebookMarketingAPI {
           spendCap: campaign.spend_cap,
           dailyBudget: campaign.daily_budget,
           lifetimeBudget: campaign.lifetime_budget,
+          createdTime: campaign.created_time,
+          updatedTime: campaign.updated_time,
+          startTime: campaign.start_time,
+          stopTime: campaign.stop_time,
         })
       );
 
@@ -772,23 +800,12 @@ export class FacebookMarketingAPI {
         return null;
       }
 
-      const insights = data.data[0];
-
-      const result = {
-        impressions: insights.impressions,
-        clicks: insights.clicks,
-        spend: insights.spend,
-        reach: insights.reach,
-        frequency: insights.frequency,
-        ctr: insights.ctr,
-        cpc: insights.cpc,
-        cpm: insights.cpm,
-      };
+      const sanitized = sanitizeFacebookInsights(data.data[0]);
 
       // Cache the result
-      insightsCache.set(cacheKey, result, CACHE_TTL.INSIGHTS);
+      insightsCache.set(cacheKey, sanitized, CACHE_TTL.INSIGHTS);
 
-      return result;
+      return sanitized;
     } catch (error) {
       // Re-throw token expiry errors
       if (error instanceof FacebookTokenExpiredError) {
@@ -824,6 +841,10 @@ export class FacebookMarketingAPI {
           lifetime_budget: adSet.lifetime_budget,
           bid_amount: adSet.bid_amount,
           targeting: adSet.targeting,
+          created_time: adSet.created_time,
+          updated_time: adSet.updated_time,
+          start_time: adSet.start_time,
+          end_time: adSet.end_time,
         })
       );
 
@@ -924,18 +945,7 @@ export class FacebookMarketingAPI {
         return null;
       }
 
-      const insights = data.data[0];
-
-      return {
-        impressions: insights.impressions,
-        clicks: insights.clicks,
-        spend: insights.spend,
-        reach: insights.reach,
-        frequency: insights.frequency,
-        ctr: insights.ctr,
-        cpc: insights.cpc,
-        cpm: insights.cpm,
-      };
+      return sanitizeFacebookInsights(data.data[0]);
     } catch (error) {
       // Re-throw token expiry errors
       if (error instanceof FacebookTokenExpiredError) {
@@ -968,6 +978,8 @@ export class FacebookMarketingAPI {
           status: ad.status,
           effective_status: ad.effective_status,
           creative: ad.creative,
+          created_time: ad.created_time,
+          updated_time: ad.updated_time,
         })
       );
 
@@ -1068,18 +1080,7 @@ export class FacebookMarketingAPI {
         return null;
       }
 
-      const insights = data.data[0];
-
-      return {
-        impressions: insights.impressions,
-        clicks: insights.clicks,
-        spend: insights.spend,
-        reach: insights.reach,
-        frequency: insights.frequency,
-        ctr: insights.ctr,
-        cpc: insights.cpc,
-        cpm: insights.cpm,
-      };
+      return sanitizeFacebookInsights(data.data[0]);
     } catch (error) {
       // Re-throw token expiry errors
       if (error instanceof FacebookTokenExpiredError) {

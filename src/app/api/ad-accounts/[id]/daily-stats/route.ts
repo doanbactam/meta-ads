@@ -1,6 +1,34 @@
 import { auth } from '@clerk/nextjs/server';
 import { type NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/server/prisma';
+import { parseDateRange } from '@/lib/server/api-utils';
+
+function toNumber(value: unknown): number {
+  if (value === null || value === undefined) {
+    return 0;
+  }
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  if (typeof value === 'bigint') {
+    return Number(value);
+  }
+
+  if (typeof value === 'object' && 'toNumber' in (value as { toNumber?: () => number })) {
+    try {
+      const numeric = (value as { toNumber?: () => number }).toNumber?.();
+      return typeof numeric === 'number' && Number.isFinite(numeric) ? numeric : 0;
+    } catch (error) {
+      console.warn('Failed to convert Prisma Decimal to number', error);
+      return 0;
+    }
+  }
+
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
 
 const EMPTY_DAILY_STATS = {
   spend: 0,
@@ -18,8 +46,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const { id: adAccountId } = await params;
     const { searchParams } = new URL(request.url);
-    const from = searchParams.get('from');
-    const to = searchParams.get('to');
+    const { dateFilter } = parseDateRange(searchParams);
 
     // Verify user has access to this ad account
     const adAccount = await prisma.adAccount.findFirst({
@@ -33,17 +60,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Ad account not found' }, { status: 404 });
     }
 
-    // Build date filter
-    const dateFilter: any = {};
-    if (from) dateFilter.gte = new Date(from);
-    if (to) dateFilter.lte = new Date(to);
-
     // Get campaigns with their daily stats
     const campaigns = await prisma.campaign.findMany({
       where: {
         adAccountId: adAccountId,
-        ...(Object.keys(dateFilter).length > 0 && {
-          createdAt: dateFilter,
+        ...(dateFilter && {
+          dateStart: dateFilter,
         }),
       },
       select: {
@@ -51,10 +73,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         impressions: true,
         clicks: true,
         conversions: true,
-        createdAt: true,
+        dateStart: true,
       },
       orderBy: {
-        createdAt: 'asc',
+        dateStart: 'asc',
       },
     });
 
@@ -70,14 +92,22 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     >();
 
     campaigns.forEach((campaign) => {
-      const dateKey = campaign.createdAt.toISOString().split('T')[0];
+      const date = campaign.dateStart instanceof Date ? campaign.dateStart : new Date(campaign.dateStart);
+      if (Number.isNaN(date.getTime())) {
+        return;
+      }
+      const dateKey = date.toISOString().split('T')[0];
+      const spend = toNumber(campaign.spent);
+      const impressions = toNumber(campaign.impressions);
+      const clicks = toNumber(campaign.clicks);
+      const conversions = toNumber(campaign.conversions);
       const existing = dailyStatsMap.get(dateKey) || { ...EMPTY_DAILY_STATS };
 
       dailyStatsMap.set(dateKey, {
-        spend: existing.spend + (campaign.spent || 0),
-        impressions: existing.impressions + (campaign.impressions || 0),
-        clicks: existing.clicks + (campaign.clicks || 0),
-        conversions: existing.conversions + (campaign.conversions || 0),
+        spend: existing.spend + spend,
+        impressions: existing.impressions + impressions,
+        clicks: existing.clicks + clicks,
+        conversions: existing.conversions + conversions,
       });
     });
 

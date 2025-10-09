@@ -1,12 +1,13 @@
 'use server';
 
 import { auth } from '@clerk/nextjs/server';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { z } from 'zod';
 import { prisma } from '@/lib/server/prisma';
 import { FacebookSDKClient } from '@/lib/server/facebook-sdk-client';
-import { CacheManager } from '@/lib/server/cache-manager';
+import { getCacheManager } from '@/lib/server/cache';
 import { FacebookErrorHandler, FACEBOOK_API_CONFIG } from '@/lib/integrations/facebook';
+import { getPlainFacebookToken } from '@/lib/server/token-utils';
 
 // Validation schemas
 const duplicateAdSchema = z.object({
@@ -84,12 +85,25 @@ export async function duplicateAdAction(
       return { success: false, error: 'Facebook account not connected' };
     }
 
+    const tokenResult = getPlainFacebookToken(
+      creative.adGroup.campaign.adAccount.facebookAccessToken
+    );
+
+    if (!tokenResult.token) {
+      return {
+        success: false,
+        error: tokenResult.error || 'Stored Facebook token is invalid. Please reconnect.',
+      };
+    }
+
     // Initialize Facebook SDK Client and Cache
+    const cacheManager = getCacheManager();
     const sdkClient = new FacebookSDKClient({
-      accessToken: creative.adGroup.campaign.adAccount.facebookAccessToken,
+      accessToken: tokenResult.token,
       apiVersion: FACEBOOK_API_CONFIG.apiVersion,
+      cacheManager,
+      userId: creative.adGroup.campaign.adAccount.userId,
     });
-    const cacheManager = new CacheManager(1000);
 
     // Duplicate ad via Facebook SDK with retry logic
     const result = await errorHandler.handleWithRetry(async () => {
@@ -137,11 +151,13 @@ export async function duplicateAdAction(
       } as any, // Cast to avoid Prisma client type issues
     });
 
-    // Invalidate cache
     if (creative.adGroup.facebookAdSetId) {
-      await cacheManager.invalidateAds(creative.adGroup.facebookAdSetId);
+      cacheManager.invalidateAds(
+        creative.adGroup.campaign.adAccount.userId,
+        creative.adGroup.facebookAdSetId
+      );
     }
-
+    revalidateTag(`ads-${creative.adGroup.campaign.adAccountId}`);
     revalidatePath('/ads');
     return { success: true };
   } catch (error) {
@@ -198,23 +214,32 @@ export async function deleteAdAction(
     }
 
     // Initialize cache
-    const cacheManager = new CacheManager(1000);
+    const cacheManager = getCacheManager();
 
     // Delete from Facebook if synced
-    if (creative.facebookAdId && creative.adGroup.campaign.adAccount.facebookAccessToken) {
-      const sdkClient = new FacebookSDKClient({
-        accessToken: creative.adGroup.campaign.adAccount.facebookAccessToken,
-        apiVersion: FACEBOOK_API_CONFIG.apiVersion,
-      });
+      if (creative.facebookAdId && creative.adGroup.campaign.adAccount.facebookAccessToken) {
+        const tokenResult = getPlainFacebookToken(
+          creative.adGroup.campaign.adAccount.facebookAccessToken
+        );
+
+        if (!tokenResult.token) {
+          return {
+            success: false,
+            error: tokenResult.error || 'Stored Facebook token is invalid. Please reconnect.',
+          };
+        }
+
+        const sdkClient = new FacebookSDKClient({
+          accessToken: tokenResult.token,
+          apiVersion: FACEBOOK_API_CONFIG.apiVersion,
+          cacheManager,
+          userId: creative.adGroup.campaign.adAccount.userId,
+        });
 
       await errorHandler.handleWithRetry(async () => {
         await sdkClient.deleteAd(creative.facebookAdId!);
       });
 
-      // Invalidate cache
-      if (creative.adGroup.facebookAdSetId) {
-        await cacheManager.invalidateAds(creative.adGroup.facebookAdSetId);
-      }
     }
 
     // Delete from local database
@@ -222,6 +247,13 @@ export async function deleteAdAction(
       where: { id: validated.id },
     });
 
+    if (creative.adGroup.facebookAdSetId) {
+      cacheManager.invalidateAds(
+        creative.adGroup.campaign.adAccount.userId,
+        creative.adGroup.facebookAdSetId
+      );
+    }
+    revalidateTag(`ads-${creative.adGroup.campaign.adAccountId}`);
     revalidatePath('/ads');
     return { success: true };
   } catch (error) {
@@ -278,14 +310,27 @@ export async function updateAdStatusAction(
     }
 
     // Initialize cache
-    const cacheManager = new CacheManager(1000);
+    const cacheManager = getCacheManager();
 
     // Update on Facebook if synced
-    if (creative.facebookAdId && creative.adGroup.campaign.adAccount.facebookAccessToken) {
-      const sdkClient = new FacebookSDKClient({
-        accessToken: creative.adGroup.campaign.adAccount.facebookAccessToken,
-        apiVersion: FACEBOOK_API_CONFIG.apiVersion,
-      });
+      if (creative.facebookAdId && creative.adGroup.campaign.adAccount.facebookAccessToken) {
+        const tokenResult = getPlainFacebookToken(
+          creative.adGroup.campaign.adAccount.facebookAccessToken
+        );
+
+        if (!tokenResult.token) {
+          return {
+            success: false,
+            error: tokenResult.error || 'Stored Facebook token is invalid. Please reconnect.',
+          };
+        }
+
+        const sdkClient = new FacebookSDKClient({
+          accessToken: tokenResult.token,
+          apiVersion: FACEBOOK_API_CONFIG.apiVersion,
+          cacheManager,
+          userId: creative.adGroup.campaign.adAccount.userId,
+        });
 
       await errorHandler.handleWithRetry(async () => {
         await sdkClient.updateAd(creative.facebookAdId!, {
@@ -293,10 +338,6 @@ export async function updateAdStatusAction(
         });
       });
 
-      // Invalidate cache
-      if (creative.adGroup.facebookAdSetId) {
-        await cacheManager.invalidateAds(creative.adGroup.facebookAdSetId);
-      }
     }
 
     // Update local database
@@ -307,6 +348,13 @@ export async function updateAdStatusAction(
       },
     });
 
+    if (creative.adGroup.facebookAdSetId) {
+      cacheManager.invalidateAds(
+        creative.adGroup.campaign.adAccount.userId,
+        creative.adGroup.facebookAdSetId
+      );
+    }
+    revalidateTag(`ads-${creative.adGroup.campaign.adAccountId}`);
     revalidatePath('/ads');
     return { success: true };
   } catch (error) {

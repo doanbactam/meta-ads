@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { deleteToken } from './token-storage';
 import { FACEBOOK_ERROR_CODES } from './facebook-api';
+import { getPlainFacebookToken } from './token-utils';
 
 /**
  * Token Revocation Handler
@@ -31,6 +32,7 @@ const TOKEN_REVOCATION_MESSAGES = [
   'token is invalid',
   'oauth access token has expired',
   'the user has not granted permission',
+  'facebook_token_expired',
 ];
 
 export interface TokenRevocationInfo {
@@ -151,7 +153,23 @@ export async function checkTokenRevocation(
     
     // Try to validate token
     const { FacebookMarketingAPI } = await import('./facebook-api');
-    const api = new FacebookMarketingAPI(account.facebookAccessToken);
+
+    const { token: plainToken, error: decodeError } = getPlainFacebookToken(
+      account.facebookAccessToken
+    );
+
+    if (!plainToken) {
+      console.warn(
+        `Failed to decrypt token for account ${accountId}: ${decodeError || 'Unknown error'}`
+      );
+      return {
+        isRevoked: true,
+        shouldReauthenticate: true,
+        reason: decodeError || 'Stored token is invalid or corrupted',
+      };
+    }
+
+    const api = new FacebookMarketingAPI(plainToken);
     
     try {
       const validation = await api.validateToken();

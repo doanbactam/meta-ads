@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { getAccountsWithExpiringTokens, updateToken } from './token-storage';
 import { FacebookMarketingAPI } from './facebook-api';
+import { getPlainFacebookToken } from './token-utils';
 
 /**
  * Token Refresh Service
@@ -93,6 +94,18 @@ export async function refreshTokenForAccount(
         error: 'No token found',
       };
     }
+
+    const { token: plainToken, error: decodeError } = getPlainFacebookToken(
+      account.facebookAccessToken
+    );
+
+    if (!plainToken) {
+      return {
+        accountId,
+        success: false,
+        error: decodeError || 'Stored token is invalid',
+      };
+    }
     
     // Check if token is already long-lived (> 30 days until expiry)
     if (account.facebookTokenExpiry) {
@@ -110,7 +123,7 @@ export async function refreshTokenForAccount(
     }
     
     // Validate current token first
-    const api = new FacebookMarketingAPI(account.facebookAccessToken);
+    const api = new FacebookMarketingAPI(plainToken);
     const validation = await api.validateToken();
     
     if (!validation.isValid) {
@@ -122,7 +135,7 @@ export async function refreshTokenForAccount(
     }
     
     // Exchange for long-lived token
-    const exchangeResult = await exchangeForLongLivedToken(account.facebookAccessToken);
+    const exchangeResult = await exchangeForLongLivedToken(plainToken);
     
     if (!exchangeResult) {
       return {

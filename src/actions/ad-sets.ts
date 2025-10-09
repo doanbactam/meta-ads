@@ -1,7 +1,7 @@
 'use server';
 
 import { auth } from '@clerk/nextjs/server';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { z } from 'zod';
 import { prisma } from '@/lib/server/prisma';
 
@@ -51,6 +51,15 @@ export async function duplicateAdSetAction(
       return { success: false, error: 'Ad set not found' };
     }
 
+    const campaign = await prisma.campaign.findUnique({
+      where: { id: adSet.campaignId },
+      select: { adAccountId: true },
+    });
+
+    if (!campaign) {
+      return { success: false, error: 'Parent campaign not found' };
+    }
+
     // Create duplicate
     await prisma.adGroup.create({
       data: {
@@ -59,9 +68,10 @@ export async function duplicateAdSetAction(
         name: `${adSet.name} (Copy)`,
         createdAt: undefined,
         updatedAt: undefined,
-      },
+      } as any,
     });
 
+    revalidateTag(`ad-sets-${campaign.adAccountId}`);
     revalidatePath('/ad-sets');
     return { success: true };
   } catch (error) {
@@ -89,11 +99,30 @@ export async function deleteAdSetAction(
       return { success: false, error: 'Unauthorized' };
     }
 
+    const adSet = await prisma.adGroup.findUnique({
+      where: { id: validated.id },
+      select: { campaignId: true },
+    });
+
+    if (!adSet) {
+      return { success: false, error: 'Ad set not found' };
+    }
+
+    const campaign = await prisma.campaign.findUnique({
+      where: { id: adSet.campaignId },
+      select: { adAccountId: true },
+    });
+
+    if (!campaign) {
+      return { success: false, error: 'Parent campaign not found' };
+    }
+
     // Delete ad set
     await prisma.adGroup.delete({
       where: { id: validated.id },
     });
 
+    revalidateTag(`ad-sets-${campaign.adAccountId}`);
     revalidatePath('/ad-sets');
     return { success: true };
   } catch (error) {
@@ -121,12 +150,31 @@ export async function updateAdSetStatusAction(
       return { success: false, error: 'Unauthorized' };
     }
 
+    const adSet = await prisma.adGroup.findUnique({
+      where: { id: validated.id },
+      select: { campaignId: true },
+    });
+
+    if (!adSet) {
+      return { success: false, error: 'Ad set not found' };
+    }
+
+    const campaign = await prisma.campaign.findUnique({
+      where: { id: adSet.campaignId },
+      select: { adAccountId: true },
+    });
+
+    if (!campaign) {
+      return { success: false, error: 'Parent campaign not found' };
+    }
+
     // Update ad set status
     await prisma.adGroup.update({
       where: { id: validated.id },
       data: { status: validated.status },
     });
 
+    revalidateTag(`ad-sets-${campaign.adAccountId}`);
     revalidatePath('/ad-sets');
     return { success: true };
   } catch (error) {

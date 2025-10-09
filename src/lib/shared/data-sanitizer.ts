@@ -68,6 +68,23 @@ export function safeParsePercentage(value: string | number | null | undefined): 
 }
 
 /**
+ * Safely parse ISO date strings returned from Facebook.
+ */
+export function safeParseDate(value: string | null | undefined): Date | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    console.warn(`Invalid date string received from Facebook: ${value}`);
+    return undefined;
+  }
+
+  return parsed;
+}
+
+/**
  * Sanitize Facebook campaign data with validation
  */
 export function sanitizeFacebookCampaign(data: any) {
@@ -81,6 +98,10 @@ export function sanitizeFacebookCampaign(data: any) {
       spendCap: validated.spendCap ?? undefined,
       dailyBudget: validated.dailyBudget ?? undefined,
       lifetimeBudget: validated.lifetimeBudget ?? undefined,
+      createdTime: safeParseDate(validated.createdTime),
+      updatedTime: safeParseDate(validated.updatedTime),
+      startTime: safeParseDate(validated.startTime),
+      stopTime: safeParseDate(validated.stopTime),
     };
   } catch (error) {
     console.warn(`Failed to validate campaign data for ${data?.id}:`, error);
@@ -93,6 +114,10 @@ export function sanitizeFacebookCampaign(data: any) {
       spendCap: undefined,
       dailyBudget: undefined,
       lifetimeBudget: undefined,
+      createdTime: safeParseDate(data?.created_time),
+      updatedTime: safeParseDate(data?.updated_time),
+      startTime: safeParseDate(data?.start_time),
+      stopTime: safeParseDate(data?.stop_time),
     };
   }
 }
@@ -140,6 +165,8 @@ export function sanitizeFacebookInsights(data: any) {
     conversions: safeParseInt(sourceData.conversions),
     // Cost per conversion is in cents, convert to dollars
     costPerConversion: safeParseFloat(sourceData.costPerConversion, 100),
+    dateStart: safeParseDate(sourceData.date_start),
+    dateStop: safeParseDate(sourceData.date_stop),
   };
 }
 
@@ -158,6 +185,10 @@ export function sanitizeFacebookAdSet(data: any) {
       lifetime_budget: validated.lifetime_budget ?? undefined,
       bid_amount: validated.bid_amount ?? undefined,
       targeting: validated.targeting ?? undefined,
+      created_time: safeParseDate(validated.created_time),
+      updated_time: safeParseDate(validated.updated_time),
+      start_time: safeParseDate(validated.start_time),
+      end_time: safeParseDate(validated.end_time),
     };
   } catch (error) {
     console.warn(`Failed to validate ad set data for ${data?.id}:`, error);
@@ -170,6 +201,10 @@ export function sanitizeFacebookAdSet(data: any) {
       lifetime_budget: undefined,
       bid_amount: undefined,
       targeting: undefined,
+      created_time: safeParseDate(data?.created_time),
+      updated_time: safeParseDate(data?.updated_time),
+      start_time: safeParseDate(data?.start_time),
+      end_time: safeParseDate(data?.end_time),
     };
   }
 }
@@ -186,6 +221,8 @@ export function sanitizeFacebookAd(data: any) {
       status: validated.status,
       effective_status: validated.effective_status ?? undefined,
       creative: validated.creative ?? undefined,
+      created_time: safeParseDate(validated.created_time),
+      updated_time: safeParseDate(validated.updated_time),
     };
   } catch (error) {
     console.warn(`Failed to validate ad data for ${data?.id}:`, error);
@@ -195,6 +232,8 @@ export function sanitizeFacebookAd(data: any) {
       status: 'PAUSED',
       effective_status: undefined,
       creative: undefined,
+      created_time: safeParseDate(data?.created_time),
+      updated_time: safeParseDate(data?.updated_time),
     };
   }
 }

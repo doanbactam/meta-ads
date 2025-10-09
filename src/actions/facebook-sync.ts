@@ -1,12 +1,13 @@
 'use server';
 
 import { auth } from '@clerk/nextjs/server';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { z } from 'zod';
 import { prisma } from '@/lib/server/prisma';
 import { FacebookSDKClient } from '@/lib/server/facebook-sdk-client';
-import { CacheManager } from '@/lib/server/cache-manager';
+import { getCacheManager } from '@/lib/server/cache';
 import { FacebookErrorHandler, FACEBOOK_API_CONFIG, FACEBOOK_FIELDS } from '@/lib/integrations/facebook';
+import { getPlainFacebookToken } from '@/lib/server/token-utils';
 
 // Validation schemas
 const syncAdAccountSchema = z.object({
@@ -68,12 +69,23 @@ export async function syncAdAccountAction(
       return { success: false, error: 'Facebook ad account ID not found' };
     }
 
+    const tokenResult = getPlainFacebookToken(adAccount.facebookAccessToken);
+
+    if (!tokenResult.token) {
+      return {
+        success: false,
+        error: tokenResult.error || 'Stored Facebook token is invalid. Please reconnect.',
+      };
+    }
+
     // Initialize Facebook SDK Client and Cache
+    const cacheManager = getCacheManager();
     const sdkClient = new FacebookSDKClient({
-      accessToken: adAccount.facebookAccessToken,
+      accessToken: tokenResult.token,
       apiVersion: FACEBOOK_API_CONFIG.apiVersion,
+      cacheManager,
+      userId: adAccount.userId,
     });
-    const cacheManager = new CacheManager(1000);
 
     // Update sync status
     await prisma.adAccount.update({
@@ -104,7 +116,7 @@ export async function syncAdAccountAction(
     });
 
     // Invalidate cache
-    await cacheManager.invalidateAdAccounts(adAccount.facebookAdAccountId);
+    cacheManager.invalidateAdAccounts(adAccount.userId);
 
     revalidatePath('/dashboard');
     return { 
@@ -184,11 +196,22 @@ export async function syncCampaignsAction(
     }
 
     // Initialize Facebook SDK Client and Cache
+    const cacheManager = getCacheManager();
+    const tokenResult = getPlainFacebookToken(adAccount.facebookAccessToken);
+
+    if (!tokenResult.token) {
+      return {
+        success: false,
+        error: tokenResult.error || 'Stored Facebook token is invalid. Please reconnect.',
+      };
+    }
+
     const sdkClient = new FacebookSDKClient({
-      accessToken: adAccount.facebookAccessToken,
+      accessToken: tokenResult.token,
       apiVersion: FACEBOOK_API_CONFIG.apiVersion,
+      cacheManager,
+      userId: adAccount.userId,
     });
-    const cacheManager = new CacheManager(1000);
 
     // Update sync status
     await prisma.adAccount.update({
@@ -268,7 +291,10 @@ export async function syncCampaignsAction(
     });
 
     // Invalidate cache
-    await cacheManager.invalidateCampaigns(adAccount.facebookAdAccountId);
+    if (adAccount.facebookAdAccountId) {
+      cacheManager.invalidateCampaigns(adAccount.userId, adAccount.facebookAdAccountId);
+    }
+    revalidateTag(`campaigns-${validated.adAccountId}`);
 
     revalidatePath('/campaigns');
     return { 

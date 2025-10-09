@@ -2,7 +2,10 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
-import { UniversalDataTable } from '@/components/table/universal-data-table';
+import {
+  UniversalDataTable,
+  UniversalDataTableSkeleton,
+} from '@/components/table/universal-data-table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAdAccount } from '@/lib/client/contexts/ad-account-context';
 import {
@@ -51,21 +54,27 @@ function CampaignsContent() {
         </TabsList>
 
         <TabsContent value="campaigns" className="mt-4">
-          <UniversalDataTable<Campaign>
-            adAccountId={selectedAdAccount}
-            config={campaignTableConfig}
-          />
+          <Suspense fallback={<UniversalDataTableSkeleton<Campaign> config={campaignTableConfig} />}>
+            <UniversalDataTable<Campaign>
+              adAccountId={selectedAdAccount}
+              config={campaignTableConfig}
+            />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="ad-sets" className="mt-4">
-          <UniversalDataTable<AdGroup>
-            adAccountId={selectedAdAccount}
-            config={adGroupsTableConfig}
-          />
+          <Suspense fallback={<UniversalDataTableSkeleton<AdGroup> config={adGroupsTableConfig} />}>
+            <UniversalDataTable<AdGroup>
+              adAccountId={selectedAdAccount}
+              config={adGroupsTableConfig}
+            />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="ads" className="mt-4">
-          <UniversalDataTable<Ad> adAccountId={selectedAdAccount} config={adsTableConfig} />
+          <Suspense fallback={<UniversalDataTableSkeleton<Ad> config={adsTableConfig} />}>
+            <UniversalDataTable<Ad> adAccountId={selectedAdAccount} config={adsTableConfig} />
+          </Suspense>
         </TabsContent>
       </Tabs>
     </div>
@@ -73,9 +82,5 @@ function CampaignsContent() {
 }
 
 export default function CampaignsPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <CampaignsContent />
-    </Suspense>
-  );
+  return <CampaignsContent />;
 }

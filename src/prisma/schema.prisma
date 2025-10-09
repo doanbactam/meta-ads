@@ -52,6 +52,7 @@ model AdAccount {
   @@index([syncStatus])
   @@index([userId, status])
   @@index([userId, facebookBusinessId])
+  @@index([facebookAdAccountId, userId])
   @@map("ad_accounts")
 }
 
@@ -111,7 +112,9 @@ model Campaign {
   @@index([lastSyncedAt])
   @@index([adAccountId, status])
   @@index([adAccountId, lastSyncedAt])
+  @@index([adAccountId, facebookCampaignId])
   @@index([dateStart, dateEnd])
+  @@index([adAccountId, dateStart, dateEnd])
   @@map("campaigns")
 }
 
@@ -168,7 +171,9 @@ model AdGroup {
   @@index([effectiveStatus])
   @@index([lastSyncedAt])
   @@index([campaignId, status])
+  @@index([campaignId, facebookAdSetId])
   @@index([dateStart, dateEnd])
+  @@index([campaignId, dateStart, dateEnd])
   @@map("ad_groups")
 }
 
@@ -197,7 +202,9 @@ model Creative {
   @@index([lastSyncedAt])
   @@index([status])
   @@index([adGroupId, status])
+  @@index([adGroupId, facebookAdId])
   @@index([dateStart, dateEnd])
+  @@index([adGroupId, dateStart, dateEnd])
   @@map("creatives")
 }
 

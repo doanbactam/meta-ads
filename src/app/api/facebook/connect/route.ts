@@ -4,6 +4,7 @@ import { checkRateLimit, RATE_LIMIT_CONFIGS } from '@/app/api/_lib/rate-limiter'
 import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
 import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
 import { prisma } from '@/lib/server/prisma';
+import { encryptTokenForStorage } from '@/lib/server/token-encryption';
 
 export async function POST(req: NextRequest) {
   try {
@@ -126,6 +127,13 @@ export async function POST(req: NextRequest) {
     const authorizedAccountIds = fbAccounts.map((acc) => acc.id.replace('act_', ''));
 
     // Use transaction to ensure data consistency
+    let storedToken = accessToken;
+    try {
+      storedToken = encryptTokenForStorage(accessToken);
+    } catch (error) {
+      console.warn('[Facebook Connect] Failed to encrypt token, storing as plain text:', error);
+    }
+
     const result = await prisma.$transaction(async (tx) => {
       // Get all existing Facebook ad accounts for this user
       const existingAccounts = await tx.adAccount.findMany({
@@ -164,7 +172,7 @@ export async function POST(req: NextRequest) {
             },
           },
           update: {
-            facebookAccessToken: accessToken,
+            facebookAccessToken: storedToken,
             facebookTokenExpiry: expiryDate,
             facebookUserId: validation.userId,
             facebookBusinessId: fbAccount.businessId || null,
@@ -181,7 +189,7 @@ export async function POST(req: NextRequest) {
             status: 'ACTIVE',
             currency: fbAccount.currency || 'USD',
             timeZone: fbAccount.timezone || 'UTC',
-            facebookAccessToken: accessToken,
+            facebookAccessToken: storedToken,
             facebookTokenExpiry: expiryDate,
             facebookAdAccountId: cleanAccountId,
             facebookUserId: validation.userId,
@@ -201,13 +209,13 @@ export async function POST(req: NextRequest) {
     // Trigger immediate data sync for the first account (non-blocking)
     if (result.updatedAccounts.length > 0 && result.updatedAccounts[0]) {
       const firstAccount = result.updatedAccounts[0];
-      if (firstAccount.facebookAdAccountId && firstAccount.facebookAccessToken) {
+      if (firstAccount.facebookAdAccountId) {
         console.log(`[Facebook Connect] Triggering initial data sync for account ${firstAccount.facebookAdAccountId}`);
 
         // Import sync service dynamically to avoid circular dependencies
         import('@/lib/server/facebook-sync-service').then(({ FacebookSyncService }) => {
           const syncService = new FacebookSyncService(
-            firstAccount.facebookAccessToken!,
+            accessToken,
             firstAccount.facebookAdAccountId!,
             firstAccount.id
           );

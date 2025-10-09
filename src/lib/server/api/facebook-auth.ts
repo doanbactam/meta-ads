@@ -1,6 +1,7 @@
 import type { AdAccount } from '@prisma/client';
 import { FacebookMarketingAPI, FacebookTokenExpiredError } from '@/lib/server/facebook-api';
 import { prisma } from '@/lib/server/prisma';
+import { getPlainFacebookToken } from '@/lib/server/token-utils';
 
 /**
  * Validates and returns a Facebook access token for an ad account.
@@ -27,6 +28,27 @@ export async function getValidFacebookToken(
     return { error: 'Facebook not connected', status: 400 };
   }
 
+  const { token: plainToken, error: decodeError } = getPlainFacebookToken(
+    adAccount.facebookAccessToken
+  );
+
+  if (!plainToken) {
+    await prisma.adAccount.update({
+      where: { id: adAccount.id },
+      data: {
+        status: 'PAUSED',
+        syncStatus: 'ERROR',
+        syncError: decodeError || 'Stored Facebook token is invalid. Please reconnect.',
+        facebookTokenExpiry: new Date(),
+      },
+    });
+
+    return {
+      error: decodeError || 'Facebook token is invalid. Please reconnect.',
+      status: 401,
+    };
+  }
+
   // Check if token is expired based on stored expiry date
   if (adAccount.facebookTokenExpiry && adAccount.facebookTokenExpiry < new Date()) {
     // Mark account as paused using transaction to prevent race conditions
@@ -49,7 +71,7 @@ export async function getValidFacebookToken(
   // Skip Facebook API validation if requested (e.g., token was just updated)
   // This prevents race conditions and unnecessary API calls after reconnection
   if (options?.skipFacebookValidation) {
-    return { token: adAccount.facebookAccessToken, adAccount };
+    return { token: plainToken, adAccount };
   }
 
   // Check if token was recently updated (within last 2 minutes)
@@ -58,11 +80,11 @@ export async function getValidFacebookToken(
     adAccount.updatedAt && Date.now() - adAccount.updatedAt.getTime() < 2 * 60 * 1000;
 
   if (recentlyUpdated && adAccount.status === 'ACTIVE') {
-    return { token: adAccount.facebookAccessToken, adAccount };
+    return { token: plainToken, adAccount };
   }
 
   // Validate token with Facebook API
-  const api = new FacebookMarketingAPI(adAccount.facebookAccessToken);
+  const api = new FacebookMarketingAPI(plainToken);
   const validation = await api.validateToken();
 
   if (!validation.isValid) {
@@ -89,7 +111,7 @@ export async function getValidFacebookToken(
     };
   }
 
-  return { token: adAccount.facebookAccessToken, adAccount };
+  return { token: plainToken, adAccount };
 }
 
 /**

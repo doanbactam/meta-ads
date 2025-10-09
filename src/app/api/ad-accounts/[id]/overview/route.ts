@@ -7,6 +7,33 @@ import {
 } from '@/lib/server/api-utils';
 import { prisma } from '@/lib/server/prisma';
 
+function toNumber(value: unknown): number {
+  if (value === null || value === undefined) {
+    return 0;
+  }
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  if (typeof value === 'bigint') {
+    return Number(value);
+  }
+
+  if (typeof value === 'object' && 'toNumber' in (value as { toNumber?: () => number })) {
+    try {
+      const numeric = (value as { toNumber?: () => number }).toNumber?.();
+      return typeof numeric === 'number' && Number.isFinite(numeric) ? numeric : 0;
+    } catch (error) {
+      console.warn('Failed to convert Prisma Decimal to number', error);
+      return 0;
+    }
+  }
+
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withAuth(params, async (userId, { id: adAccountId }) => {
     const { searchParams } = new URL(request.url);
@@ -19,7 +46,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const currentStats = await prisma.campaign.aggregate({
       where: {
         adAccountId: adAccountId,
-        ...(dateFilter && { createdAt: dateFilter }),
+        ...(dateFilter && { dateStart: dateFilter }),
       },
       _sum: {
         spent: true,
@@ -43,7 +70,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       previousStats = await prisma.campaign.aggregate({
         where: {
           adAccountId: adAccountId,
-          createdAt: {
+          dateStart: {
             gte: previousFrom,
             lte: previousTo,
           },
@@ -57,15 +84,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       });
     }
 
-    const currentSpend = currentStats._sum?.spent || 0;
-    const currentImpressions = currentStats._sum?.impressions || 0;
-    const currentClicks = currentStats._sum?.clicks || 0;
-    const currentConversions = currentStats._sum?.conversions || 0;
+    const currentSpend = toNumber(currentStats._sum?.spent);
+    const currentImpressions = toNumber(currentStats._sum?.impressions);
+    const currentClicks = toNumber(currentStats._sum?.clicks);
+    const currentConversions = toNumber(currentStats._sum?.conversions);
 
-    const previousSpend = previousStats?._sum?.spent || 0;
-    const previousImpressions = previousStats?._sum?.impressions || 0;
-    const previousClicks = previousStats?._sum?.clicks || 0;
-    const previousConversions = previousStats?._sum?.conversions || 0;
+    const previousSpend = toNumber(previousStats?._sum?.spent);
+    const previousImpressions = toNumber(previousStats?._sum?.impressions);
+    const previousClicks = toNumber(previousStats?._sum?.clicks);
+    const previousConversions = toNumber(previousStats?._sum?.conversions);
 
     // Calculate derived metrics
     const averageCpc = currentClicks > 0 ? currentSpend / currentClicks : 0;
@@ -76,7 +103,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       totalImpressions: currentImpressions,
       totalClicks: currentClicks,
       totalConversions: currentConversions,
-      averageCtr: currentStats._avg?.ctr || 0,
+      averageCtr: toNumber(currentStats._avg?.ctr),
       averageCpc: averageCpc,
       averageRoas: averageRoas,
       spendChange: calculatePercentageChange(currentSpend, previousSpend),

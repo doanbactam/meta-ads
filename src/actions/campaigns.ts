@@ -1,12 +1,13 @@
 'use server';
 
 import { auth } from '@clerk/nextjs/server';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { z } from 'zod';
 import { prisma } from '@/lib/server/prisma';
 import { FacebookSDKClient } from '@/lib/server/facebook-sdk-client';
-import { CacheManager } from '@/lib/server/cache-manager';
+import { getCacheManager } from '@/lib/server/cache';
 import { FacebookErrorHandler, FACEBOOK_API_CONFIG } from '@/lib/integrations/facebook';
+import { getPlainFacebookToken } from '@/lib/server/token-utils';
 
 // Validation schemas
 const duplicateCampaignSchema = z.object({
@@ -74,12 +75,23 @@ export async function duplicateCampaignAction(
       return { success: false, error: 'Facebook account not connected' };
     }
 
+    const tokenResult = getPlainFacebookToken(campaign.adAccount.facebookAccessToken);
+
+    if (!tokenResult.token) {
+      return {
+        success: false,
+        error: tokenResult.error || 'Stored Facebook token is invalid. Please reconnect.',
+      };
+    }
+
     // Initialize Facebook SDK Client and Cache
+    const cacheManager = getCacheManager();
     const sdkClient = new FacebookSDKClient({
-      accessToken: campaign.adAccount.facebookAccessToken,
+      accessToken: tokenResult.token,
       apiVersion: FACEBOOK_API_CONFIG.apiVersion,
+      cacheManager,
+      userId: campaign.adAccount.userId,
     });
-    const cacheManager = new CacheManager(1000);
 
     // Duplicate campaign via Facebook SDK with retry logic
     const result = await errorHandler.handleWithRetry(async () => {
@@ -124,9 +136,13 @@ export async function duplicateCampaignAction(
       } as any, // Cast entire object to avoid Prisma client type issues
     });
 
-    // Invalidate cache
-    await cacheManager.invalidateCampaigns(campaign.adAccount.facebookAdAccountId!);
-
+    if (campaign.adAccount.facebookAdAccountId) {
+      cacheManager.invalidateCampaigns(
+        campaign.adAccount.userId,
+        campaign.adAccount.facebookAdAccountId
+      );
+    }
+    revalidateTag(`campaigns-${campaign.adAccountId}`);
     revalidatePath('/campaigns');
     return { success: true };
   } catch (error) {
@@ -173,13 +189,24 @@ export async function deleteCampaignAction(
     }
 
     // Initialize cache
-    const cacheManager = new CacheManager(1000);
+    const cacheManager = getCacheManager();
 
     // Delete from Facebook if synced
     if (campaign.facebookCampaignId && campaign.adAccount.facebookAccessToken) {
+      const tokenResult = getPlainFacebookToken(campaign.adAccount.facebookAccessToken);
+
+      if (!tokenResult.token) {
+        return {
+          success: false,
+          error: tokenResult.error || 'Stored Facebook token is invalid. Please reconnect.',
+        };
+      }
+
       const sdkClient = new FacebookSDKClient({
-        accessToken: campaign.adAccount.facebookAccessToken,
+        accessToken: tokenResult.token,
         apiVersion: FACEBOOK_API_CONFIG.apiVersion,
+        cacheManager,
+        userId: campaign.adAccount.userId,
       });
 
       await errorHandler.handleWithRetry(async () => {
@@ -187,9 +214,6 @@ export async function deleteCampaignAction(
       });
 
       // Invalidate cache
-      if (campaign.adAccount.facebookAdAccountId) {
-        await cacheManager.invalidateCampaigns(campaign.adAccount.facebookAdAccountId);
-      }
     }
 
     // Delete from local database
@@ -197,6 +221,13 @@ export async function deleteCampaignAction(
       where: { id: validated.id },
     });
 
+    if (campaign.adAccount.facebookAdAccountId) {
+      cacheManager.invalidateCampaigns(
+        campaign.adAccount.userId,
+        campaign.adAccount.facebookAdAccountId
+      );
+    }
+    revalidateTag(`campaigns-${campaign.adAccountId}`);
     revalidatePath('/campaigns');
     return { success: true };
   } catch (error) {
@@ -243,13 +274,24 @@ export async function updateCampaignStatusAction(
     }
 
     // Initialize cache
-    const cacheManager = new CacheManager(1000);
+    const cacheManager = getCacheManager();
 
     // Update on Facebook if synced
     if (campaign.facebookCampaignId && campaign.adAccount.facebookAccessToken) {
+      const tokenResult = getPlainFacebookToken(campaign.adAccount.facebookAccessToken);
+
+      if (!tokenResult.token) {
+        return {
+          success: false,
+          error: tokenResult.error || 'Stored Facebook token is invalid. Please reconnect.',
+        };
+      }
+
       const sdkClient = new FacebookSDKClient({
-        accessToken: campaign.adAccount.facebookAccessToken,
+        accessToken: tokenResult.token,
         apiVersion: FACEBOOK_API_CONFIG.apiVersion,
+        cacheManager,
+        userId: campaign.adAccount.userId,
       });
 
       await errorHandler.handleWithRetry(async () => {
@@ -258,10 +300,6 @@ export async function updateCampaignStatusAction(
         });
       });
 
-      // Invalidate cache
-      if (campaign.adAccount.facebookAdAccountId) {
-        await cacheManager.invalidateCampaigns(campaign.adAccount.facebookAdAccountId);
-      }
     }
 
     // Update local database
@@ -272,6 +310,13 @@ export async function updateCampaignStatusAction(
       },
     });
 
+    if (campaign.adAccount.facebookAdAccountId) {
+      cacheManager.invalidateCampaigns(
+        campaign.adAccount.userId,
+        campaign.adAccount.facebookAdAccountId
+      );
+    }
+    revalidateTag(`campaigns-${campaign.adAccountId}`);
     revalidatePath('/campaigns');
     return { success: true };
   } catch (error) {

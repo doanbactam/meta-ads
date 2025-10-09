@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
 import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
 import { prisma } from '@/lib/server/prisma';
+import { getPlainFacebookToken } from '@/lib/server/token-utils';
 
 async function getAdAccountWithValidation(userId: string, adAccountId: string) {
   const user = await getOrCreateUserFromClerk(userId);
@@ -26,7 +27,16 @@ async function getAdAccountWithValidation(userId: string, adAccountId: string) {
     return { error: 'Token expired', status: 401 };
   }
 
-  return { adAccount };
+  const { token, error } = getPlainFacebookToken(adAccount.facebookAccessToken);
+
+  if (!token) {
+    return {
+      error: error || 'Stored Facebook token is invalid. Please reconnect.',
+      status: 401,
+    };
+  }
+
+  return { adAccount, token };
 }
 
 export async function GET(req: NextRequest) {
@@ -53,8 +63,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: result.error }, { status: result.status });
     }
 
-    const { adAccount } = result;
-    const api = new FacebookMarketingAPI(adAccount.facebookAccessToken!);
+    const { adAccount, token } = result;
+    const api = new FacebookMarketingAPI(token);
 
     try {
       const adSets = await api.getAdSets(campaignId);
@@ -106,7 +116,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: result.error }, { status: result.status });
     }
 
-    const { adAccount } = result;
+    const { adAccount, token } = result;
 
     const adSetData: any = {
       campaign_id: campaignId,
@@ -120,7 +130,7 @@ export async function POST(req: NextRequest) {
     if (targeting) adSetData.targeting = targeting;
 
     const response = await fetch(
-      `https://graph.facebook.com/v23.0/${campaignId}/adsets?access_token=${adAccount.facebookAccessToken!}`,
+      `https://graph.facebook.com/v23.0/${campaignId}/adsets?access_token=${token}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -164,10 +174,10 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: result.error }, { status: result.status });
     }
 
-    const { adAccount } = result;
+    const { adAccount, token } = result;
 
     const response = await fetch(
-      `https://graph.facebook.com/v23.0/${adSetId}?access_token=${adAccount.facebookAccessToken!}`,
+      `https://graph.facebook.com/v23.0/${adSetId}?access_token=${token}`,
       { method: 'DELETE' }
     );
 

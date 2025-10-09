@@ -4,6 +4,7 @@ import { checkRateLimit, RATE_LIMIT_CONFIGS } from '@/app/api/_lib/rate-limiter'
 import { getOrCreateUserFromClerk } from '@/lib/server/api/users';
 import { FacebookMarketingAPI } from '@/lib/server/facebook-api';
 import { prisma } from '@/lib/server/prisma';
+import { getPlainFacebookToken } from '@/lib/server/token-utils';
 
 export async function GET(req: NextRequest) {
   try {
@@ -96,6 +97,29 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    const { token: plainToken, error: decodeError } = getPlainFacebookToken(
+      adAccount.facebookAccessToken
+    );
+
+    if (!plainToken) {
+      await prisma.adAccount.update({
+        where: { id: adAccount.id },
+        data: {
+          status: 'PAUSED',
+          syncStatus: 'ERROR',
+          syncError: decodeError || 'Stored Facebook token is invalid. Please reconnect.',
+          facebookTokenExpiry: new Date(),
+        },
+      });
+
+      return NextResponse.json({
+        connected: false,
+        message: decodeError || 'Stored Facebook token is invalid. Please reconnect.',
+        requiresReconnect: true,
+        reason: 'TOKEN_INVALID',
+      });
+    }
+
     // If token was recently updated (within last 2 minutes) and status is active,
     // skip Facebook API validation to prevent race conditions and unnecessary API calls
     const recentlyUpdated =
@@ -117,7 +141,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Validate token with Facebook API
-    const api = new FacebookMarketingAPI(adAccount.facebookAccessToken);
+    const api = new FacebookMarketingAPI(plainToken);
     const validation = await api.validateToken();
 
     if (!validation.isValid) {
