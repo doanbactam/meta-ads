@@ -11,6 +11,35 @@ import {
   sanitizeFacebookStatus,
 } from '@/lib/shared/data-sanitizer';
 
+type ConcurrencyLimiter = <T>(fn: () => Promise<T>) => Promise<T>;
+
+function createConcurrencyLimiter(limit: number): ConcurrencyLimiter {
+  let activeCount = 0;
+  const queue: Array<() => void> = [];
+
+  const next = () => {
+    activeCount = Math.max(0, activeCount - 1);
+    const resolver = queue.shift();
+    resolver?.();
+  };
+
+  return async function run<T>(fn: () => Promise<T>): Promise<T> {
+    if (activeCount >= limit) {
+      await new Promise<void>((resolve) => {
+        queue.push(resolve);
+      });
+    }
+
+    activeCount++;
+
+    try {
+      return await fn();
+    } finally {
+      next();
+    }
+  };
+}
+
 /**
  * Facebook Sync Service
  * Syncs data from Facebook Marketing API to local database
@@ -32,16 +61,19 @@ interface SyncResult {
 }
 
 const SYNC_INTERVAL = 10 * 60 * 1000; // 10 minutes
+const API_CONCURRENCY_LIMIT = 5;
 
 export class FacebookSyncService {
   private api: FacebookMarketingAPI;
   private adAccountId: string;
   private adAccountDbId: string;
+  private limit: ConcurrencyLimiter;
 
   constructor(accessToken: string, adAccountId: string, adAccountDbId: string) {
     this.api = new FacebookMarketingAPI(accessToken);
     this.adAccountId = adAccountId;
     this.adAccountDbId = adAccountDbId;
+    this.limit = createConcurrencyLimiter(API_CONCURRENCY_LIMIT);
   }
 
   /**
@@ -140,73 +172,117 @@ export class FacebookSyncService {
     try {
       const facebookCampaigns = await this.api.getCampaigns(this.adAccountId);
 
-      for (const fbCampaignRaw of facebookCampaigns) {
-        try {
-          // Sanitize and validate campaign data
-          const fbCampaign = sanitizeFacebookCampaign(fbCampaignRaw);
+      const campaignTasks = facebookCampaigns.map((fbCampaignRaw) =>
+        this.limit(async () => {
+          try {
+            const fbCampaign = sanitizeFacebookCampaign(fbCampaignRaw);
 
-          // Get insights for the campaign
-          const insightsRaw = await this.api
-            .getCampaignInsights(fbCampaign.id, {
-              dateFrom: options.dateFrom,
-              dateTo: options.dateTo,
-            })
-            .catch(() => null);
+            const insightsRaw = await this.api
+              .getCampaignInsights(fbCampaign.id, {
+                dateFrom: options.dateFrom,
+                dateTo: options.dateTo,
+              })
+              .catch(() => null);
 
-          // Sanitize insights data with safe number parsing
-          const insights = insightsRaw ? sanitizeFacebookInsights(insightsRaw) : null;
+            const insights = insightsRaw ? sanitizeFacebookInsights(insightsRaw) : null;
 
-          // Get budget with safe parsing (already converted from cents to dollars)
-          const budget = getBudgetAmount(fbCampaign.dailyBudget, fbCampaign.lifetimeBudget);
+            const budget = getBudgetAmount(fbCampaign.dailyBudget, fbCampaign.lifetimeBudget);
+            const dateStart = sanitizeDate(options.dateFrom);
+            const dateEnd = sanitizeDate(options.dateTo);
+            const status = sanitizeFacebookStatus(
+              fbCampaign.status,
+              'campaign',
+              'PAUSED'
+            ) as CampaignStatus;
 
-          // Parse dates safely
-          const dateStart = sanitizeDate(options.dateFrom);
-          const dateEnd = sanitizeDate(options.dateTo);
-
-          // Validate and map status
-          const status = sanitizeFacebookStatus(
-            fbCampaign.status,
-            'campaign',
-            'PAUSED'
-          ) as CampaignStatus;
-
-          await prisma.campaign.upsert({
-            where: { facebookCampaignId: fbCampaign.id },
-            create: {
-              adAccountId: this.adAccountDbId,
+            return {
               facebookCampaignId: fbCampaign.id,
               name: fbCampaign.name,
               status,
               budget,
-              spent: insights?.spend ?? 0,
-              impressions: insights?.impressions ?? 0,
-              clicks: insights?.clicks ?? 0,
-              ctr: insights?.ctr ?? 0,
-              conversions: insights?.conversions ?? 0,
-              costPerConversion: insights?.costPerConversion ?? 0,
+              insights,
               dateStart,
               dateEnd,
+            };
+          } catch (error) {
+            const message =
+              error instanceof Error ? error.message : 'Unknown error while preparing campaign';
+            throw new Error(
+              `Failed to prepare campaign ${fbCampaignRaw?.id || 'unknown'}: ${message}`
+            );
+          }
+        })
+      );
+
+      const campaignResults = await Promise.allSettled(campaignTasks);
+
+      const campaignsToPersist: Array<{
+        facebookCampaignId: string;
+        name: string;
+        status: CampaignStatus;
+        budget: number;
+        insights: ReturnType<typeof sanitizeFacebookInsights> | null;
+        dateStart: Date;
+        dateEnd: Date;
+      }> = [];
+
+      for (const result of campaignResults) {
+        if (result.status === 'fulfilled') {
+          campaignsToPersist.push(result.value);
+        } else {
+          const msg = `Failed to sync campaign: ${
+            result.reason instanceof Error ? result.reason.message : String(result.reason)
+          }`;
+          errors.push(msg);
+          console.warn(msg);
+        }
+      }
+
+      const persistenceResults = await Promise.allSettled(
+        campaignsToPersist.map((campaign) =>
+          prisma.campaign.upsert({
+            where: { facebookCampaignId: campaign.facebookCampaignId },
+            create: {
+              adAccountId: this.adAccountDbId,
+              facebookCampaignId: campaign.facebookCampaignId,
+              name: campaign.name,
+              status: campaign.status,
+              budget: campaign.budget,
+              spent: campaign.insights?.spend ?? 0,
+              impressions: campaign.insights?.impressions ?? 0,
+              clicks: campaign.insights?.clicks ?? 0,
+              ctr: campaign.insights?.ctr ?? 0,
+              conversions: campaign.insights?.conversions ?? 0,
+              costPerConversion: campaign.insights?.costPerConversion ?? 0,
+              dateStart: campaign.dateStart,
+              dateEnd: campaign.dateEnd,
               lastSyncedAt: new Date(),
             },
             update: {
-              name: fbCampaign.name,
-              status,
-              budget,
-              spent: insights?.spend ?? 0,
-              impressions: insights?.impressions ?? 0,
-              clicks: insights?.clicks ?? 0,
-              ctr: insights?.ctr ?? 0,
-              conversions: insights?.conversions ?? 0,
-              costPerConversion: insights?.costPerConversion ?? 0,
+              name: campaign.name,
+              status: campaign.status,
+              budget: campaign.budget,
+              spent: campaign.insights?.spend ?? 0,
+              impressions: campaign.insights?.impressions ?? 0,
+              clicks: campaign.insights?.clicks ?? 0,
+              ctr: campaign.insights?.ctr ?? 0,
+              conversions: campaign.insights?.conversions ?? 0,
+              costPerConversion: campaign.insights?.costPerConversion ?? 0,
               lastSyncedAt: new Date(),
             },
-          });
+          })
+        )
+      );
 
+      for (const result of persistenceResults) {
+        if (result.status === 'fulfilled') {
           synced++;
-        } catch (error) {
-          const msg = `Failed to sync campaign ${fbCampaignRaw?.id || 'unknown'}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+        } else {
+          const msg = `Failed to persist campaign: ${
+            result.reason instanceof Error ? result.reason.message : String(result.reason)
+          }`;
           errors.push(msg);
-          console.warn(msg);
+          console.error(msg);
         }
       }
     } catch (error) {
@@ -232,84 +308,167 @@ export class FacebookSyncService {
         select: { id: true, facebookCampaignId: true },
       });
 
-      for (const campaign of campaigns) {
-        if (!campaign.facebookCampaignId) continue;
-
-        try {
-          const facebookAdSets = await this.api.getAdSets(campaign.facebookCampaignId);
-
-          for (const fbAdSetRaw of facebookAdSets) {
+      const campaignTasks = campaigns
+        .filter((campaign) => campaign.facebookCampaignId)
+        .map((campaign) =>
+          this.limit(async () => {
             try {
-              // Sanitize and validate ad set data
-              const fbAdSet = sanitizeFacebookAdSet(fbAdSetRaw);
-
-              const insightsRaw = await this.api
-                .getAdSetInsights(fbAdSet.id, {
-                  dateFrom: options.dateFrom,
-                  dateTo: options.dateTo,
-                })
-                .catch(() => null);
-
-              // Sanitize insights data
-              const insights = insightsRaw ? sanitizeFacebookInsights(insightsRaw) : null;
-
-              // Get budget with safe parsing
-              const budget = getBudgetAmount(fbAdSet.daily_budget, fbAdSet.lifetime_budget);
-
-              // Parse dates safely
-              const dateStart = sanitizeDate(options.dateFrom);
-              const dateEnd = sanitizeDate(options.dateTo);
-
-              // Validate and map status
-              const status = sanitizeFacebookStatus(
-                fbAdSet.status,
-                'adset',
-                'PAUSED'
-              ) as AdSetStatus;
-
-              await prisma.adGroup.upsert({
-                where: { facebookAdSetId: fbAdSet.id },
-                create: {
-                  campaignId: campaign.id,
-                  facebookAdSetId: fbAdSet.id,
-                  name: fbAdSet.name,
-                  status,
-                  budget,
-                  spent: insights?.spend ?? 0,
-                  impressions: insights?.impressions ?? 0,
-                  clicks: insights?.clicks ?? 0,
-                  ctr: insights?.ctr ?? 0,
-                  cpc: insights?.cpc ?? 0,
-                  conversions: insights?.conversions ?? 0,
-                  dateStart,
-                  dateEnd,
-                  lastSyncedAt: new Date(),
-                },
-                update: {
-                  name: fbAdSet.name,
-                  status,
-                  budget,
-                  spent: insights?.spend ?? 0,
-                  impressions: insights?.impressions ?? 0,
-                  clicks: insights?.clicks ?? 0,
-                  ctr: insights?.ctr ?? 0,
-                  cpc: insights?.cpc ?? 0,
-                  conversions: insights?.conversions ?? 0,
-                  lastSyncedAt: new Date(),
-                },
-              });
-
-              synced++;
+              const facebookAdSets = await this.api.getAdSets(campaign.facebookCampaignId!);
+              return { campaign, facebookAdSets };
             } catch (error) {
-              const msg = `Failed to sync ad set ${fbAdSetRaw?.id || 'unknown'}: ${error instanceof Error ? error.message : 'Unknown error'}`;
-              errors.push(msg);
-              console.warn(msg);
+              const message =
+                error instanceof Error ? error.message : 'Unknown error while fetching ad sets';
+              throw new Error(
+                `Failed to fetch ad sets for campaign ${
+                  campaign.facebookCampaignId || 'unknown'
+                }: ${message}`
+              );
             }
+          })
+        );
+
+      const campaignResults = await Promise.allSettled(campaignTasks);
+
+      const adSetPreparationTasks: Array<Promise<{
+        campaignId: string;
+        facebookAdSetId: string;
+        name: string;
+        status: AdSetStatus;
+        budget: number;
+        insights: ReturnType<typeof sanitizeFacebookInsights> | null;
+        dateStart: Date;
+        dateEnd: Date;
+      }>> = [];
+
+      for (const result of campaignResults) {
+        if (result.status === 'fulfilled') {
+          const {
+            campaign,
+            facebookAdSets,
+          } = result.value;
+          for (const fbAdSetRaw of facebookAdSets) {
+            adSetPreparationTasks.push(
+              this.limit(async () => {
+                try {
+                  const fbAdSet = sanitizeFacebookAdSet(fbAdSetRaw);
+                  const insightsRaw = await this.api
+                    .getAdSetInsights(fbAdSet.id, {
+                      dateFrom: options.dateFrom,
+                      dateTo: options.dateTo,
+                    })
+                    .catch(() => null);
+                  const insights = insightsRaw ? sanitizeFacebookInsights(insightsRaw) : null;
+                  const budget = getBudgetAmount(
+                    fbAdSet.daily_budget,
+                    fbAdSet.lifetime_budget
+                  );
+                  const dateStart = sanitizeDate(options.dateFrom);
+                  const dateEnd = sanitizeDate(options.dateTo);
+                  const status = sanitizeFacebookStatus(
+                    fbAdSet.status,
+                    'adset',
+                    'PAUSED'
+                  ) as AdSetStatus;
+
+                  return {
+                    campaignId: campaign.id,
+                    facebookAdSetId: fbAdSet.id,
+                    name: fbAdSet.name,
+                    status,
+                    budget,
+                    insights,
+                    dateStart,
+                    dateEnd,
+                  };
+                } catch (error) {
+                  const message =
+                    error instanceof Error ? error.message : 'Unknown error while preparing ad set';
+                  throw new Error(
+                    `Failed to prepare ad set ${fbAdSetRaw?.id || 'unknown'}: ${message}`
+                  );
+                }
+              })
+            );
           }
-        } catch (error) {
-          const msg = `Failed to fetch ad sets for campaign ${campaign.facebookCampaignId}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+        } else {
+          const msg = `Failed to fetch ad sets: ${
+            result.reason instanceof Error ? result.reason.message : String(result.reason)
+          }`;
           errors.push(msg);
           console.warn(msg);
+        }
+      }
+
+      const adSetResults = await Promise.allSettled(adSetPreparationTasks);
+
+      const adSetsToPersist: Array<{
+        campaignId: string;
+        facebookAdSetId: string;
+        name: string;
+        status: AdSetStatus;
+        budget: number;
+        insights: ReturnType<typeof sanitizeFacebookInsights> | null;
+        dateStart: Date;
+        dateEnd: Date;
+      }> = [];
+
+      for (const result of adSetResults) {
+        if (result.status === 'fulfilled') {
+          adSetsToPersist.push(result.value);
+        } else {
+          const msg = `Failed to prepare ad set: ${
+            result.reason instanceof Error ? result.reason.message : String(result.reason)
+          }`;
+          errors.push(msg);
+          console.warn(msg);
+        }
+      }
+
+      const persistenceResults = await Promise.allSettled(
+        adSetsToPersist.map((adSet) =>
+          prisma.adGroup.upsert({
+            where: { facebookAdSetId: adSet.facebookAdSetId },
+            create: {
+              campaignId: adSet.campaignId,
+              facebookAdSetId: adSet.facebookAdSetId,
+              name: adSet.name,
+              status: adSet.status,
+              budget: adSet.budget,
+              spent: adSet.insights?.spend ?? 0,
+              impressions: adSet.insights?.impressions ?? 0,
+              clicks: adSet.insights?.clicks ?? 0,
+              ctr: adSet.insights?.ctr ?? 0,
+              cpc: adSet.insights?.cpc ?? 0,
+              conversions: adSet.insights?.conversions ?? 0,
+              dateStart: adSet.dateStart,
+              dateEnd: adSet.dateEnd,
+              lastSyncedAt: new Date(),
+            },
+            update: {
+              name: adSet.name,
+              status: adSet.status,
+              budget: adSet.budget,
+              spent: adSet.insights?.spend ?? 0,
+              impressions: adSet.insights?.impressions ?? 0,
+              clicks: adSet.insights?.clicks ?? 0,
+              ctr: adSet.insights?.ctr ?? 0,
+              cpc: adSet.insights?.cpc ?? 0,
+              conversions: adSet.insights?.conversions ?? 0,
+              lastSyncedAt: new Date(),
+            },
+          })
+        )
+      );
+
+      for (const result of persistenceResults) {
+        if (result.status === 'fulfilled') {
+          synced++;
+        } else {
+          const msg = `Failed to persist ad set: ${
+            result.reason instanceof Error ? result.reason.message : String(result.reason)
+          }`;
+          errors.push(msg);
+          console.error(msg);
         }
       }
     } catch (error) {
@@ -337,75 +496,151 @@ export class FacebookSyncService {
         select: { id: true, facebookAdSetId: true },
       });
 
-      for (const adSet of adSets) {
-        if (!adSet.facebookAdSetId) continue;
-
-        try {
-          const facebookAds = await this.api.getAds(adSet.facebookAdSetId);
-
-          for (const fbAdRaw of facebookAds) {
+      const adSetTasks = adSets
+        .filter((adSet) => adSet.facebookAdSetId)
+        .map((adSet) =>
+          this.limit(async () => {
             try {
-              // Sanitize and validate ad data
-              const fbAd = sanitizeFacebookAd(fbAdRaw);
-
-              const insightsRaw = await this.api
-                .getAdInsights(fbAd.id, {
-                  dateFrom: options.dateFrom,
-                  dateTo: options.dateTo,
-                })
-                .catch(() => null);
-
-              // Sanitize insights data
-              const insights = insightsRaw ? sanitizeFacebookInsights(insightsRaw) : null;
-
-              // Parse dates safely
-              const dateStart = sanitizeDate(options.dateFrom);
-              const dateEnd = sanitizeDate(options.dateTo);
-
-              // Validate and map status
-              const status = sanitizeFacebookStatus(fbAd.status, 'ad', 'PAUSED') as CreativeStatus;
-
-              await prisma.creative.upsert({
-                where: { facebookAdId: fbAd.id },
-                create: {
-                  adGroupId: adSet.id,
-                  facebookAdId: fbAd.id,
-                  name: fbAd.name,
-                  format: 'Facebook Ad',
-                  status,
-                  impressions: insights?.impressions ?? 0,
-                  clicks: insights?.clicks ?? 0,
-                  ctr: insights?.ctr ?? 0,
-                  engagement: insights?.impressions ?? 0,
-                  spend: insights?.spend ?? 0,
-                  roas: 0,
-                  dateStart,
-                  dateEnd,
-                  lastSyncedAt: new Date(),
-                },
-                update: {
-                  name: fbAd.name,
-                  status,
-                  impressions: insights?.impressions ?? 0,
-                  clicks: insights?.clicks ?? 0,
-                  ctr: insights?.ctr ?? 0,
-                  engagement: insights?.impressions ?? 0,
-                  spend: insights?.spend ?? 0,
-                  lastSyncedAt: new Date(),
-                },
-              });
-
-              synced++;
+              const facebookAds = await this.api.getAds(adSet.facebookAdSetId!);
+              return { adSet, facebookAds };
             } catch (error) {
-              const msg = `Failed to sync ad ${fbAdRaw?.id || 'unknown'}: ${error instanceof Error ? error.message : 'Unknown error'}`;
-              errors.push(msg);
-              console.warn(msg);
+              const message =
+                error instanceof Error ? error.message : 'Unknown error while fetching ads';
+              throw new Error(
+                `Failed to fetch ads for ad set ${adSet.facebookAdSetId || 'unknown'}: ${message}`
+              );
             }
+          })
+        );
+
+      const adSetResults = await Promise.allSettled(adSetTasks);
+
+      const adPreparationTasks: Array<Promise<{
+        adGroupId: string;
+        facebookAdId: string;
+        name: string;
+        status: CreativeStatus;
+        insights: ReturnType<typeof sanitizeFacebookInsights> | null;
+        dateStart: Date;
+        dateEnd: Date;
+      }>> = [];
+
+      for (const result of adSetResults) {
+        if (result.status === 'fulfilled') {
+          const { adSet, facebookAds } = result.value;
+          for (const fbAdRaw of facebookAds) {
+            adPreparationTasks.push(
+              this.limit(async () => {
+                try {
+                  const fbAd = sanitizeFacebookAd(fbAdRaw);
+                  const insightsRaw = await this.api
+                    .getAdInsights(fbAd.id, {
+                      dateFrom: options.dateFrom,
+                      dateTo: options.dateTo,
+                    })
+                    .catch(() => null);
+                  const insights = insightsRaw ? sanitizeFacebookInsights(insightsRaw) : null;
+                  const dateStart = sanitizeDate(options.dateFrom);
+                  const dateEnd = sanitizeDate(options.dateTo);
+                  const status = sanitizeFacebookStatus(
+                    fbAd.status,
+                    'ad',
+                    'PAUSED'
+                  ) as CreativeStatus;
+
+                  return {
+                    adGroupId: adSet.id,
+                    facebookAdId: fbAd.id,
+                    name: fbAd.name,
+                    status,
+                    insights,
+                    dateStart,
+                    dateEnd,
+                  };
+                } catch (error) {
+                  const message =
+                    error instanceof Error ? error.message : 'Unknown error while preparing ad';
+                  throw new Error(`Failed to prepare ad ${fbAdRaw?.id || 'unknown'}: ${message}`);
+                }
+              })
+            );
           }
-        } catch (error) {
-          const msg = `Failed to fetch ads for ad set ${adSet.facebookAdSetId}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+        } else {
+          const msg = `Failed to fetch ads: ${
+            result.reason instanceof Error ? result.reason.message : String(result.reason)
+          }`;
           errors.push(msg);
           console.warn(msg);
+        }
+      }
+
+      const adResults = await Promise.allSettled(adPreparationTasks);
+
+      const adsToPersist: Array<{
+        adGroupId: string;
+        facebookAdId: string;
+        name: string;
+        status: CreativeStatus;
+        insights: ReturnType<typeof sanitizeFacebookInsights> | null;
+        dateStart: Date;
+        dateEnd: Date;
+      }> = [];
+
+      for (const result of adResults) {
+        if (result.status === 'fulfilled') {
+          adsToPersist.push(result.value);
+        } else {
+          const msg = `Failed to prepare ad: ${
+            result.reason instanceof Error ? result.reason.message : String(result.reason)
+          }`;
+          errors.push(msg);
+          console.warn(msg);
+        }
+      }
+
+      const persistenceResults = await Promise.allSettled(
+        adsToPersist.map((ad) =>
+          prisma.creative.upsert({
+            where: { facebookAdId: ad.facebookAdId },
+            create: {
+              adGroupId: ad.adGroupId,
+              facebookAdId: ad.facebookAdId,
+              name: ad.name,
+              format: 'Facebook Ad',
+              status: ad.status,
+              impressions: ad.insights?.impressions ?? 0,
+              clicks: ad.insights?.clicks ?? 0,
+              ctr: ad.insights?.ctr ?? 0,
+              engagement: ad.insights?.impressions ?? 0,
+              spend: ad.insights?.spend ?? 0,
+              roas: 0,
+              dateStart: ad.dateStart,
+              dateEnd: ad.dateEnd,
+              lastSyncedAt: new Date(),
+            },
+            update: {
+              name: ad.name,
+              status: ad.status,
+              impressions: ad.insights?.impressions ?? 0,
+              clicks: ad.insights?.clicks ?? 0,
+              ctr: ad.insights?.ctr ?? 0,
+              engagement: ad.insights?.impressions ?? 0,
+              spend: ad.insights?.spend ?? 0,
+              lastSyncedAt: new Date(),
+            },
+          })
+        )
+      );
+
+      for (const result of persistenceResults) {
+        if (result.status === 'fulfilled') {
+          synced++;
+        } else {
+          const msg = `Failed to persist ad: ${
+            result.reason instanceof Error ? result.reason.message : String(result.reason)
+          }`;
+          errors.push(msg);
+          console.error(msg);
         }
       }
     } catch (error) {
